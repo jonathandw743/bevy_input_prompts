@@ -4,6 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy_asset = "0.15.3"
-bevy_input = "0.15.3"
-leafwing-input-manager = "0.16.0"
+bevy_asset = "0.15"
+bevy_input = "0.15"
