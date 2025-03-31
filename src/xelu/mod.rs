@@ -31,7 +31,7 @@ impl Plugin for XeluPlugin {
             .collect::<Vec<_>>();
         let this_asset_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("assets");
         fs::create_dir_all(&this_asset_dir).expect("creating asset directory failed");
-        copy_items(&asset_paths, this_asset_dir, &CopyOptions::default())
+        copy_items(&asset_paths, this_asset_dir, &CopyOptions::default().skip_exist(true))
             .expect("copying assets failed");
     }
 }
