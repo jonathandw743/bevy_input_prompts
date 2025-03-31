@@ -1,10 +1,8 @@
-use std::{env::join_paths, path::PathBuf};
+use std::path::PathBuf;
 
 use bevy_app::{App, Plugin};
-use bevy_asset::{AssetPlugin, embedded_asset};
 use fs_extra::copy_items;
 use fs_extra::dir::CopyOptions;
-use fs_extra::dir::copy;
 
 pub mod xelu_key_code;
 pub mod xelu_key_code_name;
@@ -13,7 +11,6 @@ pub mod xelu_mouse_button_name;
 
 use std::env;
 use std::fs;
-use walkdir::WalkDir;
 
 pub enum LightDark {
     Light,
