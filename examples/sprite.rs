@@ -8,11 +8,12 @@ use bevy::{
 };
 use bevy_asset::AssetServer;
 use bevy_input::keyboard::KeyCode;
-use bevy_input_prompts::xelu::{LightDark, xelu_key_code::XeluKeyCode};
+use bevy_input_prompts::xelu::{xelu_key_code::XeluKeyCode, LightDark, XeluPlugin};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(XeluPlugin)
         .add_systems(Startup, setup)
         .run();
 }
