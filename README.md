@@ -11,7 +11,6 @@ Updated by Paul Paun (2011)
 Readme.txt inside
 https://thoseawesomeguys.com/prompts/
 
-
 ## assets/xelu/VectorSource.svg
 
 license under Creative Commons 0 (CC0)
