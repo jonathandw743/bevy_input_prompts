@@ -1,4 +1,5 @@
 pub mod mouse_button;
+pub mod key_code;
 
 use super::copy_assets;
 
