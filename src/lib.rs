@@ -6,6 +6,7 @@ use std::{
 use fs_extra::dir::CopyOptions;
 
 pub mod xelu;
+pub mod kenny;
 
 fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     let addon_asset_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
