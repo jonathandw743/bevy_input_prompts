@@ -3,19 +3,20 @@
 Mappings from bevy input types to popular input prompt asset paths.
 
 ```rust
-let arrow_left_handle = asset_server.load(
-    bevy_input_prompts::xelu::key_code::XeluKeyCode {
+let arrow_left_handle = asset_server.load(XeluKeyCode {
         key_code: KeyCode::ArrowLeft,
         light_dark: LightDark::Dark,
-    }
-);
+});
 
-let mouse_right_handle = asset_server.load(
-    bevy_input_prompts::xelu::mouse_button::XeluMouseButton {
+let mouse_right_handle = asset_server.load(XeluMouseButton {
         key_code: KeyCode::ArrowLeft,
         light_dark: LightDark::Dark,
-    }
-);
+});
+
+let a_button_handle = asset_server.load(XeluGamepadButton {
+        gamepad_button: GamepadButton::South,
+        gamepad_brand: GamepadBrand::XboxSeries,
+});
 ```
 
 ## adding assets to your project
@@ -38,7 +39,7 @@ Plug in your input device and run `cargo run --example detection`.
 
 If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue.
 
-If you want to add your own prompt pack, open a pull request.
+If you want to add your own prompt pack, open a pull request!
 
 ## assets/xelu/Xelu_Free_Controller&Key_Prompts
 
