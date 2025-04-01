@@ -39,7 +39,7 @@ Plug in your input device and run `cargo run --example detection`.
 
 If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue.
 
-If you want to add your own prompt pack, open a pull request!
+If you want to add your own prompt pack or want to fix a mapping issue, open a pull request!
 
 ## assets/xelu/Xelu_Free_Controller&Key_Prompts
 
