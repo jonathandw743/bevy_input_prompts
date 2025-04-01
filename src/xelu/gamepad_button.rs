@@ -1,5 +1,5 @@
 use bevy_asset::AssetPath;
-use bevy_input::{gamepad::GamepadButton, keyboard::KeyCode};
+use bevy_input::gamepad::GamepadButton;
 
 use super::GamepadBrand;
 
