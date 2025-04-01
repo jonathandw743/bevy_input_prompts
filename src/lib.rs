@@ -30,7 +30,18 @@ fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     .expect("copying assets failed");
 }
 
-pub fn build() {
-    xelu::build();
+pub fn build_xelu() {
     copy_assets(["unknown.png"]);
+    copy_assets(xelu::ASSET_DIRS);
+}
+
+pub fn build_kenny() {
+    copy_assets(["unknown.png"]);
+    copy_assets(kenny::ASSET_DIRS);
+}
+
+pub fn build_all() {
+    copy_assets(["unknown.png"]);
+    copy_assets(xelu::ASSET_DIRS);
+    copy_assets(kenny::ASSET_DIRS);
 }

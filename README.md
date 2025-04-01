@@ -31,7 +31,7 @@ Make sure to call the build function in your `build.rs` for example:
 // build.rs
 
 fn main() {
-    bevy_input_prompts::build();
+    bevy_input_prompts::build_all();
 }
 ```
 
