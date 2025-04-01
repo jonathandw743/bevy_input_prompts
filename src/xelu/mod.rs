@@ -3,8 +3,6 @@ pub mod mouse_button;
 pub mod gamepad_button;
 pub mod gamepad_axis;
 
-use super::copy_assets;
-
 pub enum LightDark {
     Light,
     Dark,
@@ -18,7 +16,3 @@ pub enum GamepadBrand {
 }
 
 pub const ASSET_DIRS: [&'static str; 1] = ["xelu"];
-
-pub fn build() {
-    copy_assets(ASSET_DIRS);
-}
