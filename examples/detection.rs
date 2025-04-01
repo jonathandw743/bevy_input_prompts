@@ -1,5 +1,4 @@
-use bevy::{ecs::component, math::vec2, prelude::*};
-use bevy_input::keyboard::KeyboardInput;
+use bevy::{math::vec2, prelude::*};
 use bevy_input_prompts::xelu::{gamepad_button::XeluGamepadButton, key_code::XeluKeyCode, GamepadBrand, LightDark};
 
 fn main() {
@@ -13,7 +12,7 @@ fn main() {
 #[derive(Component)]
 struct ShowInput;
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
     commands.spawn(ShowInput);
 }
