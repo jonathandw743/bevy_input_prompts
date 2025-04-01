@@ -4,14 +4,14 @@ Mappings from bevy input types to popular input prompt asset paths.
 
 ```rust
 let arrow_left_handle = asset_server.load(
-    bevy_input_prompts::xelu::xelu_key_code::XeluKeyCode {
+    bevy_input_prompts::xelu::key_code::XeluKeyCode {
         key_code: KeyCode::ArrowLeft,
         light_dark: LightDark::Dark,
     }
 );
 
 let mouse_right_handle = asset_server.load(
-    bevy_input_prompts::xelu::xelu_mouse_button::XeluMouseButton {
+    bevy_input_prompts::xelu::mouse_button::XeluMouseButton {
         key_code: KeyCode::ArrowLeft,
         light_dark: LightDark::Dark,
     }
