@@ -132,11 +132,11 @@ pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
         KeyCode::NumpadEnter => Some("Enter_Tall"),
         KeyCode::PrintScreen => Some("Print_Screen"),
         KeyCode::Meta => Some("Win"),
+        KeyCode::Comma => Some("Mark_Left"),
+        KeyCode::Period => Some("Mark_Right"),
 
         // no xelu prompts for these
-        KeyCode::Comma
-        | KeyCode::Period
-        | KeyCode::Slash
+        KeyCode::Slash
         | KeyCode::Katakana
         | KeyCode::Hiragana
         | KeyCode::Undo
