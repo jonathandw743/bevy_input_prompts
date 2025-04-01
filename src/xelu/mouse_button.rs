@@ -12,10 +12,12 @@ impl XeluMouseButton {
     pub fn default_path(&self) -> &'static str {
         match self.light_dark {
             LightDark::Dark => {
-                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_Black_Mouse.png"
+                "unknown.png"
+                // "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_Black_Mouse.png"
             }
             LightDark::Light => {
-                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_White_Mouse.png"
+                "unknown.png"
+                // "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_White_Mouse.png"
             }
         }
     }

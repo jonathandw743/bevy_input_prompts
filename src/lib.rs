@@ -22,3 +22,8 @@ fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     )
     .expect("copying assets failed");
 }
+
+pub fn build() {
+    xelu::build();
+    copy_assets(["unknown.png"]);
+}

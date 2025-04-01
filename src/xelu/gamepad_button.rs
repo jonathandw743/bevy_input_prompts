@@ -33,16 +33,16 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     GamepadButton::C
                     | GamepadButton::Z
                     | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => "Diagram",
+                    | GamepadButton::Other { .. } => {
+                        return "unknown.png".into()
+                    },
                 };
                 format!(
                     "PS5/PS5_{}.png",
                     gamepad_button_name
                 )
             },
-            GamepadBrand::SteamDeck => todo!(),
-            GamepadBrand::Switch => todo!(),
-            GamepadBrand::XboxSeries => {
+            GamepadBrand::SteamDeck => {
                 let gamepad_button_name = match self.gamepad_button {
                     GamepadButton::South => "A",
                     GamepadButton::East => "B",
@@ -64,7 +64,41 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     GamepadButton::C
                     | GamepadButton::Z
                     | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => "Diagram",
+                    | GamepadButton::Other { .. } => {
+                        return "unknown.png".into()
+                    },
+                };
+                format!(
+                    "Steam Deck/SteamDeck_{}.png",
+                    gamepad_button_name
+                )
+            },
+            GamepadBrand::Switch => todo!(),
+            GamepadBrand::XboxSeries => {
+                let gamepad_button_name = match self.gamepad_button {
+                    GamepadButton::South => "A",
+                    GamepadButton::East => "B",
+                    GamepadButton::North => "Y",
+                    GamepadButton::West => "X",
+                    GamepadButton::LeftTrigger => "L1",
+                    GamepadButton::LeftTrigger2 => "L2",
+                    GamepadButton::RightTrigger => "R1",
+                    GamepadButton::RightTrigger2 => "R2",
+                    GamepadButton::Select => "Inventory",
+                    GamepadButton::Start => "Menu",
+                    GamepadButton::LeftThumb => "Left_Stick_Click",
+                    GamepadButton::RightThumb => "Right_Stick_Click",
+                    GamepadButton::DPadUp => "Dpad_Up",
+                    GamepadButton::DPadDown => "Dpad_Down",
+                    GamepadButton::DPadLeft => "Dpad_Left",
+                    GamepadButton::DPadRight => "Dpad_Right",
+
+                    GamepadButton::C
+                    | GamepadButton::Z
+                    | GamepadButton::Mode
+                    | GamepadButton::Other { .. } => {
+                        return "unknown.png".into()
+                    },
                 };
                 format!(
                     "Xbox Series/XboxSeriesX_{}.png",
