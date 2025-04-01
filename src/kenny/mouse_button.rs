@@ -3,6 +3,7 @@ use bevy_input::mouse::MouseButton;
 
 use super::{FilledOutline, Format, KennySettings};
 
+#[derive(Clone, Debug)]
 pub struct KennyMouseButton {
     pub mouse_button: MouseButton,
     pub settings: KennySettings,

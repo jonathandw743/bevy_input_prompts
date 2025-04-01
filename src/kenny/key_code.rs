@@ -3,6 +3,7 @@ use bevy_input::keyboard::KeyCode;
 
 use super::{FilledOutline, Format, KennySettings};
 
+#[derive(Clone, Debug)]
 pub struct KennyKeyCode {
     pub key_code: KeyCode,
     pub settings: KennySettings,

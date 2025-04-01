@@ -3,6 +3,7 @@ use bevy_input::mouse::MouseButton;
 
 use super::{LightDark, XeluKeyboardAndMouseSettings};
 
+#[derive(Clone, Debug)]
 pub struct XeluMouseButton {
     pub mouse_button: MouseButton,
     pub settings: XeluKeyboardAndMouseSettings,
