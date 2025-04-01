@@ -31,6 +31,8 @@ fn main() {
 }
 ```
 
+And include this crate in `Cargo.toml` `[build-dependencies]`.
+
 This copies input prompt assets into your `assets` directory if they don't exist (don't worry, nothing will get overwritten).
 
 Or, copy assets manually in the same structure as the `assets` directory.
@@ -39,7 +41,7 @@ Or, copy assets manually in the same structure as the `assets` directory.
 
 Plug in your input device and run `cargo run --example detection`.
 
-If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue. (Unfortunately I don't have every input device ever made.)
+If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue. (Unfortunately, I don't have every input device ever made.)
 
 If you want to add your own prompt pack or want to fix a mapping issue, open a pull request!
 
