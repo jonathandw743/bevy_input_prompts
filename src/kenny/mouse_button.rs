@@ -17,7 +17,7 @@ impl<'a> Into<AssetPath<'a>> for KennyMouseButton {
         };
         let filled_outline_name = self.filled_outline_name();
         format!(
-            "kenny/kenney_input-prompts/Keyboard & Mouse/{}/mouse{}{}.png",
+            "kenny/kenney_input-prompts/Keyboard & Mouse/{}/mouse_{}{}.png",
             format_name, mouse_button_name, filled_outline_name,
         )
         .into()
