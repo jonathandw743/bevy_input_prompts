@@ -41,17 +41,8 @@ If there are any issues, for example a lot of `unknown.png` showing, or `ERROR b
 
 If you want to add your own prompt pack or want to fix a mapping issue, open a pull request!
 
-## assets/xelu/Xelu_Free_Controller&Key_Prompts
+## lisences
 
-All the assets are in the public domain license under Creative Commons 0 (CC0) completely free to use in any personal or commercial project
+The lisence for this project can be found in `LICENSE`. Assets in `assets` are not under this lisence.
 
-Made by Nicolae (XELU) Berbece
-Updated by Paul Paun (2011)
-Readme.txt inside
-https://thoseawesomeguys.com/prompts/
-
-## assets/xelu/VectorSource.svg
-
-license under Creative Commons 0 (CC0)
-
-https://github.com/haaldor/Xelu_prompts_SVG
+Lisences for included assets can be found in the relevant sub directories of `assets`.
