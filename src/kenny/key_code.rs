@@ -1,12 +1,11 @@
 use bevy_asset::AssetPath;
 use bevy_input::keyboard::KeyCode;
 
-use super::{FilledOutline, Format};
+use super::{FilledOutline, Format, KennySettings};
 
 pub struct KennyKeyCode {
     pub key_code: KeyCode,
-    pub filled_outline: FilledOutline,
-    pub format: Format,
+    pub settings: KennySettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for KennyKeyCode {
@@ -26,14 +25,14 @@ impl<'a> Into<AssetPath<'a>> for KennyKeyCode {
 
 impl KennyKeyCode {
     pub fn format_name(&self) -> &'static str {
-        match self.format {
+        match self.settings.format {
             Format::Default => "Default",
             Format::Double => "Double",
             Format::Vector => "Vector",
         }
     }
     pub fn filled_outline_name(&self) -> &'static str {
-        match self.filled_outline {
+        match self.settings.filled_outline {
             FilledOutline::Filled => "",
             FilledOutline::Outline => "_outline",
         }
