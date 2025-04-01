@@ -1,18 +1,18 @@
 use bevy_asset::AssetPath;
 use bevy_input::keyboard::KeyCode;
 
-use super::LightDark;
+use super::{LightDark, XeluKeyboardAndMouseSettings};
 
 pub struct XeluKeyCode {
     pub key_code: KeyCode,
-    pub light_dark: LightDark,
+    pub settings: XeluKeyboardAndMouseSettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for XeluKeyCode {
     fn into(self) -> AssetPath<'a> {
         let light_dark_name = self.light_dark_name();
         let Some(key_code_name) = self.key_code_name() else {
-            return "unkown.png".into();
+            return "unknown.png".into();
         };
         format!(
             "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
@@ -24,7 +24,7 @@ impl<'a> Into<AssetPath<'a>> for XeluKeyCode {
 
 impl XeluKeyCode {
     pub fn light_dark_name(&self) -> &'static str {
-        match self.light_dark {
+        match self.settings.light_dark {
             LightDark::Light => "Light",
             LightDark::Dark => "Dark",
         }

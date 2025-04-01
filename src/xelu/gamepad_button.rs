@@ -1,16 +1,16 @@
 use bevy_asset::AssetPath;
 use bevy_input::gamepad::GamepadButton;
 
-use super::GamepadBrand;
+use super::{GamepadBrand, XeluGamepadSettings};
 
 pub struct XeluGamepadButton {
     pub gamepad_button: GamepadButton,
-    pub gamepad_brand: GamepadBrand,
+    pub settings: XeluGamepadSettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
     fn into(self) -> AssetPath<'a> {
-        let path = match self.gamepad_brand {
+        let path = match self.settings.gamepad_brand {
             GamepadBrand::PS5 => {
                 let gamepad_button_name = match self.gamepad_button {
                     GamepadButton::South => "Cross",
@@ -83,8 +83,8 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     GamepadButton::LeftTrigger2 => "LT",
                     GamepadButton::RightTrigger => "RB",
                     GamepadButton::RightTrigger2 => "RT",
-                    GamepadButton::Select => "Inventory",
-                    GamepadButton::Start => "Menu",
+                    GamepadButton::Select => "Square",
+                    GamepadButton::Start => "Home",
                     GamepadButton::LeftThumb => "Left_Stick_Click",
                     GamepadButton::RightThumb => "Right_Stick_Click",
                     GamepadButton::DPadUp => "Dpad_Up",

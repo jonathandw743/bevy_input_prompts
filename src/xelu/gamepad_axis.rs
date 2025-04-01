@@ -1,16 +1,16 @@
 use bevy_asset::AssetPath;
 use bevy_input::gamepad::GamepadAxis;
 
-use super::GamepadBrand;
+use super::{GamepadBrand, XeluGamepadSettings};
 
 pub struct XeluGamepadAxis {
     pub gamepad_axis: GamepadAxis,
-    pub gamepad_brand: GamepadBrand,
+    pub settings: XeluGamepadSettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
     fn into(self) -> AssetPath<'a> {
-        let path = match self.gamepad_brand {
+        let path = match self.settings.gamepad_brand {
             GamepadBrand::PS5 => {
                 let gamepad_axis_name = match self.gamepad_axis {
                     GamepadAxis::LeftStickX => "Left_Stick",

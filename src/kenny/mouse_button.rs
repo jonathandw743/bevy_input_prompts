@@ -1,12 +1,11 @@
 use bevy_asset::AssetPath;
 use bevy_input::mouse::MouseButton;
 
-use super::{FilledOutline, Format};
+use super::{FilledOutline, Format, KennySettings};
 
 pub struct KennyMouseButton {
     pub mouse_button: MouseButton,
-    pub filled_outline: FilledOutline,
-    pub format: Format,
+    pub settings: KennySettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for KennyMouseButton {
@@ -26,14 +25,14 @@ impl<'a> Into<AssetPath<'a>> for KennyMouseButton {
 
 impl KennyMouseButton {
     pub fn format_name(&self) -> &'static str {
-        match self.format {
+        match self.settings.format {
             Format::Default => "Default",
             Format::Double => "Double",
             Format::Vector => "Vector",
         }
     }
     pub fn filled_outline_name(&self) -> &'static str {
-        match self.filled_outline {
+        match self.settings.filled_outline {
             FilledOutline::Filled => "",
             FilledOutline::Outline => "_outline",
         }
