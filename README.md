@@ -31,7 +31,9 @@ fn main() {
 }
 ```
 
-This copies input prompt assets into your `assets` directory (don't worry, nothing will get overwritten).
+This copies input prompt assets into your `assets` directory if they don't exist (don't worry, nothing will get overwritten).
+
+Or, copy assets manually in the same structure as the `assets` directory.
 
 ## contributing
 

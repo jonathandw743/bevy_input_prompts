@@ -18,7 +18,13 @@ fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     fs_extra::copy_items(
         &asset_paths,
         this_asset_dir,
-        &CopyOptions::default().skip_exist(true),
+        &CopyOptions {
+            overwrite: false,
+            skip_exist: true,
+            content_only: false,
+            depth: 0,
+            ..Default::default()
+        },
     )
     .expect("copying assets failed");
 }
