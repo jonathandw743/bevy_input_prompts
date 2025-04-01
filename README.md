@@ -2,6 +2,10 @@
 
 Mappings from bevy input types to popular input prompt asset paths.
 
+| Bevy Version | Plugin Version |
+| -----------: | -------------: |
+|         0.15 |           main |
+
 ```rust
 let arrow_left_handle = asset_server.load(XeluKeyCode {
         key_code: KeyCode::ArrowLeft,
