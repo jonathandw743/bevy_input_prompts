@@ -42,7 +42,19 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
                 format!("Steam Deck/SteamDeck_{}.png", gamepad_axis_name)
             }
             GamepadBrand::Switch => {
-                return "unknown.png".into();
+                let gamepad_axis_name = match self.gamepad_axis {
+                    GamepadAxis::LeftStickX => "Left_Stick",
+                    GamepadAxis::LeftStickY => "Left_Stick",
+                    GamepadAxis::RightStickX => "Right_Stick",
+                    GamepadAxis::RightStickY => "Right_Stick",
+                    GamepadAxis::LeftZ => "LT",
+                    GamepadAxis::RightZ => "RT",
+
+                    GamepadAxis::Other { .. } => {
+                        return "unknown.png".into();
+                    }
+                };
+                format!("Switch/Switch_{}.png", gamepad_axis_name)
             }
             GamepadBrand::XboxSeries => {
                 let gamepad_axis_name = match self.gamepad_axis {
