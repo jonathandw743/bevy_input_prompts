@@ -73,7 +73,9 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     gamepad_button_name
                 )
             },
-            GamepadBrand::Switch => todo!(),
+            GamepadBrand::Switch => {
+                return "unknown.png".into();
+            },
             GamepadBrand::XboxSeries => {
                 let gamepad_button_name = match self.gamepad_button {
                     GamepadButton::South => "A",
