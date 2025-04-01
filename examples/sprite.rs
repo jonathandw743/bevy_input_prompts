@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_input_prompts::xelu::{xelu_key_code::XeluKeyCode, LightDark};
+use bevy_input_prompts::xelu::{key_code::XeluKeyCode, LightDark};
 
 fn main() {
     App::new()
