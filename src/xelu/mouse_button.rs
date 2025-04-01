@@ -8,47 +8,33 @@ pub struct XeluMouseButton {
     pub light_dark: LightDark,
 }
 
-impl XeluMouseButton {
-    pub fn default_path(&self) -> &'static str {
-        match self.light_dark {
-            LightDark::Dark => {
-                "unknown.png"
-                // "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_Black_Mouse.png"
-            }
-            LightDark::Light => {
-                "unknown.png"
-                // "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Blanks/Blank_White_Mouse.png"
-            }
-        }
-    }
-    pub fn format_mouse_button_name(&self, key_name: &str) -> String {
-        match self.light_dark {
-            LightDark::Light => format!(
-                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Light/{}_Key_Light.png",
-                key_name
-            ),
-            LightDark::Dark => format!(
-                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Dark/{}_Key_Dark.png",
-                key_name
-            ),
-        }
-    }
-}
-
 impl<'a> Into<AssetPath<'a>> for XeluMouseButton {
     fn into(self) -> AssetPath<'a> {
-        match mouse_button_name(self.mouse_button) {
-            Some(key_name) => self.format_mouse_button_name(key_name).into(),
-            None => self.default_path().into(),
-        }
+        let light_dark_name = self.light_dark_name();
+        let Some(mouse_button_name) = self.mouse_button_name() else {
+            return "unkown.png".into();
+        };
+        format!(
+            "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
+            light_dark_name, mouse_button_name, light_dark_name
+        )
+        .into()
     }
 }
 
-pub fn mouse_button_name(mouse_button: MouseButton) -> Option<&'static str> {
-    match mouse_button {
-        MouseButton::Left => Some("Mouse_Left"),
-        MouseButton::Right => Some("Mouse_Right"),
-        MouseButton::Middle => Some("Mouse_Middle"),
-        MouseButton::Back | MouseButton::Forward | MouseButton::Other(_) => None,
+impl XeluMouseButton {
+    pub fn light_dark_name(&self) -> &'static str {
+        match self.light_dark {
+            LightDark::Light => "Light",
+            LightDark::Dark => "Dark",
+        }
+    }
+    pub fn mouse_button_name(&self) -> Option<&'static str> {
+        match self.mouse_button {
+            MouseButton::Left => Some("Mouse_Left"),
+            MouseButton::Right => Some("Mouse_Right"),
+            MouseButton::Middle => Some("Mouse_Middle"),
+            MouseButton::Back | MouseButton::Forward | MouseButton::Other(_) => None,
+        }
     }
 }

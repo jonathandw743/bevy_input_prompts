@@ -30,7 +30,7 @@ fn update(
     asset_server: Res<AssetServer>,
     key_code_input: Option<Res<ButtonInput<KeyCode>>>,
     mouse_button_input: Option<Res<ButtonInput<MouseButton>>>,
-    gamepad_button_input: Option<Res<ButtonInput<GamepadButton>>>,
+    gamepads: Query<(Entity, &Gamepad)>,
 ) {
     if let Some(key_code_input) = key_code_input {
         if let Some(&key_code) = key_code_input.get_just_pressed().next() {
@@ -78,8 +78,10 @@ fn update(
             return;
         }
     }
-    if let Some(gamepad_button_input) = gamepad_button_input {
-        if let Some(&gamepad_button) = gamepad_button_input.get_just_pressed().next() {
+    for (entity, gamepad) in &gamepads {
+        if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
+            dbg!(entity);
+            dbg!(gamepad);
             dbg!(gamepad_button);
             commands.entity(*xelu).insert(Sprite {
                 image: asset_server.load(XeluGamepadButton {
