@@ -20,13 +20,13 @@ let mouse_right_handle = asset_server.load(
 
 ## adding assets to your project
 
-Make sure to call the relevant build function in your `build.rs` for example:
+Make sure to call the build function in your `build.rs` for example:
 
 ```rust
 // build.rs
 
 fn main() {
-    bevy_input_prompts::xelu::build();
+    bevy_input_prompts::build();
 }
 ```
 
