@@ -1,6 +1,7 @@
 use bevy::{
     math::{vec2, vec3},
     prelude::*,
+    window::WindowResolution,
 };
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
@@ -17,7 +18,13 @@ use bevy_input_prompts::{
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                resolution: WindowResolution::new(1280.0, 720.0),
+                ..default()
+            }),
+            ..default()
+        }))
         .add_systems(Startup, setup)
         .add_systems(Update, update)
         .run();
