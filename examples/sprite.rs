@@ -1,13 +1,4 @@
-use bevy::{
-    DefaultPlugins,
-    app::{App, Startup},
-    core_pipeline::core_2d::Camera2d,
-    ecs::system::{Commands, Res},
-    sprite::Sprite,
-    utils::default,
-};
-use bevy_asset::AssetServer;
-use bevy_input::keyboard::KeyCode;
+use bevy::prelude::*;
 use bevy_input_prompts::xelu::{xelu_key_code::XeluKeyCode, LightDark};
 
 fn main() {
