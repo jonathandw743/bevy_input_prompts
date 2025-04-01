@@ -37,7 +37,7 @@ This copies input prompt assets into your `assets` directory (don't worry, nothi
 
 Plug in your input device and run `cargo run --example detection`.
 
-If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue.
+If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue. (Unfortunately I don't have every input device ever made.)
 
 If you want to add your own prompt pack or want to fix a mapping issue, open a pull request!
 
