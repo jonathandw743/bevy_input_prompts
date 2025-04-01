@@ -32,6 +32,14 @@ fn main() {
 
 This copies input prompt assets into your `assets` directory (don't worry, nothing will get overwritten).
 
+## contributing
+
+Plug in your input device and run `cargo run --example detection`.
+
+If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue.
+
+If you want to add your own prompt pack, open a pull request.
+
 ## assets/xelu/Xelu_Free_Controller&Key_Prompts
 
 All the assets are in the public domain license under Creative Commons 0 (CC0) completely free to use in any personal or commercial project
