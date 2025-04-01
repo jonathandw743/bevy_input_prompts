@@ -23,8 +23,14 @@ impl XeluKeyCode {
     }
     pub fn format_key_name(&self, key_name: &str) -> String {
         match self.light_dark {
-            LightDark::Light => format!("xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Light/{}_Key_Light.png", key_name),
-            LightDark::Dark => format!("xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Dark/{}_Key_Dark.png", key_name),
+            LightDark::Light => format!(
+                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Light/{}_Key_Light.png",
+                key_name
+            ),
+            LightDark::Dark => format!(
+                "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/Dark/{}_Key_Dark.png",
+                key_name
+            ),
         }
     }
 }
@@ -37,7 +43,6 @@ impl<'a> Into<AssetPath<'a>> for XeluKeyCode {
         }
     }
 }
-
 
 pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
     match key_code {
@@ -93,7 +98,7 @@ pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
         KeyCode::F12 => Some("F12"),
         KeyCode::Minus => Some("Minus"),
         KeyCode::Equal => Some("Plus"),
-        KeyCode::Backslash => Some("Backslash"),
+        KeyCode::Backslash | KeyCode::IntlBackslash => Some("Slash"),
         KeyCode::Backspace => Some("Backspace"),
         KeyCode::Tab => Some("Tab"),
         KeyCode::BracketLeft => Some("Bracket_Left"),
@@ -101,12 +106,9 @@ pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
         KeyCode::Enter => Some("Enter"),
         KeyCode::Semicolon => Some("Semicolon"),
         KeyCode::Quote => Some("Quote"),
-        KeyCode::Comma => Some("Comma"),
-        KeyCode::Period => Some("Period"),
-        KeyCode::Slash => Some("Slash"),
         KeyCode::Space => Some("Space"),
         KeyCode::ShiftLeft => Some("Shift"),
-        KeyCode::ShiftRight => Some("Shift"),
+        KeyCode::ShiftRight => Some("Shift_Alt"),
         KeyCode::ControlLeft => Some("Ctrl"),
         KeyCode::ControlRight => Some("Ctrl"),
         KeyCode::AltLeft => Some("Alt"),
@@ -132,7 +134,10 @@ pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
         KeyCode::Meta => Some("Win"),
 
         // no xelu prompts for these
-        KeyCode::Katakana
+        KeyCode::Comma
+        | KeyCode::Period
+        | KeyCode::Slash
+        | KeyCode::Katakana
         | KeyCode::Hiragana
         | KeyCode::Undo
         | KeyCode::Select
@@ -215,7 +220,6 @@ pub fn key_code_name(key_code: KeyCode) -> Option<&'static str> {
         | KeyCode::ContextMenu
         | KeyCode::IntlYen
         | KeyCode::IntlRo
-        | KeyCode::IntlBackslash
         | KeyCode::Backquote
         | KeyCode::F13
         | KeyCode::F14
