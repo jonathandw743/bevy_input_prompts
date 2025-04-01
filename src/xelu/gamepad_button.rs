@@ -3,6 +3,7 @@ use bevy_input::gamepad::GamepadButton;
 
 use super::{GamepadBrand, XeluGamepadSettings};
 
+#[derive(Clone, Debug)]
 pub struct XeluGamepadButton {
     pub gamepad_button: GamepadButton,
     pub settings: XeluGamepadSettings,

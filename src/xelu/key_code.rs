@@ -3,6 +3,7 @@ use bevy_input::keyboard::KeyCode;
 
 use super::{LightDark, XeluKeyboardAndMouseSettings};
 
+#[derive(Clone, Debug)]
 pub struct XeluKeyCode {
     pub key_code: KeyCode,
     pub settings: XeluKeyboardAndMouseSettings,

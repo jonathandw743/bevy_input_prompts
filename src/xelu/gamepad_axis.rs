@@ -3,6 +3,7 @@ use bevy_input::gamepad::GamepadAxis;
 
 use super::{GamepadBrand, XeluGamepadSettings};
 
+#[derive(Clone, Debug)]
 pub struct XeluGamepadAxis {
     pub gamepad_axis: GamepadAxis,
     pub settings: XeluGamepadSettings,
