@@ -74,7 +74,35 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                 )
             },
             GamepadBrand::Switch => {
-                return "unknown.png".into();
+                let gamepad_button_name = match self.gamepad_button {
+                    GamepadButton::South => "A",
+                    GamepadButton::East => "B",
+                    GamepadButton::North => "Y",
+                    GamepadButton::West => "X",
+                    GamepadButton::LeftTrigger => "L1",
+                    GamepadButton::LeftTrigger2 => "L2",
+                    GamepadButton::RightTrigger => "R1",
+                    GamepadButton::RightTrigger2 => "R2",
+                    GamepadButton::Select => "Inventory",
+                    GamepadButton::Start => "Menu",
+                    GamepadButton::LeftThumb => "Left_Stick_Click",
+                    GamepadButton::RightThumb => "Right_Stick_Click",
+                    GamepadButton::DPadUp => "Dpad_Up",
+                    GamepadButton::DPadDown => "Dpad_Down",
+                    GamepadButton::DPadLeft => "Dpad_Left",
+                    GamepadButton::DPadRight => "Dpad_Right",
+
+                    GamepadButton::C
+                    | GamepadButton::Z
+                    | GamepadButton::Mode
+                    | GamepadButton::Other { .. } => {
+                        return "unknown.png".into()
+                    },
+                };
+                format!(
+                    "Switch/Switch_{}.png",
+                    gamepad_button_name
+                )
             },
             GamepadBrand::XboxSeries => {
                 let gamepad_button_name = match self.gamepad_button {
