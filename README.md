@@ -9,17 +9,17 @@ Mappings from bevy input types to popular input prompt asset paths.
 ```rust
 let arrow_left_handle = asset_server.load(XeluKeyCode {
         key_code: KeyCode::ArrowLeft,
-        light_dark: LightDark::Dark,
+        settings: default(),
 });
 
 let mouse_right_handle = asset_server.load(XeluMouseButton {
         key_code: KeyCode::ArrowLeft,
-        light_dark: LightDark::Dark,
+        settings: default(),
 });
 
 let a_button_handle = asset_server.load(XeluGamepadButton {
         gamepad_button: GamepadButton::South,
-        gamepad_brand: GamepadBrand::XboxSeries,
+        settings: default(),
 });
 ```
 
