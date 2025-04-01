@@ -17,7 +17,7 @@ impl<'a> Into<AssetPath<'a>> for KennyKeyCode {
         };
         let filled_outline_name = self.filled_outline_name();
         format!(
-            "kenny/kenney_input-prompts/Keyboard & Mouse/{}/keyboard{}{}.png",
+            "kenny/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.png",
             format_name, key_code_name, filled_outline_name,
         )
         .into()
