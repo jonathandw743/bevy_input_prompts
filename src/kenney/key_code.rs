@@ -1,41 +1,36 @@
 use bevy_asset::AssetPath;
 use bevy_input::keyboard::KeyCode;
 
-use super::{FilledOutline, Format, KennySettings};
+use super::KenneyKeyboardAndMouseSettings;
 
 #[derive(Clone, Debug)]
-pub struct KennyKeyCode {
+pub struct KenneyKeyCode {
     pub key_code: KeyCode,
-    pub settings: KennySettings,
+    pub settings: KenneyKeyboardAndMouseSettings,
 }
 
-impl<'a> Into<AssetPath<'a>> for KennyKeyCode {
+impl<'a> Into<AssetPath<'a>> for KenneyKeyCode {
     fn into(self) -> AssetPath<'a> {
-        let format_name = self.format_name();
         let Some(key_code_name) = self.key_code_name() else {
             return "unknown.png".into();
         };
-        let filled_outline_name = self.filled_outline_name();
         format!(
-            "kenny/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.png",
-            format_name, key_code_name, filled_outline_name,
+            "kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.{}",
+            self.settings.format.directiory(),
+            key_code_name,
+            self.outline_name(),
+            self.settings.format.extension()
         )
         .into()
     }
 }
 
-impl KennyKeyCode {
-    pub fn format_name(&self) -> &'static str {
-        match self.settings.format {
-            Format::Default => "Default",
-            Format::Double => "Double",
-            Format::Vector => "Vector",
-        }
-    }
-    pub fn filled_outline_name(&self) -> &'static str {
-        match self.settings.filled_outline {
-            FilledOutline::Filled => "",
-            FilledOutline::Outline => "_outline",
+impl KenneyKeyCode {
+    pub fn outline_name(&self) -> &'static str {
+        if self.settings.outline {
+            "_outline"
+        } else {
+            ""
         }
     }
     pub fn key_code_name(&self) -> Option<&'static str> {

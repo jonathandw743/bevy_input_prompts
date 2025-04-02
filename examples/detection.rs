@@ -1,13 +1,12 @@
 use bevy::{
     math::{vec2, vec3},
     prelude::*,
-    window::WindowResolution,
 };
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
-    kenny::{
-        FilledOutline, Format, KennySettings, key_code::KennyKeyCode,
-        mouse_button::KennyMouseButton,
+    kenney::{
+        Format, KenneyKeyboardAndMouseSettings, key_code::KenneyKeyCode,
+        mouse_button::KenneyMouseButton,
     },
     xelu::{
         GamepadBrand, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings,
@@ -18,13 +17,7 @@ use bevy_input_prompts::{
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(1280.0, 720.0),
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(Update, update)
         .run();
@@ -37,7 +30,7 @@ struct XeluGamepadPrompt(XeluGamepadSettings);
 struct XeluKeyboardAndMousePrompt(XeluKeyboardAndMouseSettings);
 
 #[derive(Component)]
-struct KennyPrompt(KennySettings);
+struct KenneyPrompt(KenneyKeyboardAndMouseSettings);
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
@@ -80,29 +73,29 @@ fn setup(mut commands: Commands) {
     ));
 
     commands.spawn((
-        KennyPrompt(KennySettings {
-            filled_outline: FilledOutline::Filled,
+        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+            outline: false,
             format: Format::Default,
         }),
         Transform::default().with_translation(vec3(200.0, -200.0, 0.0)),
     ));
     commands.spawn((
-        KennyPrompt(KennySettings {
-            filled_outline: FilledOutline::Filled,
+        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+            outline: false,
             format: Format::Double,
         }),
         Transform::default().with_translation(vec3(200.0, -100.0, 0.0)),
     ));
     commands.spawn((
-        KennyPrompt(KennySettings {
-            filled_outline: FilledOutline::Outline,
+        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+            outline: true,
             format: Format::Default,
         }),
         Transform::default().with_translation(vec3(200.0, 0.0, 0.0)),
     ));
     commands.spawn((
-        KennyPrompt(KennySettings {
-            filled_outline: FilledOutline::Outline,
+        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+            outline: true,
             format: Format::Double,
         }),
         Transform::default().with_translation(vec3(200.0, 100.0, 0.0)),
@@ -113,7 +106,7 @@ fn update(
     mut commands: Commands,
     xelu_kbm: Query<(Entity, &XeluKeyboardAndMousePrompt)>,
     xelu_gp: Query<(Entity, &XeluGamepadPrompt)>,
-    kenny: Query<(Entity, &KennyPrompt)>,
+    kenney: Query<(Entity, &KenneyPrompt)>,
     asset_server: Res<AssetServer>,
     key_code_input: Option<Res<ButtonInput<KeyCode>>>,
     mouse_button_input: Option<Res<ButtonInput<MouseButton>>>,
@@ -132,11 +125,11 @@ fn update(
                     ..default()
                 });
             }
-            for (entity, kenny) in &kenny {
+            for (entity, kenney) in &kenney {
                 commands.entity(entity).insert(Sprite {
-                    image: asset_server.load(KennyKeyCode {
+                    image: asset_server.load(KenneyKeyCode {
                         key_code,
-                        settings: kenny.0,
+                        settings: kenney.0,
                     }),
                     custom_size: Some(vec2(100.0, 100.0)),
                     ..default()
@@ -158,11 +151,11 @@ fn update(
                     ..default()
                 });
             }
-            for (entity, kenny) in &kenny {
+            for (entity, kenney) in &kenney {
                 commands.entity(entity).insert(Sprite {
-                    image: asset_server.load(KennyMouseButton {
+                    image: asset_server.load(KenneyMouseButton {
                         mouse_button,
-                        settings: kenny.0,
+                        settings: kenney.0,
                     }),
                     custom_size: Some(vec2(100.0, 100.0)),
                     ..default()
