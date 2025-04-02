@@ -6,7 +6,7 @@ use std::{
 use fs_extra::dir::CopyOptions;
 
 pub mod xelu;
-pub mod kenny;
+pub mod kenney;
 
 fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     let addon_asset_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
@@ -35,13 +35,13 @@ pub fn build_xelu() {
     copy_assets(xelu::ASSET_DIRS);
 }
 
-pub fn build_kenny() {
+pub fn build_kenney() {
     copy_assets(["unknown.png"]);
-    copy_assets(kenny::ASSET_DIRS);
+    copy_assets(kenney::ASSET_DIRS);
 }
 
 pub fn build_all() {
     copy_assets(["unknown.png"]);
     copy_assets(xelu::ASSET_DIRS);
-    copy_assets(kenny::ASSET_DIRS);
+    copy_assets(kenney::ASSET_DIRS);
 }
