@@ -4,9 +4,12 @@ pub mod mouse_button;
 
 #[derive(Default, Clone, Copy, Debug)]
 pub enum Format {
+    /// 64x64 pixels
     #[default]
     Default,
+    /// 128 x 128 pixels
     Double,
+    /// SVG
     Vector,
 }
 
@@ -70,25 +73,35 @@ impl GamepadBrand {
     }
 }
 
+/// settings to configure a Kenney keyboard and mouse input prompt
 #[derive(Default, Clone, Copy, Debug)]
 pub struct KenneyKeyboardAndMouseSettings {
+    /// outline icons
     pub outline: bool,
+    /// icon format
     pub format: Format,
 }
 
+/// settings to configure a Kenney gamepad input prompt
 #[derive(Clone, Copy, Debug)]
 pub struct KenneyGamepadSettings {
+    /// round icons if possible, only for xbox dpad
+    pub round_if_possible: bool,
+    /// outline icons if possible, available for most icons except sticks
     pub outline_if_bossible: bool,
+    /// icon format
     pub format: Format,
-    // only for xbox, steam deck and playstation
+    /// color icons if possible, only for xbox series A B X Y, steam controller A B X Y and playstation cross circle square triangle
     pub color_if_possible: bool,
+    /// brand of gamepad
     pub gamepad_brand: GamepadBrand,
 }
 
 impl Default for KenneyGamepadSettings {
     fn default() -> Self {
         Self {
-            outline_if_bossible: Default::default(),
+            round_if_possible: false,
+            outline_if_bossible: false,
             format: Default::default(),
             color_if_possible: true,
             gamepad_brand: Default::default(),
@@ -96,4 +109,4 @@ impl Default for KenneyGamepadSettings {
     }
 }
 
-pub const ASSET_DIRS: [&'static str; 1] = ["kenney"];
+pub const ASSET_DIRS: [&'static str; 1] = ["bevy_input_prompts/kenney"];

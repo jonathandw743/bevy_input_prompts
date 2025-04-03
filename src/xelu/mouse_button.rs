@@ -13,10 +13,10 @@ impl<'a> Into<AssetPath<'a>> for XeluMouseButton {
     fn into(self) -> AssetPath<'a> {
         let light_dark_name = self.light_dark_name();
         let Some(mouse_button_name) = self.mouse_button_name() else {
-            return "unknown.png".into();
+            return "bevy_input_prompts/unknown.png".into();
         };
         format!(
-            "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
+            "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
             light_dark_name, mouse_button_name, light_dark_name
         )
         .into()

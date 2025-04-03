@@ -31,17 +31,17 @@ fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
 }
 
 pub fn build_xelu() {
-    copy_assets(["unknown.png"]);
+    copy_assets(["bevy_input_prompts/unknown.png"]);
     copy_assets(xelu::ASSET_DIRS);
 }
 
 pub fn build_kenney() {
-    copy_assets(["unknown.png"]);
+    copy_assets(["bevy_input_prompts/unknown.png"]);
     copy_assets(kenney::ASSET_DIRS);
 }
 
 pub fn build_all() {
-    copy_assets(["unknown.png"]);
+    copy_assets(["bevy_input_prompts/unknown.png"]);
     copy_assets(xelu::ASSET_DIRS);
     copy_assets(kenney::ASSET_DIRS);
 }

@@ -12,10 +12,10 @@ pub struct XeluKeyCode {
 impl<'a> Into<AssetPath<'a>> for XeluKeyCode {
     fn into(self) -> AssetPath<'a> {
         let Some(key_code_name) = self.key_code_name() else {
-            return "unknown.png".into();
+            return "bevy_input_prompts/unknown.png".into();
         };
         format!(
-            "xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
+            "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
             self.settings.light_dark.directory(), key_code_name, self.settings.light_dark.directory()
         )
         .into()

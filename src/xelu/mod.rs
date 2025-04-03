@@ -28,14 +28,16 @@ pub enum GamepadBrand {
     XboxSeries,
 }
 
+/// settings to configure a Xelu gamepad input prompt
 #[derive(Default, Clone, Copy, Debug)]
 pub struct XeluGamepadSettings {
     pub gamepad_brand: GamepadBrand,
 }
 
+/// settings to configure a Xelu heyboard and mouse input prompt
 #[derive(Default, Clone, Copy, Debug)]
 pub struct XeluKeyboardAndMouseSettings {
     pub light_dark: LightDark,
 }
 
-pub const ASSET_DIRS: [&'static str; 1] = ["xelu"];
+pub const ASSET_DIRS: [&'static str; 1] = ["bevy_input_prompts/xelu"];
