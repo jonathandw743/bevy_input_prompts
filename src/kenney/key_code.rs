@@ -12,10 +12,10 @@ pub struct KenneyKeyCode {
 impl<'a> Into<AssetPath<'a>> for KenneyKeyCode {
     fn into(self) -> AssetPath<'a> {
         let Some(key_code_name) = self.key_code_name() else {
-            return "unknown.png".into();
+            return "bevy_input_prompts/unknown.png".into();
         };
         format!(
-            "kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.{}",
+            "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.{}",
             self.settings.format.directiory(),
             key_code_name,
             self.outline_name(),

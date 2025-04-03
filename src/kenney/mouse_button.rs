@@ -12,10 +12,10 @@ pub struct KenneyMouseButton {
 impl<'a> Into<AssetPath<'a>> for KenneyMouseButton {
     fn into(self) -> AssetPath<'a> {
         let Some(mouse_button_name) = self.mouse_button_name() else {
-            return "unknown.png".into();
+            return "bevy_input_prompts/unknown.png".into();
         };
         format!(
-            "kenney/kenney_input-prompts/Keyboard & Mouse/{}/mouse_{}{}.{}",
+            "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/mouse_{}{}.{}",
             self.settings.format.directiory(),
             mouse_button_name,
             self.outline_name(),

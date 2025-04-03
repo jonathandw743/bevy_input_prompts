@@ -35,7 +35,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     | GamepadButton::Z
                     | GamepadButton::Mode
                     | GamepadButton::Other { .. } => {
-                        return "unknown.png".into()
+                        return "bevy_input_prompts/unknown.png".into()
                     },
                 };
                 format!(
@@ -66,7 +66,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     | GamepadButton::Z
                     | GamepadButton::Mode
                     | GamepadButton::Other { .. } => {
-                        return "unknown.png".into()
+                        return "bevy_input_prompts/unknown.png".into()
                     },
                 };
                 format!(
@@ -97,7 +97,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     | GamepadButton::Z
                     | GamepadButton::Mode
                     | GamepadButton::Other { .. } => {
-                        return "unknown.png".into()
+                        return "bevy_input_prompts/unknown.png".into()
                     },
                 };
                 format!(
@@ -128,7 +128,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                     | GamepadButton::Z
                     | GamepadButton::Mode
                     | GamepadButton::Other { .. } => {
-                        return "unknown.png".into()
+                        return "bevy_input_prompts/unknown.png".into()
                     },
                 };
                 format!(
@@ -137,6 +137,6 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
                 )
             }
         };
-        format!("xelu/Xelu_Free_Controller&Key_Prompts/{}", path).into()
+        format!("bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}", path).into()
     }
 }

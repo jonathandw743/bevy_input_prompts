@@ -22,7 +22,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
                     GamepadAxis::RightZ => "R2",
 
                     GamepadAxis::Other { .. } => {
-                        return "unknown.png".into();
+                        return "bevy_input_prompts/unknown.png".into();
                     }
                 };
                 format!("PS5/PS5_{}.png", gamepad_axis_name)
@@ -37,7 +37,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
                     GamepadAxis::RightZ => "R2",
 
                     GamepadAxis::Other { .. } => {
-                        return "unknown.png".into();
+                        return "bevy_input_prompts/unknown.png".into();
                     }
                 };
                 format!("Steam Deck/SteamDeck_{}.png", gamepad_axis_name)
@@ -52,7 +52,7 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
                     GamepadAxis::RightZ => "RT",
 
                     GamepadAxis::Other { .. } => {
-                        return "unknown.png".into();
+                        return "bevy_input_prompts/unknown.png".into();
                     }
                 };
                 format!("Switch/Switch_{}.png", gamepad_axis_name)
@@ -67,12 +67,12 @@ impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
                     GamepadAxis::RightZ => "RT",
 
                     GamepadAxis::Other { .. } => {
-                        return "unknown.png".into();
+                        return "bevy_input_prompts/unknown.png".into();
                     }
                 };
                 format!("Xbox Series/XboxSeriesX_{}.png", gamepad_axis_name)
             }
         };
-        format!("xelu/Xelu_Free_Controller&Key_Prompts/{}", path).into()
+        format!("bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}", path).into()
     }
 }
