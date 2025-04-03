@@ -49,8 +49,24 @@ If there are any issues, for example a lot of `unknown.png` showing, or `ERROR b
 
 If you want to add your own prompt pack or want to fix a mapping issue, open a pull request!
 
-## lisences
+## goals
 
-The lisence for this project can be found in `LICENSE`. Assets in `assets` are not under this lisence.
+The end stage for this project would look like:
 
-Lisences for included assets can be found in the relevant sub directories of `assets`.
+- A way to programmatically access the majority of assets from all the prompt packs
+- Support for all devices which have assets in the packs.
+- Good defaults
+- Gamepad detection using product/vendor IDs, mapping to branded assets
+- Good unknown input/device handling
+
+This will take a lot of work. My short-term goals are:
+
+- A way to programmatically access most of Xelu's and Kenney's assets for keyboard and mouse, Xbox and PlayStation
+- No panicking or path not found for Xbox, keyboard and mouse or PlayStation
+- Basic unknown input/device handling
+
+## licenses
+
+The license for this project can be found in `LICENSE`. Assets in `assets` are not under this license.
+
+Licenses for included assets can be found in the relevant sub directories of `assets`.
