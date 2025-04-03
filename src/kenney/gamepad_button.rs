@@ -4,22 +4,26 @@ use bevy_input::gamepad::GamepadButton;
 use super::{GamepadBrand, KenneyGamepadSettings};
 
 #[derive(Clone, Debug)]
-struct KenneyGamepadButton {
+pub struct KenneyGamepadButton {
     pub gamepad_button: GamepadButton,
     pub settings: KenneyGamepadSettings,
 }
 
 impl<'a> Into<AssetPath<'a>> for KenneyGamepadButton {
     fn into(self) -> AssetPath<'a> {
-        if let Some(buttont_type) = self.button_type() {
+        if let (Some(buttont_type), Some(gamepad_button_name)) =
+            (self.button_type(), self.gamepad_button_name())
+        {
             format!(
-                "bevy_input_prompts/kenney/kenney_input-prompts/{}/{}/{}_{}{}_{}{}.{}",
+                "bevy_input_prompts/kenney/kenney_input-prompts/{}/{}/{}{}{}{}{}_{}{}.{}",
                 self.settings.gamepad_brand.directory(),
                 self.settings.format.directiory(),
                 self.settings.gamepad_brand.prefix(),
+                self.gamepad_brand_prefix_extra(),
                 buttont_type,
+                self.round_name(),
                 self.color_name(),
-                self.gamepad_button_name(),
+                gamepad_button_name,
                 self.outline_name(),
                 self.settings.format.extension()
             )
@@ -87,47 +91,63 @@ impl KenneyGamepadButton {
             | GamepadButton::South
             | GamepadButton::East
             | GamepadButton::North
-            | GamepadButton::West => Some("button"),
-            GamepadButton::LeftTrigger => Some("lb"),
-            GamepadButton::LeftTrigger2 => Some("lt"),
-            GamepadButton::RightTrigger => Some("rb"),
-            GamepadButton::RightTrigger2 => Some("rt"),
-            GamepadButton::Mode => Some("guide"),
-            GamepadButton::LeftThumb | GamepadButton::RightThumb => Some("stick"),
+            | GamepadButton::West => Some("_button"),
+            GamepadButton::LeftTrigger
+            | GamepadButton::LeftTrigger2
+            | GamepadButton::RightTrigger
+            | GamepadButton::RightTrigger2 => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "_trigger",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => "_button",
+                GamepadBrand::XboxSeries => "",
+            }),
+            GamepadButton::Mode => Some(""),
+            GamepadButton::LeftThumb | GamepadButton::RightThumb => Some("_stick"),
             GamepadButton::DPadUp
             | GamepadButton::DPadDown
             | GamepadButton::DPadLeft
-            | GamepadButton::DPadRight => Some("dpad"),
+            | GamepadButton::DPadRight => Some("_dpad"),
             GamepadButton::C | GamepadButton::Z | GamepadButton::Other(_) => None,
         }
     }
     pub fn outline_possible(&self) -> bool {
         match self.gamepad_button {
-            GamepadButton::South => todo!(),
-            GamepadButton::East => todo!(),
-            GamepadButton::North => todo!(),
-            GamepadButton::West => todo!(),
-            GamepadButton::LeftTrigger => todo!(),
-            GamepadButton::LeftTrigger2 => todo!(),
-            GamepadButton::RightTrigger => todo!(),
-            GamepadButton::RightTrigger2 => todo!(),
-            GamepadButton::Select => todo!(),
-            GamepadButton::Start => todo!(),
-            GamepadButton::Mode => todo!(),
-            GamepadButton::LeftThumb => todo!(),
-            GamepadButton::RightThumb => todo!(),
-            GamepadButton::DPadUp => todo!(),
-            GamepadButton::DPadDown => todo!(),
-            GamepadButton::DPadLeft => todo!(),
-            GamepadButton::DPadRight => todo!(),
+            GamepadButton::C
+            | GamepadButton::Z
+            | GamepadButton::Other(_)
+            | GamepadButton::LeftThumb
+            | GamepadButton::RightThumb => {
+                return false;
+            }
 
-            GamepadButton::C => todo!(),
-            GamepadButton::Z => todo!(),
-            GamepadButton::Other(_) => todo!(),
+            GamepadButton::South
+            | GamepadButton::East
+            | GamepadButton::North
+            | GamepadButton::West
+            | GamepadButton::LeftTrigger
+            | GamepadButton::LeftTrigger2
+            | GamepadButton::RightTrigger
+            | GamepadButton::RightTrigger2
+            | GamepadButton::Select
+            | GamepadButton::Start
+            | GamepadButton::Mode
+            | GamepadButton::DPadUp
+            | GamepadButton::DPadDown
+            | GamepadButton::DPadLeft
+            | GamepadButton::DPadRight => {}
         }
+        return true;
     }
     pub fn outline_name(&self) -> &'static str {
-        if self.settings.outline_if_bossible && self.outline_possible() {
+        if self.settings.outline_if_possible
+            && self.outline_possible()
+            && !(self.settings.round_if_possible && self.round_possible())
+        {
             "_outline"
         } else {
             ""
@@ -181,7 +201,150 @@ impl KenneyGamepadButton {
             ""
         }
     }
-    pub fn gamepad_button_name(&self) -> &'static str {
-        todo!()
+    pub fn gamepad_brand_prefix_extra(&self) -> &'static str {
+        match self.settings.gamepad_brand {
+            GamepadBrand::PlayStation => {},
+            _ => {
+                return "";
+            }
+        }
+        match self.gamepad_button {
+            GamepadButton::Start | GamepadButton::Select => "3",
+            GamepadButton::Mode => "5",
+            _ => ""
+        }
+    }
+    pub fn gamepad_button_name(&self) -> Option<&'static str> {
+        match self.gamepad_button {
+            GamepadButton::South => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "cross",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "a",
+            }),
+            GamepadButton::East => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "circle",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "b",
+            }),
+            GamepadButton::North => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "triangle",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "y",
+            }),
+            GamepadButton::West => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "square",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "x",
+            }),
+            GamepadButton::LeftTrigger => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "l1",
+                GamepadBrand::SteamController => "l1",
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "lb",
+            }),
+            GamepadButton::LeftTrigger2 => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "l2",
+                GamepadBrand::SteamController => "l2",
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "lt",
+            }),
+            GamepadButton::RightTrigger => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "r1",
+                GamepadBrand::SteamController => "r1",
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "rb",
+            }),
+            GamepadButton::RightTrigger2 => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "r2",
+                GamepadBrand::SteamController => "r2",
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "rb",
+            }),
+            GamepadButton::Select => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "select",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "view",
+            }),
+            GamepadButton::Start => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "start",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "menu",
+            }),
+            GamepadButton::Mode => Some(match self.settings.gamepad_brand {
+                GamepadBrand::Generic => todo!(),
+                GamepadBrand::Switch => todo!(),
+                GamepadBrand::Wii => todo!(),
+                GamepadBrand::WiiU => todo!(),
+                GamepadBrand::Playdate => todo!(),
+                GamepadBrand::PlayStation => "touchpad",
+                GamepadBrand::SteamController => todo!(),
+                GamepadBrand::SteamDeck => todo!(),
+                GamepadBrand::XboxSeries => "guide",
+            }),
+            GamepadButton::LeftThumb => Some("side_l"),
+            GamepadButton::RightThumb => Some("side_r"),
+            GamepadButton::DPadUp => Some("up"),
+            GamepadButton::DPadDown => Some("down"),
+            GamepadButton::DPadLeft => Some("left"),
+            GamepadButton::DPadRight => Some("right"),
+
+            GamepadButton::C | GamepadButton::Z | GamepadButton::Other(_) => None,
+        }
     }
 }

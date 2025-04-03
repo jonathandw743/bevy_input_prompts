@@ -5,11 +5,12 @@ use bevy::{
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
     kenney::{
-        Format, KenneyKeyboardAndMouseSettings, key_code::KenneyKeyCode,
+        self, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings,
+        gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode,
         mouse_button::KenneyMouseButton,
     },
     xelu::{
-        GamepadBrand, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings,
+        self, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings,
         gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode,
         mouse_button::XeluMouseButton,
     },
@@ -30,31 +31,34 @@ struct XeluGamepadPrompt(XeluGamepadSettings);
 struct XeluKeyboardAndMousePrompt(XeluKeyboardAndMouseSettings);
 
 #[derive(Component)]
-struct KenneyPrompt(KenneyKeyboardAndMouseSettings);
+struct KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings);
+
+#[derive(Component)]
+struct KenneyGamepadPrompt(KenneyGamepadSettings);
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2d);
     commands.spawn((
         XeluGamepadPrompt(XeluGamepadSettings {
-            gamepad_brand: GamepadBrand::PS5,
+            gamepad_brand: xelu::GamepadBrand::PS5,
         }),
         Transform::default().with_translation(vec3(-200.0, -200.0, 0.0)),
     ));
     commands.spawn((
         XeluGamepadPrompt(XeluGamepadSettings {
-            gamepad_brand: GamepadBrand::SteamDeck,
+            gamepad_brand: xelu::GamepadBrand::SteamDeck,
         }),
         Transform::default().with_translation(vec3(-200.0, -100.0, 0.0)),
     ));
     commands.spawn((
         XeluGamepadPrompt(XeluGamepadSettings {
-            gamepad_brand: GamepadBrand::Switch,
+            gamepad_brand: xelu::GamepadBrand::Switch,
         }),
         Transform::default().with_translation(vec3(-200.0, 0.0, 0.0)),
     ));
     commands.spawn((
         XeluGamepadPrompt(XeluGamepadSettings {
-            gamepad_brand: GamepadBrand::XboxSeries,
+            gamepad_brand: xelu::GamepadBrand::XboxSeries,
         }),
         Transform::default().with_translation(vec3(-200.0, 100.0, 0.0)),
     ));
@@ -73,40 +77,68 @@ fn setup(mut commands: Commands) {
     ));
 
     commands.spawn((
-        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
             outline: false,
             format: Format::Default,
         }),
         Transform::default().with_translation(vec3(200.0, -200.0, 0.0)),
     ));
     commands.spawn((
-        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
             outline: false,
             format: Format::Double,
         }),
         Transform::default().with_translation(vec3(200.0, -100.0, 0.0)),
     ));
     commands.spawn((
-        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
             outline: true,
             format: Format::Default,
         }),
         Transform::default().with_translation(vec3(200.0, 0.0, 0.0)),
     ));
     commands.spawn((
-        KenneyPrompt(KenneyKeyboardAndMouseSettings {
+        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
             outline: true,
             format: Format::Double,
         }),
         Transform::default().with_translation(vec3(200.0, 100.0, 0.0)),
     ));
+
+    let mut i = 0;
+    for round_if_possible in [false, true] {
+        for outline_if_possible in [false, true] {
+            for format in [Format::Default, Format::Double] {
+                for color_if_possible in [false, true] {
+                    for gamepad_brand in [kenney::GamepadBrand::XboxSeries, kenney::GamepadBrand::PlayStation] {
+                        commands.spawn((
+                            KenneyGamepadPrompt(KenneyGamepadSettings {
+                                round_if_possible,
+                                outline_if_possible,
+                                format,
+                                color_if_possible,
+                                gamepad_brand,
+                            }),
+                            Transform::default().with_translation(vec3(
+                                (i / 6) as f32 * 100.0 + 300.0,
+                                (i % 6) as f32 * 100.0 - 300.0,
+                                0.0,
+                            )),
+                        ));
+                        i += 1;
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn update(
     mut commands: Commands,
     xelu_kbm: Query<(Entity, &XeluKeyboardAndMousePrompt)>,
     xelu_gp: Query<(Entity, &XeluGamepadPrompt)>,
-    kenney: Query<(Entity, &KenneyPrompt)>,
+    kenney_kbm: Query<(Entity, &KenneyKeyboardAndMousePrompt)>,
+    kenney_gp: Query<(Entity, &KenneyGamepadPrompt)>,
     asset_server: Res<AssetServer>,
     key_code_input: Option<Res<ButtonInput<KeyCode>>>,
     mouse_button_input: Option<Res<ButtonInput<MouseButton>>>,
@@ -125,7 +157,7 @@ fn update(
                     ..default()
                 });
             }
-            for (entity, kenney) in &kenney {
+            for (entity, kenney) in &kenney_kbm {
                 commands.entity(entity).insert(Sprite {
                     image: asset_server.load(KenneyKeyCode {
                         key_code,
@@ -151,7 +183,7 @@ fn update(
                     ..default()
                 });
             }
-            for (entity, kenney) in &kenney {
+            for (entity, kenney) in &kenney_kbm {
                 commands.entity(entity).insert(Sprite {
                     image: asset_server.load(KenneyMouseButton {
                         mouse_button,
@@ -175,6 +207,16 @@ fn update(
                     image: asset_server.load(XeluGamepadButton {
                         gamepad_button,
                         settings: xelu_gp.0,
+                    }),
+                    custom_size: Some(vec2(100.0, 100.0)),
+                    ..default()
+                });
+            }
+            for (entity, kenney_gp) in &kenney_gp {
+                commands.entity(entity).insert(Sprite {
+                    image: asset_server.load(KenneyGamepadButton {
+                        gamepad_button,
+                        settings: kenney_gp.0,
                     }),
                     custom_size: Some(vec2(100.0, 100.0)),
                     ..default()
