@@ -52,7 +52,7 @@ impl GamepadBrand {
             GamepadBrand::Wii => "Nintendo Wii",
             GamepadBrand::WiiU => "Nintendo WiiU",
             GamepadBrand::Playdate => "Playdate",
-            GamepadBrand::PlayStation => "Playstation Series",
+            GamepadBrand::PlayStation => "PlayStation Series",
             GamepadBrand::SteamController => "Steam Controller",
             GamepadBrand::SteamDeck => "Steam Deck",
             GamepadBrand::XboxSeries => "Xbox Series",
@@ -88,7 +88,7 @@ pub struct KenneyGamepadSettings {
     /// round icons if possible, only for xbox dpad
     pub round_if_possible: bool,
     /// outline icons if possible, available for most icons except sticks
-    pub outline_if_bossible: bool,
+    pub outline_if_possible: bool,
     /// icon format
     pub format: Format,
     /// color icons if possible, only for xbox series A B X Y, steam controller A B X Y and playstation cross circle square triangle
@@ -101,7 +101,7 @@ impl Default for KenneyGamepadSettings {
     fn default() -> Self {
         Self {
             round_if_possible: false,
-            outline_if_bossible: false,
+            outline_if_possible: false,
             format: Default::default(),
             color_if_possible: true,
             gamepad_brand: Default::default(),
