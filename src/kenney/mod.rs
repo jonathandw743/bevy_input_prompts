@@ -1,3 +1,7 @@
+use crate::vendor_ids::*;
+use crate::product_ids::*;
+use bevy_input::gamepad::Gamepad;
+
 pub mod gamepad_button;
 pub mod key_code;
 pub mod mouse_button;
@@ -37,7 +41,9 @@ pub enum GamepadBrand {
     Wii,
     WiiU,
     Playdate,
-    PlayStation,
+    PlayStation3,
+    PlayStation4,
+    PlayStation5,
     SteamController,
     SteamDeck,
     #[default]
@@ -52,23 +58,12 @@ impl GamepadBrand {
             GamepadBrand::Wii => "Nintendo Wii",
             GamepadBrand::WiiU => "Nintendo WiiU",
             GamepadBrand::Playdate => "Playdate",
-            GamepadBrand::PlayStation => "PlayStation Series",
+            GamepadBrand::PlayStation3
+            | GamepadBrand::PlayStation4
+            | GamepadBrand::PlayStation5 => "PlayStation Series",
             GamepadBrand::SteamController => "Steam Controller",
             GamepadBrand::SteamDeck => "Steam Deck",
             GamepadBrand::XboxSeries => "Xbox Series",
-        }
-    }
-    pub fn prefix(&self) -> &'static str {
-        match self {
-            GamepadBrand::Generic => "generic",
-            GamepadBrand::Switch => "switch",
-            GamepadBrand::Wii => "wii",
-            GamepadBrand::WiiU => "wiiu",
-            GamepadBrand::Playdate => "playdate",
-            GamepadBrand::PlayStation => "playstation",
-            GamepadBrand::SteamController => "steam",
-            GamepadBrand::SteamDeck => "steamdeck",
-            GamepadBrand::XboxSeries => "xbox",
         }
     }
 }
@@ -110,3 +105,52 @@ impl Default for KenneyGamepadSettings {
 }
 
 pub const ASSET_DIRS: [&'static str; 1] = ["bevy_input_prompts/kenney"];
+
+impl GamepadBrand {
+    pub fn from_vendor_id(vendor_id: u16) -> Option<Self> {
+        if vendor_id == XBOX || vendor_id == XBOX_THIRD_PARTY {
+            return Some(Self::XboxSeries);
+        }
+        if vendor_id == VALVE {
+            return Some(Self::SteamDeck);
+        }
+        if vendor_id == SONY_COMPUTER_ENTERTAINMENT_AMERICA
+            || vendor_id == SONY_COMPUTER_ENTERTAINMENT_EUROPE
+            || vendor_id == SONY_CORPORATION
+            || vendor_id == SONY_MOBILE_COMMUNICATIONS
+        {
+            return Some(Self::PlayStation5);
+        }
+        if vendor_id == NINTENDO_CO_LTD || vendor_id == NINTENDO_OF_AMERICA {
+            return Some(Self::Switch);
+        }
+        return None;
+    }
+    pub fn from_product_id(product_id: u16) -> Option<Self> {
+        if product_id == STEAM_CONTROLLER_0476
+                || product_id == STEAM_CONTROLLER_1102
+                || product_id == STEAM_CONTROLLER_1142
+                || product_id == STEAM_CONTROLLER_11FC
+                || product_id == STEAM_CONTROLLER_1201
+                || product_id == STEAM_VIRTUAL_GAMEPAD
+            {
+                return Some(Self::SteamController);
+            }
+            if product_id == DUALSHOCK3_SIXAXIS || product_id == SPLIT_FISH_FRAG_FX {
+                return Some(Self::PlayStation3)
+            }
+            if product_id == DUALSHOCK4_05C4 || product_id == STRIKE_PACK_FPS_DOMINATOR || product_id == DUALSHOCK4_09CC || product_id == DUALSHOCK4_USB_RECEIVER {
+                return Some(Self::PlayStation4);
+            }
+            return None;
+    }
+    pub fn from_gamepad(gamepad: &Gamepad) -> Option<Self> {
+        if let Some(gamepad_brand) = gamepad.product_id().map(Self::from_product_id) {
+            return gamepad_brand;
+        }
+        if let Some(gamepad_brand) = gamepad.vendor_id().map(Self::from_vendor_id) {
+            return gamepad_brand;
+        }
+        return None;
+    }
+}
