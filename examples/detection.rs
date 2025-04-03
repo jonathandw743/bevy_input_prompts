@@ -110,7 +110,7 @@ fn setup(mut commands: Commands) {
         for outline_if_possible in [false, true] {
             for format in [Format::Default, Format::Double] {
                 for color_if_possible in [false, true] {
-                    for gamepad_brand in [kenney::GamepadBrand::XboxSeries, kenney::GamepadBrand::PlayStation] {
+                    for gamepad_brand in [kenney::GamepadBrand::XboxSeries, kenney::GamepadBrand::PlayStation5] {
                         commands.spawn((
                             KenneyGamepadPrompt(KenneyGamepadSettings {
                                 round_if_possible,
