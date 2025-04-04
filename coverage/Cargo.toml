@@ -1,0 +1,10 @@
+[package]
+name = "coverage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy_asset = "0.15"
+bevy_input = "0.15"
+bevy_input_prompts = { path = ".." }
+walkdir = "2.5.0"

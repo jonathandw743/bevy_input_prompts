@@ -1,0 +1,9 @@
+[package]
+name = "asset_gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy_input = "0.15.3"
+image = "0.25.6"
+rusttype = "0.9.3"

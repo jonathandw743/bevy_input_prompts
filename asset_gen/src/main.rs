@@ -1,82 +1,96 @@
-use bevy::utils::hashbrown::HashSet;
-use bevy_asset::AssetPath;
+use bevy_input::gamepad::{GamepadAxis, GamepadButton};
 use bevy_input::{keyboard::KeyCode, mouse::MouseButton};
-use bevy_input_prompts::xelu::{key_code::XeluKeyCode, mouse_button::XeluMouseButton, LightDark, XeluKeyboardAndMouseSettings};
-use walkdir::WalkDir;
+use image::Rgba;
+use rusttype::{Font, Rect, Scale, point};
+use std::fs::{self, File};
+use std::io::Read;
 
-fn all_file_paths(path: &'static str) -> HashSet<String> {
-    let mut all_file_paths = HashSet::new();
-    for entry in WalkDir::new(
-        format!("assets/{}", path),
-    )
-    .into_iter()
-    .filter_map(Result::ok)
-    {
-        if entry.file_type().is_file() {
-            all_file_paths.insert(
-                entry
-                    .into_path()
-                    .strip_prefix("assets/")
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string(),
-            );
-        }
-    }
-    all_file_paths
+fn blend_pixels(background: &Rgba<u8>, foreground: &Rgba<u8>) -> Rgba<u8> {
+    let alpha = foreground[3] as f32 / 255.0; // Alpha from foreground
+    let inv_alpha = 1.0 - alpha;
+
+    let r = (foreground[0] as f32 * alpha + background[0] as f32 * inv_alpha) as u8;
+    let g = (foreground[1] as f32 * alpha + background[1] as f32 * inv_alpha) as u8;
+    let b = (foreground[2] as f32 * alpha + background[2] as f32 * inv_alpha) as u8;
+
+    Rgba([r, g, b, 255])
 }
 
-fn constructed_file_path<'a>(p: impl Into<AssetPath<'a>>) -> String {
-    p.into().to_string()
-}
+fn process(dir: &'static str, text: &str, font: &Font) {
+    let mut img_rgba = image::open("assets/blank.png")
+        .expect("Failed to load image")
+        .to_rgba8();
 
-fn log(all_file_paths: HashSet<String>, constructed_file_paths: HashSet<String>) {
-    println!("file paths missed:");
-    for file_path in &all_file_paths {
-        if constructed_file_paths.contains(file_path) {
-            continue;
+    let scale = Scale { x: 50.0, y: 50.0 };
+    let color = Rgba([255, 255, 255, 255]);
+
+    let (width, height) = img_rgba.dimensions();
+
+    let mut total_bb: Option<Rect<i32>> = None;
+    for glyph in font.layout(text, scale, point(0.0, 0.0)) {
+        if let Some(new_bb) = glyph.pixel_bounding_box() {
+            if let Some(bb) = &mut total_bb {
+                bb.min = point(bb.min.x.min(new_bb.min.x), bb.min.y.min(new_bb.min.y));
+                bb.max = point(bb.max.x.max(new_bb.max.x), bb.max.y.max(new_bb.max.y));
+            } else {
+                total_bb = Some(new_bb);
+            }
         }
-        println!("{}", file_path);
     }
-    println!("constructed file paths that don't exist:");
-    for file_path in &constructed_file_paths {
-        if all_file_paths.contains(file_path) {
-            continue;
-        }
-        println!("{}", file_path);
-    }
-    println!(
-        "constructed file paths: {}, all file paths: {}",
-        constructed_file_paths.len(),
-        all_file_paths.len()
+    let total_bb = total_bb.expect("no text bounding boxes");
+
+    let text_position = point(
+        width as f32 * 0.5 - total_bb.max.x as f32 * 0.5,
+        height as f32 * 0.5 - total_bb.max.y as f32 * 0.5,
     );
-}
 
-fn xelu_keyboard_and_mouse() {
-    let all_file_paths = all_file_paths("bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/");
-    let mut constructed_file_paths = HashSet::new();
-    for light_dark in [LightDark::Dark, LightDark::Light] {
-        for key_code in KEY_CODES {
-            constructed_file_paths.insert(constructed_file_path(XeluKeyCode {
-                key_code,
-                settings: XeluKeyboardAndMouseSettings { light_dark },
-            }));
+    for glyph in font.layout(text, scale, text_position) {
+        if let Some(bounding_box) = glyph.pixel_bounding_box() {
+            glyph.draw(|x, y, v| {
+                let x = x + bounding_box.min.x as u32;
+                let y = y + bounding_box.min.y as u32;
+                let image_pixel = img_rgba.get_pixel(x, y);
+                let text_pixel = Rgba([color.0[0], color.0[1], color.0[2], (v * 255.0) as u8]);
+                let blended_pixel = blend_pixels(image_pixel, &text_pixel);
+                img_rgba.put_pixel(x, y, blended_pixel)
+            });
         }
     }
-    for light_dark in [LightDark::Dark, LightDark::Light] {
-        for mouse_button in MOUSE_BUTTONS {
-            constructed_file_paths.insert(constructed_file_path(XeluMouseButton {
-                mouse_button,
-                settings: XeluKeyboardAndMouseSettings { light_dark },
-            }));
-        }
-    }
-    log(all_file_paths, constructed_file_paths);
+
+    fs::create_dir_all(format!("assets/bevy_input_prompts/not_found/{}", dir)).expect("creating asset directory failed");
+    img_rgba
+        .save(format!(
+            "assets/bevy_input_prompts/not_found/{}/{}.png",
+            dir, text
+        ))
+        .expect("Failed to save image");
 }
 
 fn main() {
-    xelu_keyboard_and_mouse();
+    let mut font_file =
+        File::open("assets/FiraMono-Regular.ttf").expect("Failed to open font file");
+    let mut font_data = Vec::new();
+    font_file
+        .read_to_end(&mut font_data)
+        .expect("Failed to read font file");
+    let font = Font::try_from_bytes(&font_data).expect("Error loading font");
+
+    for key_code in KEY_CODES {
+        process("KeyCode", &format!("{:?}", key_code), &font);
+    }
+    process("KeyCode", "Unidentified", &font);
+    for mouse_button in MOUSE_BUTTONS {
+        process("MouseButton", &format!("{:?}", mouse_button), &font);
+    }
+    process("MouseButton", "Other", &font);
+    for gamepad_axis in GAMEPAD_AXES {
+        process("GamepadAxis", &format!("{:?}", gamepad_axis), &font);
+    }
+    process("GamepadAxis", "Other", &font);
+    for gamepad_button in GAMEPAD_BUTTONS {
+        process("GamepadButton", &format!("{:?}", gamepad_button), &font);
+    }
+    process("GamepadButton", "Other", &font);
 }
 
 const MOUSE_BUTTONS: [MouseButton; 5] = [
@@ -88,8 +102,41 @@ const MOUSE_BUTTONS: [MouseButton; 5] = [
     MouseButton::Right,
 ];
 
+const GAMEPAD_AXES: [GamepadAxis; 6] = [
+    GamepadAxis::LeftStickX,
+    GamepadAxis::LeftStickY,
+    GamepadAxis::LeftZ,
+    GamepadAxis::RightStickX,
+    GamepadAxis::RightStickY,
+    GamepadAxis::RightZ,
+    // GamepadAxis::Other(_),
+];
+
+const GAMEPAD_BUTTONS: [GamepadButton; 19] = [
+    GamepadButton::South,
+    GamepadButton::East,
+    GamepadButton::North,
+    GamepadButton::West,
+    GamepadButton::C,
+    GamepadButton::Z,
+    GamepadButton::LeftTrigger,
+    GamepadButton::LeftTrigger2,
+    GamepadButton::RightTrigger,
+    GamepadButton::RightTrigger2,
+    GamepadButton::Select,
+    GamepadButton::Start,
+    GamepadButton::Mode,
+    GamepadButton::LeftThumb,
+    GamepadButton::RightThumb,
+    GamepadButton::DPadUp,
+    GamepadButton::DPadDown,
+    GamepadButton::DPadLeft,
+    GamepadButton::DPadRight,
+    // GamepadButton::Other(())
+];
+
 const KEY_CODES: [KeyCode; 194] = [
-    // KeyCode::Unidentified(native_key_code),
+    // KeyCode::Unidentified(_),
     KeyCode::Backquote,
     KeyCode::Backslash,
     KeyCode::BracketLeft,

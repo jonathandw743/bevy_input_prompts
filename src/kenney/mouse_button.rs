@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::mouse::MouseButton;
 
+use crate::not_found::mouse_button::NotFoundMouseButton;
+
 use super::KenneyKeyboardAndMouseSettings;
 
 #[derive(Clone, Debug)]
@@ -12,7 +14,10 @@ pub struct KenneyMouseButton {
 impl<'a> Into<AssetPath<'a>> for KenneyMouseButton {
     fn into(self) -> AssetPath<'a> {
         let Some(mouse_button_name) = self.mouse_button_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundMouseButton {
+                mouse_button: self.mouse_button,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/mouse_{}{}.{}",

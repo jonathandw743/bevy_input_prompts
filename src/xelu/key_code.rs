@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::keyboard::KeyCode;
 
+use crate::not_found::key_code::NotFoundKeyCode;
+
 use super::XeluKeyboardAndMouseSettings;
 
 #[derive(Clone, Debug)]
@@ -12,7 +14,10 @@ pub struct XeluKeyCode {
 impl<'a> Into<AssetPath<'a>> for XeluKeyCode {
     fn into(self) -> AssetPath<'a> {
         let Some(key_code_name) = self.key_code_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundKeyCode {
+                key_code: self.key_code,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",
@@ -76,7 +81,9 @@ impl XeluKeyCode {
             KeyCode::F12 => Some("F12"),
             KeyCode::Minus => Some("Minus"),
             KeyCode::Equal => Some("Plus"),
-            KeyCode::Backslash | KeyCode::IntlBackslash | KeyCode::IntlRo | KeyCode::IntlYen => Some("Slash"),
+            KeyCode::Backslash | KeyCode::IntlBackslash | KeyCode::IntlRo | KeyCode::IntlYen => {
+                Some("Slash")
+            }
             KeyCode::Backspace => Some("Backspace"),
             KeyCode::Tab => Some("Tab"),
             KeyCode::BracketLeft => Some("Bracket_Left"),

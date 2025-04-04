@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::gamepad::GamepadAxis;
 
+use crate::not_found::gamepad_axis::NotFoundGamepadAxis;
+
 use super::{GamepadBrand, XeluGamepadSettings};
 
 #[derive(Clone, Debug)]
@@ -12,14 +14,18 @@ pub struct XeluGamepadAxis {
 impl<'a> Into<AssetPath<'a>> for XeluGamepadAxis {
     fn into(self) -> AssetPath<'a> {
         let Some(gamepad_axis_name) = self.gamepad_axis_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundGamepadAxis {
+                gamepad_axis: self.gamepad_axis,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}/{}_{}.png",
             self.settings.gamepad_brand.directory(),
             self.settings.gamepad_brand.prefix(),
             gamepad_axis_name
-        ).into()
+        )
+        .into()
     }
 }
 
