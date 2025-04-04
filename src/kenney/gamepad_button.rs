@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::gamepad::GamepadButton;
 
+use crate::not_found::gamepad_button::NotFoundGamepadButton;
+
 use super::{GamepadBrand, KenneyGamepadSettings};
 
 #[derive(Clone, Debug)]
@@ -28,7 +30,10 @@ impl<'a> Into<AssetPath<'a>> for KenneyGamepadButton {
             )
             .into()
         } else {
-            "bevy_input_prompts/unknown.png".into()
+            return NotFoundGamepadButton {
+                gamepad_button: self.gamepad_button,
+            }
+            .into();
         }
     }
 }

@@ -2,14 +2,10 @@ use bevy::{math::vec3, prelude::*};
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
     kenney::{
-        self, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings,
-        gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode,
-        mouse_button::KenneyMouseButton,
+        self, gamepad_axis::KenneyGamepadAxis, gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode, mouse_button::KenneyMouseButton, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings
     },
     xelu::{
-        self, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings,
-        gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode,
-        mouse_button::XeluMouseButton,
+        self, gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode, mouse_button::XeluMouseButton, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings
     },
 };
 
@@ -259,6 +255,40 @@ fn update_kenney_gp(
                     gamepad_button,
                     settings: settings.0,
                 });
+            }
+        }
+        for &gamepad_input in gamepad.get_analog_axes() {
+            if let Some(value) = gamepad.get(gamepad_input) {
+                if value > 0.5 || value < -0.5 {
+                    match gamepad_input {
+                        GamepadInput::Axis(gamepad_axis) => {
+                            dbg!(entity);
+                            dbg!(gamepad_axis);
+                            dbg!(value);
+                            for (mut sprite, settings) in &mut kenney_gp {
+                                sprite.image = asset_server.load(KenneyGamepadAxis {
+                                    gamepad_axis,
+                                    settings: settings.0,
+                                });
+                            }
+                        }
+                        GamepadInput::Button(_gamepad_button) => {
+                            // handled by the `gamepad.get_just_pressed()` part of this example
+    
+                            // dbg!(entity);
+                            // dbg!(x);
+                            // dbg!(v);
+                            // commands.entity(*xelu).insert(Sprite {
+                            //     image: asset_server.load(XeluGamepadButton {
+                            //         gamepad_button,
+                            //         gamepad_brand: GamepadBrand::XboxSeries,
+                            //     }),
+                            //     custom_size: Some(vec2(100.0, 100.0)),
+                            //     ..default()
+                            // });
+                        }
+                    }
+                }
             }
         }
     }

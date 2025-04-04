@@ -3,6 +3,7 @@ use crate::product_ids::*;
 use bevy_input::gamepad::Gamepad;
 
 pub mod gamepad_button;
+pub mod gamepad_axis;
 pub mod key_code;
 pub mod mouse_button;
 

@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::gamepad::GamepadButton;
 
+use crate::not_found::gamepad_button::NotFoundGamepadButton;
+
 use super::{GamepadBrand, XeluGamepadSettings};
 
 #[derive(Clone, Debug)]
@@ -12,7 +14,10 @@ pub struct XeluGamepadButton {
 impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
     fn into(self) -> AssetPath<'a> {
         let Some(gamepad_button_name) = self.gamepad_button_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundGamepadButton {
+                gamepad_button: self.gamepad_button,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}/{}_{}.png",

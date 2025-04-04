@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::mouse::MouseButton;
 
+use crate::not_found::mouse_button::NotFoundMouseButton;
+
 use super::{LightDark, XeluKeyboardAndMouseSettings};
 
 #[derive(Clone, Debug)]
@@ -13,7 +15,10 @@ impl<'a> Into<AssetPath<'a>> for XeluMouseButton {
     fn into(self) -> AssetPath<'a> {
         let light_dark_name = self.light_dark_name();
         let Some(mouse_button_name) = self.mouse_button_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundMouseButton {
+                mouse_button: self.mouse_button,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Keyboard & Mouse/{}/{}_Key_{}.png",

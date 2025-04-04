@@ -9,6 +9,7 @@ pub mod xelu;
 pub mod kenney;
 pub mod vendor_ids;
 pub mod product_ids;
+pub mod not_found;
 
 fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     let addon_asset_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
@@ -32,18 +33,20 @@ fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     .expect("copying assets failed");
 }
 
+pub const ASSET_DIRS: [&'static str; 2] = ["bevy_input_prompts/unknown.png", "bevy_input_prompts/not_found"];
+
 pub fn build_xelu() {
-    copy_assets(["bevy_input_prompts/unknown.png"]);
+    copy_assets(ASSET_DIRS);
     copy_assets(xelu::ASSET_DIRS);
 }
 
 pub fn build_kenney() {
-    copy_assets(["bevy_input_prompts/unknown.png"]);
+    copy_assets(ASSET_DIRS);
     copy_assets(kenney::ASSET_DIRS);
 }
 
 pub fn build_all() {
-    copy_assets(["bevy_input_prompts/unknown.png"]);
+    copy_assets(ASSET_DIRS);
     copy_assets(xelu::ASSET_DIRS);
     copy_assets(kenney::ASSET_DIRS);
 }

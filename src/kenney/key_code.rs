@@ -1,6 +1,8 @@
 use bevy_asset::AssetPath;
 use bevy_input::keyboard::KeyCode;
 
+use crate::not_found::key_code::NotFoundKeyCode;
+
 use super::KenneyKeyboardAndMouseSettings;
 
 #[derive(Clone, Debug)]
@@ -12,7 +14,10 @@ pub struct KenneyKeyCode {
 impl<'a> Into<AssetPath<'a>> for KenneyKeyCode {
     fn into(self) -> AssetPath<'a> {
         let Some(key_code_name) = self.key_code_name() else {
-            return "bevy_input_prompts/unknown.png".into();
+            return NotFoundKeyCode {
+                key_code: self.key_code,
+            }
+            .into();
         };
         format!(
             "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.{}",
