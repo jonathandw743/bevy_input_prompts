@@ -7,6 +7,7 @@ pub const STEAM_VIRTUAL_GAMEPAD: u16 = 0x11ff;
 
 pub const DUALSHOCK3_SIXAXIS: u16 = 0x0268;
 pub const SPLIT_FISH_FRAG_FX: u16 = 0x042f;
+
 pub const DUALSHOCK4_05C4: u16 = 0x05c4;
 pub const STRIKE_PACK_FPS_DOMINATOR: u16 = 0x05c5;
 pub const DUALSHOCK4_09CC: u16 = 0x09cc;

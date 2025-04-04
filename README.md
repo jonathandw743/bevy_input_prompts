@@ -31,7 +31,12 @@ Make sure to call the build function in your `build.rs` for example:
 // build.rs
 
 fn main() {
+    // to copy all assets
     bevy_input_prompts::build_all();
+    // to copy just xelu's assets
+    bevy_input_prompts::build_xelu();
+    // to copy just kenney's assets
+    bevy_input_prompts::build_kenney();
 }
 ```
 
@@ -43,7 +48,7 @@ Or, copy assets manually in the same structure as the `assets` directory.
 
 ## contributing
 
-Plug in your input device and run `cargo run --example detection`.
+Plug in your input device and run `cargo run --example interactive` to test all input prompts or `cargo run --example identification` to test gamepad identification.
 
 If there are any issues, for example a lot of `unknown.png` showing, or `ERROR bevy_asset::server: Path not found` being logged, open an issue. (Unfortunately, I don't have every input device ever made.)
 
