@@ -145,11 +145,15 @@ impl GamepadBrand {
             return None;
     }
     pub fn from_gamepad(gamepad: &Gamepad) -> Option<Self> {
-        if let Some(gamepad_brand) = gamepad.product_id().map(Self::from_product_id) {
-            return gamepad_brand;
+        if let Some(product_id) = gamepad.product_id() {
+            if let Some(gamepad_brand) = Self::from_product_id(product_id) {
+                return Some(gamepad_brand);
+            }
         }
-        if let Some(gamepad_brand) = gamepad.vendor_id().map(Self::from_vendor_id) {
-            return gamepad_brand;
+        if let Some(vendor_id) = gamepad.vendor_id() {
+            if let Some(gamepad_brand) = Self::from_vendor_id(vendor_id) {
+                return Some(gamepad_brand);
+            }
         }
         return None;
     }
