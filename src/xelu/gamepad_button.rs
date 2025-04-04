@@ -11,132 +11,130 @@ pub struct XeluGamepadButton {
 
 impl<'a> Into<AssetPath<'a>> for XeluGamepadButton {
     fn into(self) -> AssetPath<'a> {
-        let path = match self.settings.gamepad_brand {
-            GamepadBrand::PS5 => {
-                let gamepad_button_name = match self.gamepad_button {
-                    GamepadButton::South => "Cross",
-                    GamepadButton::East => "Circle",
-                    GamepadButton::North => "Triangle",
-                    GamepadButton::West => "Square",
-                    GamepadButton::LeftTrigger => "L1",
-                    GamepadButton::LeftTrigger2 => "L2",
-                    GamepadButton::RightTrigger => "R1",
-                    GamepadButton::RightTrigger2 => "R2",
-                    GamepadButton::Select => "Share",
-                    GamepadButton::Start => "Options",
-                    GamepadButton::LeftThumb => "Left_Stick_Click",
-                    GamepadButton::RightThumb => "Right_Stick_Click",
-                    GamepadButton::DPadUp => "Dpad_Up",
-                    GamepadButton::DPadDown => "Dpad_Down",
-                    GamepadButton::DPadLeft => "Dpad_Left",
-                    GamepadButton::DPadRight => "Dpad_Right",
-
-                    GamepadButton::C
-                    | GamepadButton::Z
-                    | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => {
-                        return "bevy_input_prompts/unknown.png".into()
-                    },
-                };
-                format!(
-                    "PS5/PS5_{}.png",
-                    gamepad_button_name
-                )
-            },
-            GamepadBrand::SteamDeck => {
-                let gamepad_button_name = match self.gamepad_button {
-                    GamepadButton::South => "A",
-                    GamepadButton::East => "B",
-                    GamepadButton::North => "Y",
-                    GamepadButton::West => "X",
-                    GamepadButton::LeftTrigger => "L1",
-                    GamepadButton::LeftTrigger2 => "L2",
-                    GamepadButton::RightTrigger => "R1",
-                    GamepadButton::RightTrigger2 => "R2",
-                    GamepadButton::Select => "Inventory",
-                    GamepadButton::Start => "Menu",
-                    GamepadButton::LeftThumb => "Left_Stick_Click",
-                    GamepadButton::RightThumb => "Right_Stick_Click",
-                    GamepadButton::DPadUp => "Dpad_Up",
-                    GamepadButton::DPadDown => "Dpad_Down",
-                    GamepadButton::DPadLeft => "Dpad_Left",
-                    GamepadButton::DPadRight => "Dpad_Right",
-
-                    GamepadButton::C
-                    | GamepadButton::Z
-                    | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => {
-                        return "bevy_input_prompts/unknown.png".into()
-                    },
-                };
-                format!(
-                    "Steam Deck/SteamDeck_{}.png",
-                    gamepad_button_name
-                )
-            },
-            GamepadBrand::Switch => {
-                let gamepad_button_name = match self.gamepad_button {
-                    GamepadButton::South => "A",
-                    GamepadButton::East => "B",
-                    GamepadButton::North => "Y",
-                    GamepadButton::West => "X",
-                    GamepadButton::LeftTrigger => "LB",
-                    GamepadButton::LeftTrigger2 => "LT",
-                    GamepadButton::RightTrigger => "RB",
-                    GamepadButton::RightTrigger2 => "RT",
-                    GamepadButton::Select => "Square",
-                    GamepadButton::Start => "Home",
-                    GamepadButton::LeftThumb => "Left_Stick_Click",
-                    GamepadButton::RightThumb => "Right_Stick_Click",
-                    GamepadButton::DPadUp => "Dpad_Up",
-                    GamepadButton::DPadDown => "Dpad_Down",
-                    GamepadButton::DPadLeft => "Dpad_Left",
-                    GamepadButton::DPadRight => "Dpad_Right",
-
-                    GamepadButton::C
-                    | GamepadButton::Z
-                    | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => {
-                        return "bevy_input_prompts/unknown.png".into()
-                    },
-                };
-                format!(
-                    "Switch/Switch_{}.png",
-                    gamepad_button_name
-                )
-            },
-            GamepadBrand::XboxSeries => {
-                let gamepad_button_name = match self.gamepad_button {
-                    GamepadButton::South => "A",
-                    GamepadButton::East => "B",
-                    GamepadButton::North => "Y",
-                    GamepadButton::West => "X",
-                    GamepadButton::LeftTrigger => "LB",
-                    GamepadButton::LeftTrigger2 => "LT",
-                    GamepadButton::RightTrigger => "RB",
-                    GamepadButton::RightTrigger2 => "RT",
-                    GamepadButton::Select => "View",
-                    GamepadButton::Start => "Menu",
-                    GamepadButton::LeftThumb => "Left_Stick_Click",
-                    GamepadButton::RightThumb => "Right_Stick_Click",
-                    GamepadButton::DPadUp => "Dpad_Up",
-                    GamepadButton::DPadDown => "Dpad_Down",
-                    GamepadButton::DPadLeft => "Dpad_Left",
-                    GamepadButton::DPadRight => "Dpad_Right",
-
-                    GamepadButton::C
-                    | GamepadButton::Z
-                    | GamepadButton::Mode
-                    | GamepadButton::Other { .. } => {
-                        return "bevy_input_prompts/unknown.png".into()
-                    },
-                };
-                format!(
-                    "Xbox Series/XboxSeriesX_{}.png",
-                    gamepad_button_name
-                )
-            }
+        let Some(gamepad_button_name) = self.gamepad_button_name() else {
+            return "bevy_input_prompts/unknown.png".into();
         };
-        format!("bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}", path).into()
+        format!(
+            "bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/{}/{}_{}.png",
+            self.settings.gamepad_brand.directory(),
+            self.settings.gamepad_brand.prefix(),
+            gamepad_button_name
+        )
+        .into()
+    }
+}
+
+impl XeluGamepadButton {
+    pub fn gamepad_button_name(&self) -> Option<&'static str> {
+        match (self.settings.gamepad_brand, self.gamepad_button) {
+            (GamepadBrand::PS5, GamepadButton::South) => Some("Cross"),
+            (GamepadBrand::PS5, GamepadButton::East) => Some("Circle"),
+            (GamepadBrand::PS5, GamepadButton::North) => Some("Triangle"),
+            (GamepadBrand::PS5, GamepadButton::West) => Some("Square"),
+
+            (
+                GamepadBrand::SteamDeck | GamepadBrand::Switch | GamepadBrand::XboxSeries,
+                GamepadButton::South,
+            ) => Some("A"),
+            (
+                GamepadBrand::SteamDeck | GamepadBrand::Switch | GamepadBrand::XboxSeries,
+                GamepadButton::East,
+            ) => Some("B"),
+            (
+                GamepadBrand::SteamDeck | GamepadBrand::Switch | GamepadBrand::XboxSeries,
+                GamepadButton::North,
+            ) => Some("Y"),
+            (
+                GamepadBrand::SteamDeck | GamepadBrand::Switch | GamepadBrand::XboxSeries,
+                GamepadButton::West,
+            ) => Some("X"),
+
+            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadButton::LeftTrigger) => Some("L1"),
+            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadButton::RightTrigger) => {
+                Some("R1")
+            }
+
+            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadButton::LeftTrigger2) => {
+                Some("L2")
+            }
+            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadButton::RightTrigger2) => {
+                Some("R2")
+            }
+
+            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadButton::LeftTrigger) => {
+                Some("LB")
+            }
+            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadButton::RightTrigger) => {
+                Some("RB")
+            }
+
+            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadButton::LeftTrigger2) => {
+                Some("LT")
+            }
+            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadButton::RightTrigger2) => {
+                Some("RT")
+            }
+
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::LeftThumb,
+            ) => Some("Left_Stick_Click"),
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::RightThumb,
+            ) => Some("Right_Stick_Click"),
+
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::DPadUp,
+            ) => Some("Dpad_Up"),
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::DPadDown,
+            ) => Some("Dpad_Down"),
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::DPadLeft,
+            ) => Some("Dpad_Left"),
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::DPadRight,
+            ) => Some("Dpad_Right"),
+
+            (GamepadBrand::PS5, GamepadButton::Select) => Some("Share"),
+            (GamepadBrand::PS5, GamepadButton::Start) => Some("Options"),
+            (GamepadBrand::SteamDeck, GamepadButton::Select) => Some("Inventory"),
+            (GamepadBrand::SteamDeck, GamepadButton::Start) => Some("Menu"),
+            (GamepadBrand::Switch, GamepadButton::Select) => Some("Square"),
+            (GamepadBrand::Switch, GamepadButton::Start) => Some("Home"),
+            (GamepadBrand::XboxSeries, GamepadButton::Select) => Some("View"),
+            (GamepadBrand::XboxSeries, GamepadButton::Start) => Some("Menu"),
+
+            (
+                GamepadBrand::PS5
+                | GamepadBrand::SteamDeck
+                | GamepadBrand::Switch
+                | GamepadBrand::XboxSeries,
+                GamepadButton::C | GamepadButton::Z | GamepadButton::Mode | GamepadButton::Other(_),
+            ) => None,
+        }
     }
 }
