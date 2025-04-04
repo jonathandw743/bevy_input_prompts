@@ -31,6 +31,25 @@ pub enum GamepadBrand {
     XboxSeries,
 }
 
+impl GamepadBrand {
+    pub fn directory(&self) -> &'static str {
+        match self {
+            GamepadBrand::PS5 => "PS5",
+            GamepadBrand::SteamDeck => "Steam Deck",
+            GamepadBrand::Switch => "Switch",
+            GamepadBrand::XboxSeries => "Xbox Series",
+        }
+    }
+    pub fn prefix(&self) -> &'static str {
+        match self {
+            GamepadBrand::PS5 => "PS5",
+            GamepadBrand::SteamDeck => "SteamDeck",
+            GamepadBrand::Switch => "Switch",
+            GamepadBrand::XboxSeries => "XboxSeriesX",
+        }
+    }
+}
+
 /// settings to configure a Xelu gamepad input prompt
 #[derive(Default, Clone, Copy, Debug)]
 pub struct XeluGamepadSettings {

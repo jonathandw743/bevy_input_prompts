@@ -1,8 +1,4 @@
-use bevy::{
-    ecs::schedule::And,
-    math::{vec2, vec3},
-    prelude::*,
-};
+use bevy::{math::vec3, prelude::*};
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
     kenney::{
