@@ -36,7 +36,7 @@ impl KenneyKeyCode {
     pub fn key_code_name(&self) -> Option<&'static str> {
         match self.key_code {
             KeyCode::Unidentified(_native_key_code) => None,
-            KeyCode::Backquote => None,
+            KeyCode::Backquote => Some("tilde"),
             KeyCode::Backslash => Some("slash_back"),
             KeyCode::BracketLeft => Some("bracket_open"),
             KeyCode::BracketRight => Some("bracket_close"),

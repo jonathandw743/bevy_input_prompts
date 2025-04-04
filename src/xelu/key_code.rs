@@ -112,8 +112,9 @@ impl XeluKeyCode {
             KeyCode::Comma => Some("Mark_Left"),
             KeyCode::Period => Some("Mark_Right"),
             KeyCode::Slash => Some("Question"),
+            KeyCode::Backquote => Some("Tilda"),
 
-             KeyCode::Katakana
+            KeyCode::Katakana
             | KeyCode::Hiragana
             | KeyCode::Undo
             | KeyCode::Select
@@ -196,7 +197,6 @@ impl XeluKeyCode {
             | KeyCode::ContextMenu
             | KeyCode::IntlYen
             | KeyCode::IntlRo
-            | KeyCode::Backquote
             | KeyCode::F13
             | KeyCode::F14
             | KeyCode::F15
