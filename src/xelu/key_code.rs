@@ -76,7 +76,7 @@ impl XeluKeyCode {
             KeyCode::F12 => Some("F12"),
             KeyCode::Minus => Some("Minus"),
             KeyCode::Equal => Some("Plus"),
-            KeyCode::Backslash | KeyCode::IntlBackslash => Some("Slash"),
+            KeyCode::Backslash | KeyCode::IntlBackslash | KeyCode::IntlRo | KeyCode::IntlYen => Some("Slash"),
             KeyCode::Backspace => Some("Backspace"),
             KeyCode::Tab => Some("Tab"),
             KeyCode::BracketLeft => Some("Bracket_Left"),
@@ -195,8 +195,6 @@ impl XeluKeyCode {
             | KeyCode::KanaMode
             | KeyCode::Convert
             | KeyCode::ContextMenu
-            | KeyCode::IntlYen
-            | KeyCode::IntlRo
             | KeyCode::F13
             | KeyCode::F14
             | KeyCode::F15
