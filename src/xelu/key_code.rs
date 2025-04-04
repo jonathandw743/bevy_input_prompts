@@ -111,9 +111,9 @@ impl XeluKeyCode {
             KeyCode::Meta => Some("Win"),
             KeyCode::Comma => Some("Mark_Left"),
             KeyCode::Period => Some("Mark_Right"),
+            KeyCode::Slash => Some("Question"),
 
-            KeyCode::Slash
-            | KeyCode::Katakana
+             KeyCode::Katakana
             | KeyCode::Hiragana
             | KeyCode::Undo
             | KeyCode::Select
