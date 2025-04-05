@@ -4,7 +4,7 @@ Mappings from bevy input types to popular input prompt asset paths.
 
 | Bevy Version | Plugin Version |
 | -----------: | -------------: |
-|         0.15 |           main |
+|         0.15 |            0.1 |
 
 ```rust
 let arrow_left_handle = asset_server.load(XeluKeyCode {
