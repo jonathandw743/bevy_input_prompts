@@ -21,9 +21,11 @@ impl<'a> Into<AssetPath<'a>> for KenneyKeyCode {
             .into();
         };
         format!(
-            "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}.{}",
+            "bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/{}/keyboard_{}{}{}{}.{}",
             self.settings.format.directiory(),
+            self.arrow_arrows_name(),
             key_code_name,
+            self.icon_name(),
             self.outline_name(),
             self.settings.format.extension()
         )
@@ -37,6 +39,37 @@ impl KenneyKeyCode {
             "_outline"
         } else {
             ""
+        }
+    }
+    pub fn icon_possible(&self) -> bool {
+        match self.key_code {
+            KeyCode::Tab => true,
+            KeyCode::Space => true,
+            KeyCode::ShiftLeft => true,
+            KeyCode::ShiftRight => true,
+            KeyCode::CapsLock => true,
+            KeyCode::Backspace => true,
+            _ => false,
+        }
+    }
+    pub fn icon_name(&self) -> &'static str {
+        if self.settings.icon_if_possible && self.icon_possible() {
+            "_icon"
+        } else {
+            ""
+        }
+    }
+    pub fn arrow_arrows_name(&self) -> &'static str {
+        match (self.settings.arrows_if_possible, self.key_code) {
+            (false, KeyCode::ArrowDown) => "arrow_",
+            (false, KeyCode::ArrowUp) => "arrow_",
+            (false, KeyCode::ArrowLeft) => "arrow_",
+            (false, KeyCode::ArrowRight) => "arrow_",
+            (true, KeyCode::ArrowDown) => "arrows_",
+            (true, KeyCode::ArrowUp) => "arrows_",
+            (true, KeyCode::ArrowLeft) => "arrows_",
+            (true, KeyCode::ArrowRight) => "arrows_",
+            _ => "",
         }
     }
     pub fn key_code_name(&self) -> Option<&'static str> {

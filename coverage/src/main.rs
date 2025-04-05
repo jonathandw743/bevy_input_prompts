@@ -93,23 +93,37 @@ fn kenney_keyboard_and_mouse() -> (HashSet<String>, HashSet<String>) {
         all_file_paths("bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/");
     let mut constructed_file_paths = HashSet::new();
     for outline in [false, true] {
-        for format in [Format::Default, Format::Double, Format::Vector] {
-            for key_code in KEY_CODES {
-                let c = constructed_file_path(KenneyKeyCode {
-                    key_code,
-                    settings: KenneyKeyboardAndMouseSettings { outline, format },
-                });
-                if !c.contains("not_found") {
-                    constructed_file_paths.insert(c);
-                }
-            }
-            for mouse_button in MOUSE_BUTTONS {
-                let c = constructed_file_path(KenneyMouseButton {
-                    mouse_button,
-                    settings: KenneyKeyboardAndMouseSettings { outline, format },
-                });
-                if !c.contains("not_found") {
-                    constructed_file_paths.insert(c);
+        for icon_if_possible in [false, true] {
+            for arrows_if_possible in [false, true] {
+                for format in [Format::Default, Format::Double, Format::Vector] {
+                    for key_code in KEY_CODES {
+                        let c = constructed_file_path(KenneyKeyCode {
+                            key_code,
+                            settings: KenneyKeyboardAndMouseSettings {
+                                outline,
+                                format,
+                                icon_if_possible,
+                                arrows_if_possible,
+                            },
+                        });
+                        if !c.contains("not_found") {
+                            constructed_file_paths.insert(c);
+                        }
+                    }
+                    for mouse_button in MOUSE_BUTTONS {
+                        let c = constructed_file_path(KenneyMouseButton {
+                            mouse_button,
+                            settings: KenneyKeyboardAndMouseSettings {
+                                outline,
+                                format,
+                                icon_if_possible,
+                                arrows_if_possible,
+                            },
+                        });
+                        if !c.contains("not_found") {
+                            constructed_file_paths.insert(c);
+                        }
+                    }
                 }
             }
         }
