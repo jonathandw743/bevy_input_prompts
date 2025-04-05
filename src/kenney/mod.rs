@@ -72,16 +72,21 @@ impl GamepadBrand {
 /// settings to configure a Kenney keyboard and mouse input prompt
 #[derive(Default, Clone, Copy, Debug)]
 pub struct KenneyKeyboardAndMouseSettings {
-    /// outline icons
+    /// outline prompt
     pub outline: bool,
-    /// icon format
+    /// prompt format
     pub format: Format,
+    /// use icon version if possible, for example a `->|` icon instead of `TAB`
+    pub icon_if_possible: bool,
+    /// use prompt with multiple arrows and one highlighted instead of a single arrow prompt if possible
+    pub arrows_if_possible: bool,
 }
 
 /// settings to configure a Kenney gamepad input prompt
 #[derive(Clone, Copy, Debug)]
 pub struct KenneyGamepadSettings {
     /// round icons if possible, only for xbox dpad
+    /// xbox dpad can either be round or outlined, `round_if_possible` will override `outlineif_possible` in this case 
     pub round_if_possible: bool,
     /// outline icons if possible, available for most icons except sticks
     pub outline_if_possible: bool,

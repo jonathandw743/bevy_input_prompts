@@ -2,10 +2,16 @@ use bevy::{math::vec3, prelude::*};
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
     kenney::{
-        self, gamepad_axis::{Direction, KenneyGamepadAxis}, gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode, mouse_button::KenneyMouseButton, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings
+        self, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings,
+        gamepad_axis::{Direction, KenneyGamepadAxis},
+        gamepad_button::KenneyGamepadButton,
+        key_code::KenneyKeyCode,
+        mouse_button::KenneyMouseButton,
     },
     xelu::{
-        self, gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode, mouse_button::XeluMouseButton, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings
+        self, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings,
+        gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode,
+        mouse_button::XeluMouseButton,
     },
 };
 
@@ -78,17 +84,26 @@ fn setup(mut commands: Commands) {
 
     let mut i = 0;
     for outline in [false, true] {
-        for format in [Format::Default, Format::Double] {
-            commands.spawn((
-                KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings { outline, format }),
-                Transform::default().with_translation(vec3(
-                    (i / 6) as f32 * 100.0 + 200.0,
-                    (i % 6) as f32 * 100.0 - 300.0,
-                    0.0,
-                )),
-                Sprite::default(),
-            ));
-            i += 1;
+        for icon_if_possible in [false, true] {
+            for arrows_if_possible in [false, true] {
+                for format in [Format::Default, Format::Double] {
+                    commands.spawn((
+                        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
+                            outline,
+                            format,
+                            icon_if_possible,
+                            arrows_if_possible,
+                        }),
+                        Transform::default().with_translation(vec3(
+                            (i / 6) as f32 * 100.0 + 200.0,
+                            (i % 6) as f32 * 100.0 - 300.0,
+                            0.0,
+                        )),
+                        Sprite::default(),
+                    ));
+                    i += 1;
+                }
+            }
         }
     }
 
@@ -203,7 +218,7 @@ fn update_xelu_gp(
             }
         }
         for &gamepad_input in gamepad.get_analog_axes() {
-                if let Some(value) = gamepad.get(gamepad_input) {
+            if let Some(value) = gamepad.get(gamepad_input) {
                 if value > 0.5 || value < -0.5 {
                     match gamepad_input {
                         GamepadInput::Axis(gamepad_axis) => {
@@ -279,7 +294,7 @@ fn update_kenney_gp(
                         }
                         GamepadInput::Button(_gamepad_button) => {
                             // handled by the `gamepad.get_just_pressed()` part of this example
-    
+
                             // dbg!(entity);
                             // dbg!(x);
                             // dbg!(v);
