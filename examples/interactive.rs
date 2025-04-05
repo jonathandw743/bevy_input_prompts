@@ -2,7 +2,7 @@ use bevy::{math::vec3, prelude::*};
 use bevy_input::gamepad::GamepadInput;
 use bevy_input_prompts::{
     kenney::{
-        self, gamepad_axis::KenneyGamepadAxis, gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode, mouse_button::KenneyMouseButton, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings
+        self, gamepad_axis::{Direction, KenneyGamepadAxis}, gamepad_button::KenneyGamepadButton, key_code::KenneyKeyCode, mouse_button::KenneyMouseButton, Format, KenneyGamepadSettings, KenneyKeyboardAndMouseSettings
     },
     xelu::{
         self, gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton, key_code::XeluKeyCode, mouse_button::XeluMouseButton, LightDark, XeluGamepadSettings, XeluKeyboardAndMouseSettings
@@ -190,10 +190,10 @@ fn update_xelu_gp(
     gamepad: Option<Single<(Entity, &Gamepad)>>,
 ) {
     if let Some(gamepad) = gamepad {
-        let (entity, gamepad) = *gamepad;
+        let (_entity, gamepad) = *gamepad;
         if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
-            dbg!(entity);
-            dbg!(gamepad);
+            // dbg!(entity);
+            // dbg!(gamepad);
             dbg!(gamepad_button);
             for (mut sprite, settings) in &mut xelu_gp {
                 sprite.image = asset_server.load(XeluGamepadButton {
@@ -203,11 +203,11 @@ fn update_xelu_gp(
             }
         }
         for &gamepad_input in gamepad.get_analog_axes() {
-            if let Some(value) = gamepad.get(gamepad_input) {
+                if let Some(value) = gamepad.get(gamepad_input) {
                 if value > 0.5 || value < -0.5 {
                     match gamepad_input {
                         GamepadInput::Axis(gamepad_axis) => {
-                            dbg!(entity);
+                            // dbg!(entity);
                             dbg!(gamepad_axis);
                             dbg!(value);
                             for (mut sprite, settings) in &mut xelu_gp {
@@ -245,10 +245,10 @@ fn update_kenney_gp(
     gamepad: Option<Single<(Entity, &Gamepad)>>,
 ) {
     if let Some(gamepad) = gamepad {
-        let (entity, gamepad) = *gamepad;
+        let (_entity, gamepad) = *gamepad;
         if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
-            dbg!(entity);
-            dbg!(gamepad);
+            // dbg!(entity);
+            // dbg!(gamepad);
             dbg!(gamepad_button);
             for (mut sprite, settings) in &mut kenney_gp {
                 sprite.image = asset_server.load(KenneyGamepadButton {
@@ -262,12 +262,17 @@ fn update_kenney_gp(
                 if value > 0.5 || value < -0.5 {
                     match gamepad_input {
                         GamepadInput::Axis(gamepad_axis) => {
-                            dbg!(entity);
+                            // dbg!(entity);
                             dbg!(gamepad_axis);
                             dbg!(value);
                             for (mut sprite, settings) in &mut kenney_gp {
                                 sprite.image = asset_server.load(KenneyGamepadAxis {
                                     gamepad_axis,
+                                    direction: if value < -0.5 {
+                                        Direction::Negative
+                                    } else {
+                                        Direction::Positive
+                                    },
                                     settings: settings.0,
                                 });
                             }

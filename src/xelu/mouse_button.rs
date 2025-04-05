@@ -5,6 +5,7 @@ use crate::not_found::mouse_button::NotFoundMouseButton;
 
 use super::{LightDark, XeluKeyboardAndMouseSettings};
 
+/// converts to a Xelu's input prompt representing a [`MouseButton`]
 #[derive(Clone, Debug)]
 pub struct XeluMouseButton {
     pub mouse_button: MouseButton,
