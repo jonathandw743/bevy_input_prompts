@@ -12,7 +12,7 @@ pub enum Format {
     /// 64x64 pixels
     #[default]
     Default,
-    /// 128 x 128 pixels
+    /// 128x128 pixels
     Double,
     /// SVG
     Vector,
@@ -88,7 +88,7 @@ pub struct KenneyKeyboardAndMouseSettings {
 #[derive(Clone, Copy, Debug)]
 pub struct KenneyGamepadSettings {
     /// round icons if possible, only for xbox dpad
-    /// xbox dpad can either be round or outlined, `round_if_possible` will override `outlineif_possible` in this case 
+    /// xbox dpad can either be round or outlined, `round_if_possible` will override `outline_if_possible` in this case 
     pub round_if_possible: bool,
     /// outline icons if possible, available for most icons except sticks
     pub outline_if_possible: bool,
