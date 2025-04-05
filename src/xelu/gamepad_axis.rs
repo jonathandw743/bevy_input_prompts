@@ -5,6 +5,7 @@ use crate::not_found::gamepad_axis::NotFoundGamepadAxis;
 
 use super::{GamepadBrand, XeluGamepadSettings};
 
+/// converts to a Xelu's input prompt representing a [`GamepadAxis`]
 #[derive(Clone, Debug)]
 pub struct XeluGamepadAxis {
     pub gamepad_axis: GamepadAxis,
@@ -46,17 +47,7 @@ impl XeluGamepadAxis {
                 | GamepadBrand::XboxSeries,
                 GamepadAxis::RightStickX | GamepadAxis::RightStickY,
             ) => Some("Right_Stick"),
-            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadAxis::LeftZ) => Some("L2"),
-            (GamepadBrand::PS5 | GamepadBrand::SteamDeck, GamepadAxis::RightZ) => Some("R2"),
-            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadAxis::LeftZ) => Some("LT"),
-            (GamepadBrand::XboxSeries | GamepadBrand::Switch, GamepadAxis::RightZ) => Some("RT"),
-            (
-                GamepadBrand::PS5
-                | GamepadBrand::SteamDeck
-                | GamepadBrand::Switch
-                | GamepadBrand::XboxSeries,
-                GamepadAxis::Other(_),
-            ) => None,
+            _ => None,
         }
     }
 }

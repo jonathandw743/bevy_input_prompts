@@ -5,6 +5,7 @@ use crate::not_found::key_code::NotFoundKeyCode;
 
 use super::KenneyKeyboardAndMouseSettings;
 
+/// converts to a Kenney's input prompt representing a [`KeyCode`]
 #[derive(Clone, Debug)]
 pub struct KenneyKeyCode {
     pub key_code: KeyCode,

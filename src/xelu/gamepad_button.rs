@@ -5,6 +5,7 @@ use crate::not_found::gamepad_button::NotFoundGamepadButton;
 
 use super::{GamepadBrand, XeluGamepadSettings};
 
+/// converts to a Xelu's input prompt representing a [`GamepadButton`]
 #[derive(Clone, Debug)]
 pub struct XeluGamepadButton {
     pub gamepad_button: GamepadButton,

@@ -5,6 +5,7 @@ use crate::not_found::key_code::NotFoundKeyCode;
 
 use super::XeluKeyboardAndMouseSettings;
 
+/// converts to a Xelu's input prompt representing a [`KeyCode`]
 #[derive(Clone, Debug)]
 pub struct XeluKeyCode {
     pub key_code: KeyCode,

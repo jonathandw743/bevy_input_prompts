@@ -5,6 +5,7 @@ use crate::not_found::mouse_button::NotFoundMouseButton;
 
 use super::KenneyKeyboardAndMouseSettings;
 
+/// converts to a Kenney's input prompt representing a [`MouseButton`]
 #[derive(Clone, Debug)]
 pub struct KenneyMouseButton {
     pub mouse_button: MouseButton,

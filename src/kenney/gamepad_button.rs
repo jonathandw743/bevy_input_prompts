@@ -5,6 +5,7 @@ use crate::not_found::gamepad_button::NotFoundGamepadButton;
 
 use super::{GamepadBrand, KenneyGamepadSettings};
 
+/// converts to a Kenney's input prompt representing a [`GamepadButton`]
 #[derive(Clone, Debug)]
 pub struct KenneyGamepadButton {
     pub gamepad_button: GamepadButton,
@@ -121,36 +122,49 @@ impl KenneyGamepadButton {
         }
     }
     pub fn button_type(&self) -> Option<&'static str> {
-        match self.gamepad_button {
-            GamepadButton::Select
-            | GamepadButton::Start
-            | GamepadButton::South
-            | GamepadButton::East
-            | GamepadButton::North
-            | GamepadButton::West => Some("_button"),
-            GamepadButton::LeftTrigger
-            | GamepadButton::LeftTrigger2
-            | GamepadButton::RightTrigger
-            | GamepadButton::RightTrigger2 => Some(match self.settings.gamepad_brand {
-                GamepadBrand::Generic => todo!(),
-                GamepadBrand::Switch => todo!(),
-                GamepadBrand::Wii => todo!(),
-                GamepadBrand::WiiU => todo!(),
-                GamepadBrand::Playdate => todo!(),
+        match (self.settings.gamepad_brand, self.gamepad_button) {
+            (
+                _,
+                GamepadButton::Select
+                | GamepadButton::Start
+                | GamepadButton::South
+                | GamepadButton::East
+                | GamepadButton::North
+                | GamepadButton::West,
+            ) => Some("_button"),
+            (
                 GamepadBrand::PlayStation3
                 | GamepadBrand::PlayStation4
-                | GamepadBrand::PlayStation5 => "_trigger",
-                GamepadBrand::SteamController => todo!(),
-                GamepadBrand::SteamDeck => "_button",
-                GamepadBrand::XboxSeries => "",
-            }),
-            GamepadButton::Mode => Some(""),
-            GamepadButton::LeftThumb | GamepadButton::RightThumb => Some("_stick"),
-            GamepadButton::DPadUp
-            | GamepadButton::DPadDown
-            | GamepadButton::DPadLeft
-            | GamepadButton::DPadRight => Some("_dpad"),
-            GamepadButton::C | GamepadButton::Z | GamepadButton::Other(_) => None,
+                | GamepadBrand::PlayStation5,
+                GamepadButton::LeftTrigger
+                | GamepadButton::LeftTrigger2
+                | GamepadButton::RightTrigger
+                | GamepadButton::RightTrigger2,
+            ) => Some("_trigger"),
+            (
+                GamepadBrand::SteamDeck,
+                GamepadButton::LeftTrigger
+                | GamepadButton::LeftTrigger2
+                | GamepadButton::RightTrigger
+                | GamepadButton::RightTrigger2,
+            ) => Some("_button"),
+            (
+                GamepadBrand::XboxSeries,
+                GamepadButton::LeftTrigger
+                | GamepadButton::LeftTrigger2
+                | GamepadButton::RightTrigger
+                | GamepadButton::RightTrigger2,
+            ) => Some(""),
+            (_, GamepadButton::Mode) => Some(""),
+            (_, GamepadButton::LeftThumb | GamepadButton::RightThumb) => Some("_stick"),
+            (
+                _,
+                GamepadButton::DPadUp
+                | GamepadButton::DPadDown
+                | GamepadButton::DPadLeft
+                | GamepadButton::DPadRight,
+            ) => Some("_dpad"),
+            _ => None,
         }
     }
     pub fn outline_possible(&self) -> bool {
