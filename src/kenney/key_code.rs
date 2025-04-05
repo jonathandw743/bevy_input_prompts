@@ -52,12 +52,21 @@ impl KenneyKeyCode {
             _ => false,
         }
     }
-    pub fn icon_name(&self) -> &'static str {
-        if self.settings.icon_if_possible && self.icon_possible() {
-            "_icon"
-        } else {
-            ""
+    pub fn alternative_icon_possible(&self) -> bool {
+        match self.key_code {
+            KeyCode::Tab => true,
+            KeyCode::Backspace => true,
+            _ => false,
         }
+    }
+    pub fn icon_name(&self) -> &'static str {
+        if self.settings.alternative_icon_if_possible && self.alternative_icon_possible() {
+            return "_icon_alternative";
+        }
+        if self.settings.icon_if_possible && self.icon_possible() {
+            return "_icon";
+        }
+        ""
     }
     pub fn arrow_arrows_name(&self) -> &'static str {
         match (self.settings.arrows_if_possible, self.key_code) {

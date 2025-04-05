@@ -78,6 +78,8 @@ pub struct KenneyKeyboardAndMouseSettings {
     pub format: Format,
     /// use icon version if possible, for example a `->|` icon instead of `TAB`
     pub icon_if_possible: bool,
+    /// use alternative icon if possible (there are some prompts that have an alternative version)
+    pub alternative_icon_if_possible: bool,
     /// use prompt with multiple arrows and one highlighted instead of a single arrow prompt if possible
     pub arrows_if_possible: bool,
 }

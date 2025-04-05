@@ -86,22 +86,25 @@ fn setup(mut commands: Commands) {
     for outline in [false, true] {
         for icon_if_possible in [false, true] {
             for arrows_if_possible in [false, true] {
-                for format in [Format::Default, Format::Double] {
-                    commands.spawn((
-                        KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
-                            outline,
-                            format,
-                            icon_if_possible,
-                            arrows_if_possible,
-                        }),
-                        Transform::default().with_translation(vec3(
-                            (i / 6) as f32 * 100.0 + 200.0,
-                            (i % 6) as f32 * 100.0 - 300.0,
-                            0.0,
-                        )),
-                        Sprite::default(),
-                    ));
-                    i += 1;
+                for alternative_icon_if_possible in [false, true] {
+                    for format in [Format::Default, Format::Double] {
+                        commands.spawn((
+                            KenneyKeyboardAndMousePrompt(KenneyKeyboardAndMouseSettings {
+                                outline,
+                                format,
+                                icon_if_possible,
+                                alternative_icon_if_possible,
+                                arrows_if_possible,
+                            }),
+                            Transform::default().with_translation(vec3(
+                                (i / 6) as f32 * 100.0 + 200.0,
+                                (i % 6) as f32 * 100.0 - 300.0,
+                                0.0,
+                            )),
+                            Sprite::default(),
+                        ));
+                        i += 1;
+                    }
                 }
             }
         }
