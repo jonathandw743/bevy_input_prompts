@@ -80,7 +80,7 @@ fn xelu_keyboard_and_mouse() -> (HashSet<String>, HashSet<String>) {
                 mouse_button,
                 settings: XeluKeyboardAndMouseSettings { light_dark },
             });
-            if !c.contains("no_found") {
+            if !c.contains("not_found") {
                 constructed_file_paths.insert(c);
             }
         }
