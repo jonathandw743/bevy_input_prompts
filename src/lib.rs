@@ -17,6 +17,7 @@ pub mod vendor_ids;
 pub mod xelu;
 
 fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
+    directory_representation::bevy_input_prompts::kenney::kenney_input_prompts::Generic::Default::Path::generic_button_circle_fill_png
     let addon_asset_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
     let asset_paths = asset_dirs
         .into_iter()
