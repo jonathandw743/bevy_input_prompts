@@ -784,6 +784,9 @@ dependencies = [
  "bevy_asset",
  "bevy_input",
  "fs_extra",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

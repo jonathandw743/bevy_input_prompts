@@ -5,11 +5,16 @@ use std::{
 
 use fs_extra::dir::CopyOptions;
 
-pub mod xelu;
+#[allow(non_camel_case_types, non_snake_case)]
+pub mod directory_representation {
+    include!("../generated/directory_representation.rs");
+}
+
 pub mod kenney;
-pub mod vendor_ids;
-pub mod product_ids;
 pub mod not_found;
+pub mod product_ids;
+pub mod vendor_ids;
+pub mod xelu;
 
 fn copy_assets<I: IntoIterator<Item = P>, P: AsRef<Path>>(asset_dirs: I) {
     let addon_asset_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets");
