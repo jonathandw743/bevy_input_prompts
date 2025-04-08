@@ -4,20 +4,32 @@ use std::io::Write;
 use std::path::Path;
 
 fn main() -> std::io::Result<()> {
-    let dir_path = "assets/bevy_input_prompts";
+    let dir_path = Path::new("assets/bevy_input_prompts");
     let out_path = Path::new("generated/directory_representation.rs");
     if let Some(parent) = out_path.parent() {
         fs::create_dir_all(parent)?;
     }
     let mut file = File::create(out_path)?;
-    write!(file, "{}", directory_representation_module(dir_path)?).unwrap();
+    write!(
+        file,
+        "{}",
+        directory_representation_module(dir_path, dir_path.parent().unwrap_or(Path::new("")), &vec!["png", "svg"])?
+    )?;
     Ok(())
 }
 
 fn directory_representation_module<P: AsRef<Path>>(
     dir: P,
+    ignore: &Path,
+    extension_whitelist: &Vec<&str>,
 ) -> std::io::Result<proc_macro2::TokenStream> {
     Ok(if dir.as_ref().is_file() {
+        let Some(ext) = dir.as_ref().extension() else {
+            return Ok(quote! {});
+        };
+        if !extension_whitelist.contains(&ext.to_str().expect("Could not convert from OsStr to str")) {
+            return Ok(quote! {});
+        }
         let variant = filename_to_variant(
             dir.as_ref()
                 .file_name()
@@ -27,6 +39,8 @@ fn directory_representation_module<P: AsRef<Path>>(
         );
         let file_name = syn::LitStr::new(
             dir.as_ref()
+                .strip_prefix(ignore)
+                .expect("Could not strip_prefix")
                 .to_str()
                 .expect("Could not convert file_name to_str"),
             proc_macro2::Span::call_site(),
@@ -45,7 +59,7 @@ fn directory_representation_module<P: AsRef<Path>>(
         let mut submodules = Vec::new();
         for dir_entry in fs::read_dir(&dir)? {
             let dir_entry = dir_entry?;
-            submodules.push(directory_representation_module(dir_entry.path())?)
+            submodules.push(directory_representation_module(dir_entry.path(), ignore, extension_whitelist)?)
         }
         quote! {pub mod #dir_variant {
             #(#submodules)*
