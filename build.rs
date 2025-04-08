@@ -13,7 +13,7 @@ fn main() -> std::io::Result<()> {
     write!(
         file,
         "{}",
-        directory_representation_module(dir_path, dir_path.parent().unwrap_or(Path::new("")), &vec!["png", "svg"])?
+        directory_representation_module(dir_path, dir_path.parent().unwrap_or(Path::new("")), &["png", "svg"])?
     )?;
     Ok(())
 }
@@ -21,7 +21,7 @@ fn main() -> std::io::Result<()> {
 fn directory_representation_module<P: AsRef<Path>>(
     dir: P,
     ignore: &Path,
-    extension_whitelist: &Vec<&str>,
+    extension_whitelist: &[&str],
 ) -> std::io::Result<proc_macro2::TokenStream> {
     Ok(if dir.as_ref().is_file() {
         let Some(ext) = dir.as_ref().extension() else {
