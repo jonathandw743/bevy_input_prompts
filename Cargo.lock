@@ -783,7 +783,17 @@ dependencies = [
  "bevy",
  "bevy_asset",
  "bevy_input",
+ "bevy_input_prompts_macros",
  "fs_extra",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "bevy_input_prompts_macros"
+version = "0.1.0"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn",

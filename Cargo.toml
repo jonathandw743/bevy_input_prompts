@@ -12,12 +12,13 @@ repository = "https://github.com/jonathandw743/bevy_input_prompts"
 bevy_asset = "0.15"
 bevy_input = "0.15"
 fs_extra = "1.3.0"
+bevy_input_prompts_macros = { path = "macros" }
 
 [dev-dependencies]
 bevy = "0.15"
 
 [workspace]
-members = ["asset_gen", "coverage"]
+members = ["asset_gen", "coverage", "macros"]
 
 [build-dependencies]
 proc-macro2 = "1.0.94"

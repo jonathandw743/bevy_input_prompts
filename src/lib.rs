@@ -5,11 +5,6 @@ use std::{
 
 use fs_extra::dir::CopyOptions;
 
-#[allow(non_upper_case_globals, non_snake_case)]
-pub mod directory_representation {
-    include!("../generated/directory_representation.rs");
-}
-
 pub mod kenney;
 pub mod not_found;
 pub mod product_ids;
@@ -62,4 +57,9 @@ pub fn build_all() {
     copy_assets(ASSET_DIRS);
     copy_assets(xelu::ASSET_DIRS);
     copy_assets(kenney::ASSET_DIRS);
+}
+
+// #[allow(non_upper_case_globals, non_snake_case)]
+pub mod directory_representation {
+    bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts");
 }
