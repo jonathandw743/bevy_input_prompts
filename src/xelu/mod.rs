@@ -62,8 +62,6 @@ pub struct XeluKeyboardAndMouseSettings {
     pub light_dark: LightDark,
 }
 
-pub const ASSET_DIRS: [&'static str; 1] = ["bevy_input_prompts/xelu"];
-
 impl GamepadBrand {
     pub fn from_vendor_id(vendor_id: u16) -> Option<Self> {
         if vendor_id == XBOX || vendor_id == XBOX_THIRD_PARTY {
