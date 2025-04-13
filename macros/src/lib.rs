@@ -31,11 +31,11 @@ use syn::{parse::{self, Parse}, parse2, parse_macro_input, punctuated::Punctuate
 //     quote! {}.into()
 // }
 
-#[proc_macro]
-pub fn foo(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as LitStr).value();
+// #[proc_macro]
+// pub fn foo(input: TokenStream) -> TokenStream {
+//     let input = parse_macro_input!(input as LitStr).value();
     
-}
+// }
 
 #[proc_macro]
 pub fn directory_representation(input: TokenStream) -> TokenStream {
