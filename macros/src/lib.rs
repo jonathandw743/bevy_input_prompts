@@ -156,22 +156,33 @@ fn directory_representation_module<P: AsRef<Path>>(
         // should be deterministic on directory constants as sort stability doesn't matter due to dedup
         all_tokens.sort();
         all_tokens.dedup();
-        dbg!(&all_tokens);
+        // dbg!(&all_tokens);
         let mut indices = HashMap::new();
         for (i, token) in all_tokens.iter().enumerate() {
             indices.insert(token.clone(), i);
         }
         let n = all_tokens.len();
+        // dbg!(n);
+        // dbg!(dir.as_ref());
         let n_lit = LitInt::new(&n.to_string(), Span::call_site());
         let mut rules = Vec::new();
         for (p0, p1) in tokens.iter().zip(file_names) {
-            let mut r = vec![LitBool::new(false, Span::call_site()); n];
+            let mut r: (u128, u128) = (0, 0);
             for t in p0 {
-                r[indices[t]] = LitBool::new(true, Span::call_site());
+                // dbg!(indices[t]);
+                let index = indices[t];
+                if index < 128 {
+                    r.0 |= 1 << index;
+                } else {
+                    r.1 |= 1 << (index - 128);
+                }
             }
+            // let rlit = LitInt::new(&r.to_string(), Span::call_site());
+            let r0 = r.0;
+            let r1 = r.1;
             let p1 = LitStr::new(&p1, Span::call_site());
             rules.push(quote! {
-                [#(#r,)*] => #p1
+                (#r0, #r1) => #p1
             });
         }
         // let mut variants = Vec::new();
@@ -191,22 +202,23 @@ fn directory_representation_module<P: AsRef<Path>>(
         // }
         return Ok(quote! {pub mod #dir_variant {
             pub const PATH: &'static str = #file_name;
+            const x: usize = #n_lit;
             // pub enum Tokens {
             //     #(#variants,)*
             // }
-            pub fn a_to_p(a: [bool; #n_lit]) -> &'static str {
+            pub fn a_to_p(a: u128) -> &'static str {
                 match a {
                     #(#rules,)*
                 }
             }
-            impl Tokens {
-                // pub fn str(&self) -> &'static str {
-                //     match self {
-                //         #(#arms,)*
-                //     }
-                // }
-                #(#all_tokens,)*
-            }
+            // impl Tokens {
+            //     // pub fn str(&self) -> &'static str {
+            //     //     match self {
+            //     //         #(#arms,)*
+            //     //     }
+            //     // }
+            //     #(#all_tokens,)*
+            // }
             #(#submodules)*
         }});
     }
