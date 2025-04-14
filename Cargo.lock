@@ -798,6 +798,8 @@ dependencies = [
 name = "bevy_input_prompts_macros"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "petgraph 0.8.1",
  "proc-macro2",
  "quote",
  "syn",
