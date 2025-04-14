@@ -65,7 +65,8 @@ pub fn build_all() {
 }
 
 pub mod directory_representation {
-    // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/not_found");
+    // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/not_found/MouseButton");
+    // bevy_input_prompts_macros::directory_representation!("assets/test");
     // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts/Xbox Series/Default");
     bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts");
 }

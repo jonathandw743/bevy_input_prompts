@@ -5,7 +5,7 @@ use proc_macro2::Span;
 use quote::{format_ident, quote};
 use std::{collections::HashMap, path::Path};
 use syn::{
-    Expr, LitStr, Token,
+    Expr, LitBool, LitInt, LitStr, Token,
     parse::{self, Parse},
     parse_macro_input, parse2,
     punctuated::Punctuated,
@@ -124,60 +124,88 @@ fn directory_representation_module<P: AsRef<Path>>(
                 .ok_or(anyhow!("Could not convert file name to str"))?,
             proc_macro2::Span::call_site(),
         );
-        let mut str_to_i = HashMap::new();
-        let mut g = Graph::<String, ()>::new();
+        let mut tokens = Vec::new();
+        let mut file_names = Vec::new();
         let mut submodules = Vec::new();
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                let tokens = path
-                    .file_stem()
+                let f = path
+                    .file_stem().clone()
                     .ok_or(anyhow!("Could not get file stem"))?
                     .to_str()
                     .ok_or(anyhow!("Could not convert file stem to str"))?
-                    .split("_")
+                    .split("_").map(|x| x.to_owned())
                     .collect::<Vec<_>>();
-                let mut nis = Vec::new();
-                for token in tokens {
-                    nis.push(
-                        str_to_i
-                            .entry(token.to_string())
-                            .or_insert_with(|| g.add_node(token.to_string()))
-                            .clone(),
-                    );
-                }
-                for i in 0..(nis.len() - 1) {
-                    g.add_edge(nis[i], nis[i + 1], ());
-                }
+                let fstr = path
+                    .to_str()
+                    .ok_or(anyhow!("Could not convert file path to str"))?.to_owned();
+                tokens.push(f);
+                file_names.push(fstr);
             }
             if path.is_dir() {
-                submodules.push(directory_representation_module(path, ignore)?)
+                submodules.push(directory_representation_module(&path, ignore)?)
             }
         }
-        let mut variants = Vec::new();
-        let mut arms = Vec::new();
-        for ni in toposort(&g, None).map_err(|_| anyhow!("Could not topologically sort {:?}", dir.as_ref()))? {
-            let token = g
-                .node_weight(ni)
-                .ok_or(anyhow!("Could not map node index to token"))?;
-            let variant = filename_to_variant(&token);
-            let token_lit = syn::LitStr::new(&token, Span::call_site());
-            variants.push(variant.clone());
-            arms.push(quote! {
-                Self::#variant => #token_lit
+        let mut all_tokens = Vec::new();
+        for p in &tokens {
+            for a in p {
+                all_tokens.push(a.clone());
+            }
+        }
+        // should be deterministic on directory constants as sort stability doesn't matter due to dedup
+        all_tokens.sort();
+        all_tokens.dedup();
+        dbg!(&all_tokens);
+        let mut indices = HashMap::new();
+        for (i, token) in all_tokens.iter().enumerate() {
+            indices.insert(token.clone(), i);
+        }
+        let n = all_tokens.len();
+        let n_lit = LitInt::new(&n.to_string(), Span::call_site());
+        let mut rules = Vec::new();
+        for (p0, p1) in tokens.iter().zip(file_names) {
+            let mut r = vec![LitBool::new(false, Span::call_site()); n];
+            for t in p0 {
+                r[indices[t]] = LitBool::new(true, Span::call_site());
+            }
+            let p1 = LitStr::new(&p1, Span::call_site());
+            rules.push(quote! {
+                [#(#r,)*] => #p1
             });
         }
+        // let mut variants = Vec::new();
+        // let mut arms = Vec::new();
+        // for ni in toposort(&g, None)
+        //     .map_err(|_| anyhow!("Could not topologically sort {:?}", dir.as_ref()))?
+        // {
+        //     let token = g
+        //         .node_weight(ni)
+        //         .ok_or(anyhow!("Could not map node index to token"))?;
+        //     let variant = filename_to_variant(&token);
+        //     let token_lit = syn::LitStr::new(&token, Span::call_site());
+        //     variants.push(variant.clone());
+        //     arms.push(quote! {
+        //         Self::#variant => #token_lit
+        //     });
+        // }
         return Ok(quote! {pub mod #dir_variant {
             pub const PATH: &'static str = #file_name;
-            pub enum Tokens {
-                #(#variants,)*
+            // pub enum Tokens {
+            //     #(#variants,)*
+            // }
+            pub fn a_to_p(a: [bool; #n_lit]) -> &'static str {
+                match a {
+                    #(#rules,)*
+                }
             }
             impl Tokens {
-                pub fn str(&self) -> &'static str {
-                    match self {
-                        #(#arms,)*
-                    }
-                }
+                // pub fn str(&self) -> &'static str {
+                //     match self {
+                //         #(#arms,)*
+                //     }
+                // }
+                #(#all_tokens,)*
             }
             #(#submodules)*
         }});
