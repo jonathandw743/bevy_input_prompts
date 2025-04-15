@@ -167,7 +167,7 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
 /// Finds maximal cliques containing all the vertices in r, some of the
 /// vertices in p, and none of the vertices in x.
 fn bron_kerbosch_pivot(
-    mx: &Vec<BitSet>,
+    mx: &Vec<Option<BitSet>>,
     r: BitSet,
     mut p: BitSet,
     mut x: BitSet,
@@ -186,7 +186,7 @@ fn bron_kerbosch_pivot(
         .max_by_key(|&v| {
             let mut neighbours = 0;
             for i in 0..n {
-                if !mx[v].contains(i) {
+                if mx[v].as_ref().is_some_and(|mx| !mx.contains(i)) && mx[i].as_ref().is_some_and(|mx| !mx.contains(v)) {
                     neighbours += 1;
                 }
             }
@@ -195,11 +195,19 @@ fn bron_kerbosch_pivot(
         .unwrap();
     let mut todo = p
         .iter()
-        .filter(|&v| u == v || mx[u].contains(v) || mx[v].contains(u)) //skip neighbors of pivot
+        .filter(|&v| u == v || mx[u].as_ref().is_none_or(|mx| mx.contains(v)) || mx[v].as_ref().is_none_or(|mx| mx.contains(u))) //skip neighbors of pivot
         .collect::<Vec<_>>();
     while let Some(v) = todo.pop() {
-        let mut neighbors = BitSet::from_iter(0..n);
-        neighbors.difference_with(&mx[v]);
+        let neighbors = match &mx[v] {
+            Some(mx) => {
+                let mut neighbours = BitSet::from_iter(0..n);
+                neighbours.difference_with(mx);
+                neighbours
+            },
+            None => {
+                BitSet::new()
+            },
+        };
         p.remove(v);
         let mut next_r = r.clone();
         next_r.insert(v);
@@ -231,32 +239,37 @@ fn mx(bit_sets: &Vec<BitSet>) -> Vec<BitSet> {
         if result.is_empty() {
             break;
         }
-        mx.push(result);
+        mx.push(Some(result));
         n += 1;
     }
-    let mut edges = Vec::new();
-    for i in 0..mx.len() {
-        for j in (i + 1)..mx.len() {
-            if !mx[i].contains(j) && !mx[j].contains(i) {
-                edges.push((i, j));
-            }
-        }
-    }
     let mut cliques = Vec::new();
-    let mut x = BitSet::new();
-    while edges.len() > 0 {
-        let g = UnGraph::<usize, ()>::from_edges(edges.iter().map(|(a, b)| (*a as u32, *b as u32)));
+    let mut i = 0;
+    while i < n {
         let r = BitSet::new();
         let p = BitSet::from_iter(0..n);
-        let c = bron_kerbosch_pivot(&mx, r, p, x.clone(), n)
+        let x = BitSet::new();
+        let c = bron_kerbosch_pivot(&mx, r, p, x, n)
             .into_iter()
             .max_by_key(|c| c.len())
             .unwrap();
-        for i in &c {
-            x.insert(i);
+        i += c.len();
+        for a in &c {
+            mx[a] = None;
         }
         cliques.push(c);
     }
+//    let mut collected = HashSet::new();
+//    for clique in &cliques {
+//        for i in clique {
+//            collected.insert(i);
+//        }
+//    }
+//    for i in 0..n {
+//        if !collected.contains(&i) {
+//            dbg!(i);
+//        }
+//    }
+
     cliques
 }
 
@@ -353,22 +366,24 @@ fn directory_representation_module<P: AsRef<Path>>(
         let mut mx = mx(&bit_sets);
         // add any that aren't left in any mutually exclusive set
         // (they might be mutually exclusive with other tokens but they got taken by another group)
-        let mut created_tokens = Vec::new();
-        for mx in &mx {
-            created_tokens.extend(mx.clone());
-        }
-        for i in 0..tokens.len() as u32 {
-            if created_tokens.contains(&NodeIndex::from(i)) {
-                continue;
-            }
-            let h = HashSet::from_iter([NodeIndex::from(i)]);
-            mx.push(h);
-        }
+
+        // let mut created_tokens = Vec::new();
+        // for mx in &mx {
+        //     created_tokens.extend(mx.clone());
+        // }
+        // for i in 0..tokens.len() as u32 {
+        //     if created_tokens.contains(&NodeIndex::from(i)) {
+        //         continue;
+        //     }
+        //     let h = HashSet::from_iter([NodeIndex::from(i)]);
+        //     mx.push(h);
+        // }
+
         // create enums out of the mutually exlusive tokens
         let mut mx_enums = Vec::new();
         let enum_name_base = "_MX_";
         for (i, mx) in mx.iter().enumerate() {
-            let mx_tokens = mx.iter().map(|index| tokens[index.index()].clone());
+            let mx_tokens = mx.iter().map(|index| tokens[index].clone());
             let enum_name = Ident::new(&format!("{}{}", enum_name_base, i), Span::call_site());
             let variants = mx_tokens.clone().map(|t| filename_to_variant(&t));
             let arms = variants.clone().zip(mx_tokens).map(|(variant, t)| {
@@ -388,6 +403,7 @@ fn directory_representation_module<P: AsRef<Path>>(
                 }
             });
         }
+        // dbg!(&tokens[65], &tokens[80]);
         // create the module
         return Ok(quote! {
             pub mod #dir_variant {
