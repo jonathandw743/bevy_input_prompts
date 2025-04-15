@@ -799,6 +799,8 @@ name = "bevy_input_prompts_macros"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bit-set 0.8.0",
+ "hashbrown 0.15.2",
  "petgraph 0.8.1",
  "proc-macro2",
  "quote",
