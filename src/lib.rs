@@ -67,16 +67,13 @@ use fs_extra::dir::CopyOptions;
 pub mod directory_representation {
     // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/not_found/MouseButton");
     // bevy_input_prompts_macros::directory_representation!("assets/test");
-    // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts");
+    bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts");
     // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts/Xbox Series/Default");
-    bevy_input_prompts_macros::directory_representation!(
-        "assets/bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/Default"
-    );
+    // bevy_input_prompts_macros::directory_representation!(
+    //     "assets/bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/Default"
+    // );
 }
 
-pub fn foo() {
-    directory_representation::_Default::_MX_0::_f7
-}
 // pub trait ToInputPromptPath {
 //     type Preferences;
 //     fn to_input_prompt_path(&self, preferences: Self::Preferences) -> &'static str;
