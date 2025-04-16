@@ -195,7 +195,19 @@ fn bron_kerbosch_pivot(
         .unwrap();
     let mut todo = p
         .iter()
-        .filter(|&v| u == v || mx[u].as_ref().is_none_or(|mx| mx.contains(v)) || mx[v].as_ref().is_none_or(|mx| mx.contains(u))) //skip neighbors of pivot
+        //skip neighbors of pivot
+        .filter(|&v| {
+            u == v ||
+            match (&mx[u], &mx[v]) {
+                (Some(a), Some(b)) => {
+                    a.contains(v) ||
+                    b.contains(u)
+                },
+                _ => {
+                    false
+                }
+            }
+        })
         .collect::<Vec<_>>();
     while let Some(v) = todo.pop() {
         let neighbors = match &mx[v] {
