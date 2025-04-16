@@ -164,14 +164,19 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
 //     })
 // }
 
+fn mx_contains_edge(mx: &Vec<BitSet>, u: usize, v: usize) -> bool {
+    !mx[u].contains(v) && !mx[v].contains(u)
+}
+
 /// Finds maximal cliques containing all the vertices in r, some of the
 /// vertices in p, and none of the vertices in x.
 fn bron_kerbosch_pivot(
-    mx: &Vec<Option<BitSet>>,
+    mx: &Vec<BitSet>,
     r: BitSet,
     mut p: BitSet,
     mut x: BitSet,
     n: usize,
+    ignore: &HashSet<usize>,
 ) -> Vec<BitSet> {
     let mut cliques = Vec::with_capacity(1);
     if p.is_empty() {
@@ -186,7 +191,10 @@ fn bron_kerbosch_pivot(
         .max_by_key(|&v| {
             let mut neighbours = 0;
             for i in 0..n {
-                if mx[v].as_ref().is_some_and(|mx| !mx.contains(i)) && mx[i].as_ref().is_some_and(|mx| !mx.contains(v)) {
+                if ignore.contains(&v) || ignore.contains(&i) {
+                    continue;
+                }
+                if mx_contains_edge(mx, v, i) {
                     neighbours += 1;
                 }
             }
@@ -197,29 +205,22 @@ fn bron_kerbosch_pivot(
         .iter()
         //skip neighbors of pivot
         .filter(|&v| {
-            u == v ||
-            match (&mx[u], &mx[v]) {
-                (Some(a), Some(b)) => {
-                    a.contains(v) ||
-                    b.contains(u)
-                },
-                _ => {
-                    false
-                }
+            if ignore.contains(&v) {
+                return false;
             }
+            if u == v {
+                return true;
+            }
+            !mx_contains_edge(mx, v, u)
         })
         .collect::<Vec<_>>();
     while let Some(v) = todo.pop() {
-        let neighbors = match &mx[v] {
-            Some(mx) => {
-                let mut neighbours = BitSet::from_iter(0..n);
-                neighbours.difference_with(mx);
-                neighbours
-            },
-            None => {
-                BitSet::new()
-            },
-        };
+        let mut neighbors = BitSet::from_iter(0..n);
+        neighbors.difference_with(&mx[v]);
+        for ig in ignore {
+            neighbors.remove(*ig);
+        }
+
         p.remove(v);
         let mut next_r = r.clone();
         next_r.insert(v);
@@ -230,7 +231,7 @@ fn bron_kerbosch_pivot(
         let mut next_x = x.clone();
         next_x.intersect_with(&neighbors);
 
-        cliques.extend(bron_kerbosch_pivot(mx, next_r, next_p, next_x, n));
+        cliques.extend(bron_kerbosch_pivot(mx, next_r, next_p, next_x, n, ignore));
 
         x.insert(v);
     }
@@ -251,22 +252,26 @@ fn mx(bit_sets: &Vec<BitSet>) -> Vec<BitSet> {
         if result.is_empty() {
             break;
         }
-        mx.push(Some(result));
+        mx.push(result);
         n += 1;
     }
     let mut cliques = Vec::new();
     let mut i = 0;
+    let mut ignore = HashSet::new();
     while i < n {
         let r = BitSet::new();
         let p = BitSet::from_iter(0..n);
         let x = BitSet::new();
-        let c = bron_kerbosch_pivot(&mx, r, p, x, n)
+        let c = bron_kerbosch_pivot(&mx, r, p, x, n, &ignore);
+        dbg!(&c);
+        let c = c
             .into_iter()
             .max_by_key(|c| c.len())
             .unwrap();
         i += c.len();
+        dbg!(i, n);
         for a in &c {
-            mx[a] = None;
+            ignore.insert(a);
         }
         cliques.push(c);
     }
@@ -375,6 +380,9 @@ fn directory_representation_module<P: AsRef<Path>>(
             }
             bit_sets.push(bit_set);
         }
+        dbg!(&tokens);
+        dbg!(tokens.len());
+        dbg!();
         let mut mx = mx(&bit_sets);
         // add any that aren't left in any mutually exclusive set
         // (they might be mutually exclusive with other tokens but they got taken by another group)
