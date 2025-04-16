@@ -800,6 +800,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bit-set 0.8.0",
+ "fixedbitset 0.5.7",
  "hashbrown 0.15.2",
  "petgraph 0.8.1",
  "proc-macro2",

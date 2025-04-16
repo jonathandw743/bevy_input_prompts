@@ -69,7 +69,8 @@ pub mod directory_representation {
     // bevy_input_prompts_macros::directory_representation!("assets/test");
     // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts");
     // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts/Xbox Series/Default");
-    bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts");
+    bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Xbox Series");
+    // bevy_input_prompts_macros::directory_representation!("assets/bevy_input_prompts/kenney/kenney_input-prompts");
     // bevy_input_prompts_macros::directory_representation!(
     //     "assets/bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/Default"
     // );

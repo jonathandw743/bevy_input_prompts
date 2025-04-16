@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
 use bit_set::BitSet;
+use fixedbitset::FixedBitSet;
 use hashbrown::{HashMap, HashSet};
 use petgraph::{
     Graph,
@@ -239,42 +240,38 @@ fn bron_kerbosch_pivot(
     cliques
 }
 
-fn mx(bit_sets: &Vec<BitSet>) -> Vec<BitSet> {
-    let mut mx = Vec::new();
-    let mut n = 0;
-    loop {
-        let mut result = BitSet::new();
+fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
+    let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
+    for bit in 0..n {
         for bit_set in bit_sets {
-            if bit_set.contains(n) {
-                result.union_with(bit_set);
+            if bit_set.contains(bit) {
+                non_exclusive[bit].union_with(bit_set);
             }
         }
-        if result.is_empty() {
-            break;
-        }
-        mx.push(result);
-        n += 1;
     }
-    let mut cliques = Vec::new();
-    let mut i = 0;
-    let mut ignore = HashSet::new();
-    while i < n {
-        let r = BitSet::new();
-        let p = BitSet::from_iter(0..n);
-        let x = BitSet::new();
-        let c = bron_kerbosch_pivot(&mx, r, p, x, n, &ignore);
-        dbg!(&c);
-        let c = c
-            .into_iter()
-            .max_by_key(|c| c.len())
-            .unwrap();
-        i += c.len();
-        dbg!(i, n);
-        for a in &c {
-            ignore.insert(a);
-        }
-        cliques.push(c);
-    }
+    non_exclusive
+}
+// fn cliques(mutual_exclusions: &Vec<FixedBitSet>) -> Vec<FixedBitSet> {
+//     let mut cliques = Vec::new();
+//     let mut i = 0;
+//     let mut ignore = HashSet::new();
+//     while i < n {
+//         let r = BitSet::new();
+//         let p = BitSet::from_iter(0..n);
+//         let x = BitSet::new();
+//         let c = bron_kerbosch_pivot(&mx, r, p, x, n, &ignore);
+//         dbg!(&c);
+//         let c = c.into_iter().max_by_key(|c| c.len()).unwrap();
+//         i += c.len();
+//         dbg!(i, n);
+//         for a in &c {
+//             ignore.insert(a);
+//         }
+//         cliques.push(c);
+//     }
+//     cliques
+// }
+
 //    let mut collected = HashSet::new();
 //    for clique in &cliques {
 //        for i in clique {
@@ -286,9 +283,6 @@ fn mx(bit_sets: &Vec<BitSet>) -> Vec<BitSet> {
 //            dbg!(i);
 //        }
 //    }
-
-    cliques
-}
 
 // #[test]
 // fn test_mx() {
@@ -370,20 +364,30 @@ fn directory_representation_module<P: AsRef<Path>>(
         for (i, token) in tokens.iter().enumerate() {
             token_to_index.insert(token.clone(), i);
         }
+
+        let num_files = tokenised_file_names.len();
+        let num_tokens = tokens.len();
         // convert each file into a bit set that says whether the file name contains a given token
         // assumes there aren't file names that are made of the same set of tokens e.g. keyboard_w and w_keyboard
-        let mut bit_sets = Vec::new();
-        for tokenised_file_name in &tokenised_file_names {
-            let mut bit_set = BitSet::new();
-            for t in tokenised_file_name {
-                bit_set.insert(token_to_index[t]);
+        let mut bit_sets = vec![FixedBitSet::with_capacity(num_tokens); num_files];
+        for i in 0..num_files {
+            for t in &tokenised_file_names[i] {
+                bit_sets[i].insert(token_to_index[t]);
             }
-            bit_sets.push(bit_set);
         }
-        dbg!(&tokens);
-        dbg!(tokens.len());
-        dbg!();
-        let mut mx = mx(&bit_sets);
+        let non_exclusive = non_exclusive(&bit_sets, num_tokens);
+        dbg!(tokens.iter().enumerate().collect::<Vec<_>>());
+        dbg!(
+            bit_sets
+                .iter()
+                .map(|x| format!("{}", x))
+                .collect::<Vec<_>>(),
+            non_exclusive
+                .iter()
+                .map(|x| format!("{}", x))
+                .collect::<Vec<_>>()
+        );
+
         // add any that aren't left in any mutually exclusive set
         // (they might be mutually exclusive with other tokens but they got taken by another group)
 
@@ -400,38 +404,38 @@ fn directory_representation_module<P: AsRef<Path>>(
         // }
 
         // create enums out of the mutually exlusive tokens
-        let mut mx_enums = Vec::new();
-        let enum_name_base = "_MX_";
-        for (i, mx) in mx.iter().enumerate() {
-            let mx_tokens = mx.iter().map(|index| tokens[index].clone());
-            let enum_name = Ident::new(&format!("{}{}", enum_name_base, i), Span::call_site());
-            let variants = mx_tokens.clone().map(|t| filename_to_variant(&t));
-            let arms = variants.clone().zip(mx_tokens).map(|(variant, t)| {
-                let lit = LitStr::new(&t, Span::call_site());
-                quote! { Self::#variant => #lit }
-            });
-            mx_enums.push(quote! {
-                pub enum #enum_name {
-                    #(#variants,)*
-                }
-                impl #enum_name {
-                    pub fn str(&self) -> &'static str {
-                        match self {
-                            #(#arms,)*
-                        }
-                    }
-                }
-            });
-        }
-        // dbg!(&tokens[65], &tokens[80]);
-        // create the module
-        return Ok(quote! {
-            pub mod #dir_variant {
-                pub const PATH: &'static str = #file_name;
-                #(#mx_enums)*
-                #(#submodules)*
-            }
-        });
+        // let mut mx_enums = Vec::new();
+        // let enum_name_base = "_MX_";
+        // for (i, mx) in mx.iter().enumerate() {
+        //     let mx_tokens = mx.iter().map(|index| tokens[index].clone());
+        //     let enum_name = Ident::new(&format!("{}{}", enum_name_base, i), Span::call_site());
+        //     let variants = mx_tokens.clone().map(|t| filename_to_variant(&t));
+        //     let arms = variants.clone().zip(mx_tokens).map(|(variant, t)| {
+        //         let lit = LitStr::new(&t, Span::call_site());
+        //         quote! { Self::#variant => #lit }
+        //     });
+        //     mx_enums.push(quote! {
+        //         pub enum #enum_name {
+        //             #(#variants,)*
+        //         }
+        //         impl #enum_name {
+        //             pub fn str(&self) -> &'static str {
+        //                 match self {
+        //                     #(#arms,)*
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }
+        // // dbg!(&tokens[65], &tokens[80]);
+        // // create the module
+        // return Ok(quote! {
+        //     pub mod #dir_variant {
+        //         pub const PATH: &'static str = #file_name;
+        //         #(#mx_enums)*
+        //         #(#submodules)*
+        //     }
+        // });
         // let mut variants = Vec::new();
         // let mut arms = Vec::new();
         // for ni in toposort(&g, None)
