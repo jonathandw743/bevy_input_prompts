@@ -1,14 +1,16 @@
 use anyhow::{Result, anyhow};
+use std::collections::BinaryHeap;
+use std::cmp::Ordering;
 use bit_set::BitSet;
 use fixedbitset::FixedBitSet;
 use hashbrown::{HashMap, HashSet};
-use petgraph::{
-    Graph,
-    algo::{maximal_cliques, toposort},
-    data::Build,
-    graph::{NodeIndex, UnGraph},
-    visit::{GetAdjacencyMatrix, IntoNeighbors},
-};
+// use petgraph::{
+//     Graph,
+//     algo::{maximal_cliques, toposort},
+//     data::Build,
+//     graph::{NodeIndex, UnGraph},
+//     visit::{GetAdjacencyMatrix, IntoNeighbors},
+// };
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{TokenStreamExt, format_ident, quote};
@@ -21,90 +23,6 @@ use syn::{
     token::{Comma, Struct},
 };
 
-// struct BigUint<T>(T);
-
-// #[proc_macro]
-// pub fn big_int(len: TokenStream) -> TokenStream {
-//     let len = parse_macro_input!(len as LitInt);
-//     let Ok(len) = len.base10_parse::<usize>() else {
-//         return syn::Error::new_spanned(len, "Cannot parse input")
-//             .to_compile_error()
-//             .into();
-//     };
-//     let struct_name = format_ident!("BigInt{}", len);
-//     let mut tuple_type = Vec::new();
-//     let u128_count = len / 128;
-//     for _ in 0..u128_count {
-//         tuple_type.push(quote! { u128 });
-//     }
-//     let extra = len - u128_count;
-//     match extra {
-//         0 => {}
-//         1..=8 => {
-//             tuple_type.push(quote! { u8 });
-//         }
-//         9..=16 => {
-//             tuple_type.push(quote! { u16 });
-//         }
-//         17..=32 => {
-//             tuple_type.push(quote! { u32 });
-//         }
-//         33..=64 => {
-//             tuple_type.push(quote! { u64 });
-//         }
-//         65..=127 => {
-//             tuple_type.push(quote! { u128 });
-//         }
-//         128.. => unreachable!(),
-//     }
-//     let struct_def = quote! { struct #struct_name (#(#tuple_type,)*); };
-//     let impl_block = quote! {
-//         impl #struct_name {
-//             pub fn zero() -> Self {
-//                 return
-//             }
-//             pub fn from_one(shift: usize) -> Self {
-
-//             }
-//             pub fn or(&self, other: Self) -> Self {
-
-//             }
-//         }
-//     }
-// }
-// struct Input {
-//     x: Punctuated::<Expr, Token![,]>,
-// }
-
-// impl Parse for Input {
-//     fn parse(input: parse::ParseStream) -> syn::Result<Self> {
-//         let f =
-//     }
-// }
-
-// struct I(Punctuated<Expr, Token![,]>);
-
-// impl Parse for I {
-//     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-//         Ok(I(input.parse_terminated(Expr::parse, Token![,])?))
-//     }
-// }
-
-// #[proc_macro]
-// pub fn show_expr(input: TokenStream) -> TokenStream {
-//     let exprs = parse_macro_input!(input as I);
-//     let mut exprs: Vec<_> = exprs.0.into_iter().collect();
-//     exprs.sort();
-
-//     quote! {}.into()
-// }
-
-// #[proc_macro]
-// pub fn foo(input: TokenStream) -> TokenStream {
-//     let input = parse_macro_input!(input as LitStr).value();
-
-// }
-
 #[proc_macro]
 pub fn directory_representation(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr).value();
@@ -114,134 +32,6 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
         .into()
 }
 
-// fn directory_representation_module<P: AsRef<Path>>(
-//     dir: P,
-//     ignore: &Path,
-// ) -> Result<proc_macro2::TokenStream> {
-//     Ok(if dir.as_ref().is_file() {
-//         let variant = filename_to_variant(
-//             dir.as_ref()
-//                 .file_name()
-//                 .ok_or(anyhow!("No file name"))?
-//                 .to_str()
-//                 .ok_or(anyhow!("Could not convert file name to str"))?,
-//         );
-//         let file_name = syn::LitStr::new(
-//             dir.as_ref()
-//                 .strip_prefix(ignore)
-//                 .expect("Could not strip prefix")
-//                 .to_str()
-//                 .expect("Could not convert file name to str"),
-//             proc_macro2::Span::call_site(),
-//         );
-//         quote! {
-//             pub const #variant: &'static str = #file_name;
-//         }
-//     } else {
-//         let dir_variant = filename_to_variant(
-//             dir.as_ref()
-//                 .file_name()
-//                 .expect("Could not get file_name")
-//                 .to_str()
-//                 .expect("Could not convert filename to str"),
-//         );
-//         let file_name = syn::LitStr::new(
-//             dir.as_ref()
-//                 .strip_prefix(ignore)
-//                 .expect("Could not strip prefix")
-//                 .to_str()
-//                 .expect("Could not convert file name to str"),
-//             proc_macro2::Span::call_site(),
-//         );
-//         let mut submodules = Vec::new();
-//         for dir_entry in std::fs::read_dir(&dir)? {
-//             let dir_entry = dir_entry?;
-//             submodules.push(directory_representation_module(dir_entry.path(), ignore)?)
-//         }
-//         quote! {
-//             pub const #dir_variant: &'static str = #file_name;
-//             pub mod #dir_variant { #(#submodules)* }
-//         }
-//     })
-// }
-
-// fn are_mutually(mx: &Vec<BitSet>, u: usize, v: usize) -> bool {
-//     !mx[u].contains(v) && !mx[v].contains(u)
-// }
-
-/// Finds maximal cliques containing all the vertices in r, some of the
-/// vertices in p, and none of the vertices in x.
-// fn bron_kerbosch_pivot(
-//     non_exclusive: &Vec<FixedBitSet>,
-//     r: FixedBitSet,
-//     mut p: FixedBitSet,
-//     mut x: FixedBitSet,
-//     n: usize,
-//     // ignore: &HashSet<usize>,
-// ) -> Vec<FixedBitSet> {
-//     let mut cliques = Vec::with_capacity(1);
-//     if p.is_clear() {
-//         if x.is_clear() {
-//             cliques.push(r);
-//         }
-//         return cliques;
-//     }
-//     // pick the pivot u to be the vertex with max degree
-//     // println!("{}", p);
-//     let u = p.ones()
-//         .max_by_key(|&v| {
-//             let mut neighbours = 0;
-//             for i in 0..n {
-//                 // if ignore.contains(&v) || ignore.contains(&i) {
-//                 //     continue;
-//                 // }
-//                 if !non_exclusive[v].contains(i) && !non_exclusive[i].contains(v) {
-//                     neighbours += 1;
-//                 }
-//                 // if mx_contains_edge(mx, v, i) {
-//                 //     neighbours += 1;
-//                 // }
-//             }
-//             neighbours
-//         })
-//         .expect("there should be a vertex with max degree");
-//     let mut todo = p
-//         .ones()
-//         //skip neighbors of pivot
-//         .filter(|&v| {
-//             // if ignore.contains(&v) {
-//             //     return false;
-//             // }
-//             if u == v {
-//                 return true;
-//             }
-//             !(!non_exclusive[u].contains(v) && !non_exclusive[v].contains(u))
-//         })
-//         .collect::<Vec<_>>();
-//     while let Some(v) = todo.pop() {
-//         let mut neighbors = FixedBitSet::from_iter(0..n);
-//         neighbors.difference_with(&non_exclusive[v]);
-//         // for ig in ignore {
-//         //     neighbors.remove(*ig);
-//         // }
-
-//         p.remove(v);
-//         let mut next_r = r.clone();
-//         next_r.insert(v);
-
-//         let mut next_p = p.clone();
-//         next_p.intersect_with(&neighbors);
-
-//         let mut next_x = x.clone();
-//         next_x.intersect_with(&neighbors);
-
-//         cliques.extend(bron_kerbosch_pivot(non_exclusive, next_r, next_p, next_x, n));
-
-//         x.insert(v);
-//     }
-
-//     cliques
-// }
 
 fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
@@ -254,97 +44,204 @@ fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     }
     non_exclusive
 }
-// fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
-//     let mut cliques = Vec::new();
-//     let mut i = 0;
-//     let mut p = FixedBitSet::from_iter(0..n);
-//     while i < n {
-//         let r = FixedBitSet::with_capacity(n);
-//         let x = FixedBitSet::with_capacity(n);
-//         let c = bron_kerbosch_pivot(&non_exclusive, r, p.clone(), x, n);
-//         let c = c.into_iter().max_by_key(|c| c.count_ones(..)).unwrap();
-//         i += c.count_ones(..);
-//         for a in c.ones() {
-//             p.remove(a);
-//         }
-//         cliques.push(c);
-//     }
-//     cliques
-// }
 
-//    let mut collected = HashSet::new();
-//    for clique in &cliques {
-//        for i in clique {
-//            collected.insert(i);
-//        }
-//    }
-//    for i in 0..n {
-//        if !collected.contains(&i) {
-//            dbg!(i);
-//        }
-//    }
 
-// #[test]
-// fn test_mx() {
-//     let bit_sets = vec![
-//         BitSet::from_bytes(&[0b10100000]),
-//         BitSet::from_bytes(&[0b01100000]),
-//         BitSet::from_bytes(&[0b00100000]),
-//         BitSet::from_bytes(&[0b00010000]),
-//     ];
-//     let mx = mx(bit_sets);
-//     let mut edges = Vec::new();
-//     for i in 0..mx.len() {
-//         for j in (i + 1)..mx.len() {
-//             if !mx[i].contains(j) && !mx[j].contains(i) {
-//                 edges.push((i as u32, j as u32));
-//             }
-//         }
-//     }
-//     let mut g = UnGraph::<usize, ()>::from_edges(edges);
-//     dbg!(maximal_cliques(&g));
-// }
+/// Compute degeneracy ordering using a simple greedy peeling algorithm
+fn degeneracy_ordering(graph: &Vec<FixedBitSet>) -> Vec<usize> {
+    let n = graph.len();
+    let mut degrees: Vec<usize> = graph.iter().map(|neighbors| neighbors.count_ones(..)).collect();
+    let mut order = Vec::with_capacity(n);
+    let mut removed = FixedBitSet::with_capacity(n);
 
-fn is_valid(u: usize, color: usize, coloring: &[usize], graph: &[FixedBitSet]) -> bool {
-    for v in graph[u].ones() {
-        if coloring[v] == color {
-            return false;
-        }
-    }
-    true
-}
-
-fn color_graph(
-    u: usize,
-    max_color: usize,
-    coloring: &mut [usize],
-    graph: &[FixedBitSet],
-) -> bool {
-    if u == graph.len() {
-        return true;
-    }
-
-    for color in 0..max_color {
-        if is_valid(u, color, coloring, graph) {
-            coloring[u] = color;
-            if color_graph(u + 1, max_color, coloring, graph) {
-                return true;
+    for _ in 0..n {
+        // Find vertex with smallest degree not yet removed
+        let mut min_deg = usize::MAX;
+        let mut min_v = None;
+        for v in 0..n {
+            if !removed.contains(v) && degrees[v] < min_deg {
+                min_deg = degrees[v];
+                min_v = Some(v);
             }
-            coloring[u] = usize::MAX; // reset
+        }
+
+        if let Some(v) = min_v {
+            order.push(v);
+            removed.insert(v);
+            // Update degree of neighbors
+            for u in graph[v].ones() {
+                if !removed.contains(u) {
+                    degrees[u] -= 1;
+                }
+            }
         }
     }
 
-    false
+    order.reverse(); // For coloring, reverse it (lowest-degree last)
+    order
 }
 
-fn min_coloring(graph: &[FixedBitSet], n: usize) -> (usize, Vec<usize>) {
-    for k in 1..=n {
-        let mut coloring = vec![usize::MAX; n];
-        if color_graph(0, k, &mut coloring, graph) {
-            return (k, coloring);
+fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize]) -> (usize, Vec<usize>) {
+    let n = graph.len();
+    let mut coloring = vec![usize::MAX; n];
+
+    for &v in order {
+        let mut used = FixedBitSet::with_capacity(n);
+        for u in graph[v].ones() {
+            if coloring[u] != usize::MAX {
+                used.insert(coloring[u]);
+            }
+        }
+
+        // Find the first available color
+        let color = (0..n).find(|c| !used.contains(*c)).unwrap();
+        coloring[v] = color;
+    }
+
+    let max_color = *coloring.iter().max().unwrap();
+    (max_color + 1, coloring) // colors are 0-based
+}
+
+fn dsatur(graph: &Vec<FixedBitSet>) -> (usize, Vec<usize>) {
+    let n = graph.len();
+    let mut colors = vec![None; n]; // None means uncolored
+    let mut saturation_degree = vec![0; n]; // Saturation degrees
+    let mut degrees = vec![0; n]; // Vertex degrees
+    let mut heap = BinaryHeap::new();
+
+    // Calculate initial degree for each vertex
+    for i in 0..n {
+        degrees[i] = graph[i].count_ones(..);
+    }
+
+    // Initialize the heap with all vertices
+    for i in 0..n {
+        heap.push((0, degrees[i], i)); // (saturation_degree, degree, vertex_index)
+    }
+
+    while let Some((_, degree, vertex)) = heap.pop() {
+        // Find the lowest color that is not taken by neighbors
+        let mut forbidden_colors = HashSet::new();
+        for neighbor in graph[vertex].ones() {
+            if let Some(color) = colors[neighbor] {
+                forbidden_colors.insert(color);
+            }
+        }
+
+        // Assign the smallest possible color
+        let mut color = 0;
+        while forbidden_colors.contains(&color) {
+            color += 1;
+        }
+        colors[vertex] = Some(color);
+
+        // Update the saturation degree for neighbors
+        for neighbor in graph[vertex].ones() {
+            if colors[neighbor].is_none() {
+                // Calculate the new saturation degree
+                let new_saturation_degree = graph[neighbor]
+                    .ones()
+                    .filter(|&adj| colors[adj].is_some())
+                    .count();
+                saturation_degree[neighbor] = new_saturation_degree;
+
+                // Push the updated vertex back into the heap with the new saturation degree
+                heap.push((new_saturation_degree, degrees[neighbor], neighbor));
+            }
         }
     }
-    unreachable!()
+
+    // Convert colors from Option<usize> to usize, and calculate the max color used
+    let mut coloring = Vec::with_capacity(n);
+    let mut max_color = 0;
+    for &color in colors.iter() {
+        if let Some(c) = color {
+            coloring.push(c);
+            if c > max_color {
+                max_color = c;
+            }
+        } else {
+            // In case some vertex remains uncolored, this should not happen in DSatur
+            coloring.push(usize::MAX); // Just in case of error handling
+        }
+    }
+
+    (max_color + 1, coloring) // Return color count and the coloring
+}
+
+fn my_color_graph(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
+    let order = degeneracy_ordering(graph);
+    greedy_coloring(graph, &order)
+}
+
+/// Exact graph coloring using backtracking
+fn color_graph(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
+    let order = degeneracy_ordering(graph);
+    let mut colors = vec![None; n];
+    let (initial_upper_bound, initial_coloring) = greedy_coloring(graph, &order);
+    //let (initial_upper_bound, initial_coloring) = dsatur(graph);
+    let mut best_coloring = initial_coloring.clone();
+    let mut best_color_count = initial_upper_bound;
+    dbg!(&best_coloring, &best_color_count);
+
+    fn backtrack(
+        graph: &Vec<FixedBitSet>,
+        order: &[usize],
+        idx: usize,
+        colors: &mut [Option<usize>],
+        max_color: usize,
+        best_coloring: &mut Vec<usize>,
+        best_color_count: &mut usize,
+    ) {
+        if idx == order.len() {
+            if max_color < *best_color_count {
+                *best_color_count = max_color;
+                for (i, &c) in colors.iter().enumerate() {
+                    best_coloring[i] = c.unwrap();
+                }
+            }
+            return;
+        }
+
+        let v = order[idx];
+        let mut used = FixedBitSet::with_capacity(max_color + 1);
+        for u in graph[v].ones() {
+            if let Some(c) = colors[u] {
+                used.insert(c);
+            }
+        }
+
+        for color in 0..=*best_color_count {
+            if !used.contains(color) {
+                colors[v] = Some(color);
+                let new_max = max_color.max(color + 1);
+                if new_max <= *best_color_count {
+                    backtrack(
+                        graph,
+                        order,
+                        idx + 1,
+                        colors,
+                        new_max,
+                        best_coloring,
+                        best_color_count,
+                    );
+                }
+                colors[v] = None;
+            }
+        }
+    }
+
+    backtrack(
+        graph,
+        &order,
+        0,
+        &mut colors,
+        0,
+        &mut best_coloring,
+        &mut best_color_count,
+    );
+    dbg!(&best_coloring, &best_color_count);
+
+    (best_color_count, best_coloring)
 }
 
 
@@ -419,7 +316,7 @@ fn directory_representation_module<P: AsRef<Path>>(
         let non_exclusive = non_exclusive(&bit_sets, num_tokens);
         dbg!(non_exclusive.iter().map(|v| format!("{}", v)).collect::<Vec<_>>());
         dbg!("started coloring");
-        let (mx_count, coloring) = min_coloring(&non_exclusive, num_tokens);
+        let (mx_count, coloring) = my_color_graph(&non_exclusive, num_tokens);
         dbg!("ended coloring");
         
         let mx_enum_names: Vec<_> = (0..mx_count).map(|color| format_ident!("_MX_{}", color)).collect();
