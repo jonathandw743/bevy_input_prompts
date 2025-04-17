@@ -171,77 +171,77 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
 
 /// Finds maximal cliques containing all the vertices in r, some of the
 /// vertices in p, and none of the vertices in x.
-fn bron_kerbosch_pivot(
-    non_exclusive: &Vec<FixedBitSet>,
-    r: FixedBitSet,
-    mut p: FixedBitSet,
-    mut x: FixedBitSet,
-    n: usize,
-    // ignore: &HashSet<usize>,
-) -> Vec<FixedBitSet> {
-    let mut cliques = Vec::with_capacity(1);
-    if p.is_clear() {
-        if x.is_clear() {
-            cliques.push(r);
-        }
-        return cliques;
-    }
-    // pick the pivot u to be the vertex with max degree
-    // println!("{}", p);
-    let u = p.ones()
-        .max_by_key(|&v| {
-            let mut neighbours = 0;
-            for i in 0..n {
-                // if ignore.contains(&v) || ignore.contains(&i) {
-                //     continue;
-                // }
-                if !non_exclusive[v].contains(i) && !non_exclusive[i].contains(v) {
-                    neighbours += 1;
-                }
-                // if mx_contains_edge(mx, v, i) {
-                //     neighbours += 1;
-                // }
-            }
-            neighbours
-        })
-        .expect("there should be a vertex with max degree");
-    let mut todo = p
-        .ones()
-        //skip neighbors of pivot
-        .filter(|&v| {
-            // if ignore.contains(&v) {
-            //     return false;
-            // }
-            if u == v {
-                return true;
-            }
-            !(!non_exclusive[u].contains(v) && !non_exclusive[v].contains(u))
-        })
-        .collect::<Vec<_>>();
-    while let Some(v) = todo.pop() {
-        let mut neighbors = FixedBitSet::from_iter(0..n);
-        neighbors.difference_with(&non_exclusive[v]);
-        // for ig in ignore {
-        //     neighbors.remove(*ig);
-        // }
+// fn bron_kerbosch_pivot(
+//     non_exclusive: &Vec<FixedBitSet>,
+//     r: FixedBitSet,
+//     mut p: FixedBitSet,
+//     mut x: FixedBitSet,
+//     n: usize,
+//     // ignore: &HashSet<usize>,
+// ) -> Vec<FixedBitSet> {
+//     let mut cliques = Vec::with_capacity(1);
+//     if p.is_clear() {
+//         if x.is_clear() {
+//             cliques.push(r);
+//         }
+//         return cliques;
+//     }
+//     // pick the pivot u to be the vertex with max degree
+//     // println!("{}", p);
+//     let u = p.ones()
+//         .max_by_key(|&v| {
+//             let mut neighbours = 0;
+//             for i in 0..n {
+//                 // if ignore.contains(&v) || ignore.contains(&i) {
+//                 //     continue;
+//                 // }
+//                 if !non_exclusive[v].contains(i) && !non_exclusive[i].contains(v) {
+//                     neighbours += 1;
+//                 }
+//                 // if mx_contains_edge(mx, v, i) {
+//                 //     neighbours += 1;
+//                 // }
+//             }
+//             neighbours
+//         })
+//         .expect("there should be a vertex with max degree");
+//     let mut todo = p
+//         .ones()
+//         //skip neighbors of pivot
+//         .filter(|&v| {
+//             // if ignore.contains(&v) {
+//             //     return false;
+//             // }
+//             if u == v {
+//                 return true;
+//             }
+//             !(!non_exclusive[u].contains(v) && !non_exclusive[v].contains(u))
+//         })
+//         .collect::<Vec<_>>();
+//     while let Some(v) = todo.pop() {
+//         let mut neighbors = FixedBitSet::from_iter(0..n);
+//         neighbors.difference_with(&non_exclusive[v]);
+//         // for ig in ignore {
+//         //     neighbors.remove(*ig);
+//         // }
 
-        p.remove(v);
-        let mut next_r = r.clone();
-        next_r.insert(v);
+//         p.remove(v);
+//         let mut next_r = r.clone();
+//         next_r.insert(v);
 
-        let mut next_p = p.clone();
-        next_p.intersect_with(&neighbors);
+//         let mut next_p = p.clone();
+//         next_p.intersect_with(&neighbors);
 
-        let mut next_x = x.clone();
-        next_x.intersect_with(&neighbors);
+//         let mut next_x = x.clone();
+//         next_x.intersect_with(&neighbors);
 
-        cliques.extend(bron_kerbosch_pivot(non_exclusive, next_r, next_p, next_x, n));
+//         cliques.extend(bron_kerbosch_pivot(non_exclusive, next_r, next_p, next_x, n));
 
-        x.insert(v);
-    }
+//         x.insert(v);
+//     }
 
-    cliques
-}
+//     cliques
+// }
 
 fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
@@ -254,23 +254,23 @@ fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     }
     non_exclusive
 }
-fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
-    let mut cliques = Vec::new();
-    let mut i = 0;
-    let mut p = FixedBitSet::from_iter(0..n);
-    while i < n {
-        let r = FixedBitSet::with_capacity(n);
-        let x = FixedBitSet::with_capacity(n);
-        let c = bron_kerbosch_pivot(&non_exclusive, r, p.clone(), x, n);
-        let c = c.into_iter().max_by_key(|c| c.count_ones(..)).unwrap();
-        i += c.count_ones(..);
-        for a in c.ones() {
-            p.remove(a);
-        }
-        cliques.push(c);
-    }
-    cliques
-}
+// fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
+//     let mut cliques = Vec::new();
+//     let mut i = 0;
+//     let mut p = FixedBitSet::from_iter(0..n);
+//     while i < n {
+//         let r = FixedBitSet::with_capacity(n);
+//         let x = FixedBitSet::with_capacity(n);
+//         let c = bron_kerbosch_pivot(&non_exclusive, r, p.clone(), x, n);
+//         let c = c.into_iter().max_by_key(|c| c.count_ones(..)).unwrap();
+//         i += c.count_ones(..);
+//         for a in c.ones() {
+//             p.remove(a);
+//         }
+//         cliques.push(c);
+//     }
+//     cliques
+// }
 
 //    let mut collected = HashSet::new();
 //    for clique in &cliques {
@@ -306,7 +306,7 @@ fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
 // }
 
 fn is_valid(u: usize, color: usize, coloring: &[usize], graph: &[FixedBitSet]) -> bool {
-    for &v in graph[u].ones() {
+    for v in graph[u].ones() {
         if coloring[v] == color {
             return false;
         }
@@ -337,12 +337,11 @@ fn color_graph(
     false
 }
 
-fn min_coloring(graph: &[FixedBitSet]) -> Vec<usize> {
-    let n = graph.len();
+fn min_coloring(graph: &[FixedBitSet], n: usize) -> (usize, Vec<usize>) {
     for k in 1..=n {
         let mut coloring = vec![usize::MAX; n];
         if color_graph(0, k, &mut coloring, graph) {
-            return coloring;
+            return (k, coloring);
         }
     }
     unreachable!()
@@ -418,40 +417,53 @@ fn directory_representation_module<P: AsRef<Path>>(
             }
         }
         let non_exclusive = non_exclusive(&bit_sets, num_tokens);
-        let cliques = cliques(&non_exclusive, num_tokens);
-        let mut token_to_enum_name = HashMap::new(); 
-        // create enums out of the mutually exlusive tokens
-        let mut mx_enums = Vec::new();
-        for (i, mutually_exclusive_token_indices) in cliques.iter().enumerate() {
-            let mutually_exclusive_tokens = mutually_exclusive_token_indices.ones().map(|index| tokens[index].clone()).collect::<Vec<_>>();
-            let enum_name = Ident::new(&format!("_MX_{}", i), Span::call_site());
-            let variants = mutually_exclusive_tokens.clone().into_iter().map(|token| filename_to_variant(&token)).collect::<Vec<_>>();
-            // let str_arms = variants.clone().into_iter().zip(mutually_exclusive_tokens.clone()).map(|(variant, token)| {
-            //     let lit = LitStr::new(&token, Span::call_site());
-            //     quote! { Self::#variant => #lit }
-            // });
-            mx_enums.push(quote! {
-                pub enum #enum_name {
-                    #(#variants,)*
-                }
-                // impl #enum_name {
-                //     pub fn str(&self) -> &'static str {
-                //         match self {
-                //             #(#str_arms,)*
-                //         }
-                //     }
-                // }
-            });
-            for (token, variant) in mutually_exclusive_tokens.into_iter().zip(variants) {
-                token_to_enum_name.insert(token, (i, quote!{ #enum_name::#variant }));
-            }
+        dbg!(non_exclusive.iter().map(|v| format!("{}", v)).collect::<Vec<_>>());
+        dbg!("started coloring");
+        let (mx_count, coloring) = min_coloring(&non_exclusive, num_tokens);
+        dbg!("ended coloring");
+        
+        let mx_enum_names: Vec<_> = (0..mx_count).map(|color| format_ident!("_MX_{}", color)).collect();
+        let mut mx_enum_variants = vec![Vec::new(); mx_count];
+        for (&color, token) in coloring.iter().zip(tokens) {
+            mx_enum_variants[color].push(filename_to_variant(&token));
         }
+        let mut mx_enums = mx_enum_names.iter().zip(mx_enum_variants).map(|(enum_name, variants)| quote! {
+            pub enum #enum_name {
+                #(#variants,)*
+            }
+        });
+        // for (i, mutually_exclusive_token_indices) in cliques.iter().enumerate() {
+        //     let mutually_exclusive_tokens = mutually_exclusive_token_indices.ones().map(|index| tokens[index].clone()).collect::<Vec<_>>();
+        //     let enum_name = Ident::new(&format!("_MX_{}", i), Span::call_site());
+        //     let variants = mutually_exclusive_tokens.clone().into_iter().map(|token| filename_to_variant(&token)).collect::<Vec<_>>();
+        //     // let str_arms = variants.clone().into_iter().zip(mutually_exclusive_tokens.clone()).map(|(variant, token)| {
+        //     //     let lit = LitStr::new(&token, Span::call_site());
+        //     //     quote! { Self::#variant => #lit }
+        //     // });
+        //     mx_enums.push(quote! {
+        //         pub enum #enum_name {
+        //             #(#variants,)*
+        //         }
+        //         // impl #enum_name {
+        //         //     pub fn str(&self) -> &'static str {
+        //         //         match self {
+        //         //             #(#str_arms,)*
+        //         //         }
+        //         //     }
+        //         // }
+        //     });
+        //     for (token, variant) in mutually_exclusive_tokens.into_iter().zip(variants) {
+        //         token_to_enum_name.insert(token, (i, quote!{ #enum_name::#variant }));
+        //     }
+        // }
         let mut function_arms = Vec::with_capacity(num_files);
         for (i, (token_set, file_name)) in token_set_to_file_name.iter().enumerate() {
-            let mut variant_exprs = vec![None; cliques.len()];
+            let mut variant_exprs = vec![None; mx_count];
             for token in token_set {
-                let (clique_index, variant_expr) = &token_to_enum_name[token];
-                variant_exprs[*clique_index] = Some(variant_expr);
+                let color = coloring[token_to_index[token]];
+                let enum_name = &mx_enum_names[color];
+                let variant = filename_to_variant(&token);
+                variant_exprs[color] = Some(quote!{ #enum_name::#variant });
             }
             let variant_exprs_unwrap = variant_exprs.into_iter().map(|v| {
                 match v {
@@ -462,7 +474,7 @@ fn directory_representation_module<P: AsRef<Path>>(
             let lit = LitStr::new(file_name, Span::call_site());
             function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
         }
-        let tctype = (0..cliques.len()).map(|i| {
+        let tctype = (0..mx_count).map(|i| {
             let e = Ident::new(&format!("_MX_{}", i), Span::call_site());
             quote! {
                 Option<#e>
