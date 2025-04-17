@@ -305,6 +305,50 @@ fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
 //     dbg!(maximal_cliques(&g));
 // }
 
+fn is_valid(u: usize, color: usize, coloring: &[usize], graph: &[FixedBitSet]) -> bool {
+    for &v in graph[u].ones() {
+        if coloring[v] == color {
+            return false;
+        }
+    }
+    true
+}
+
+fn color_graph(
+    u: usize,
+    max_color: usize,
+    coloring: &mut [usize],
+    graph: &[FixedBitSet],
+) -> bool {
+    if u == graph.len() {
+        return true;
+    }
+
+    for color in 0..max_color {
+        if is_valid(u, color, coloring, graph) {
+            coloring[u] = color;
+            if color_graph(u + 1, max_color, coloring, graph) {
+                return true;
+            }
+            coloring[u] = usize::MAX; // reset
+        }
+    }
+
+    false
+}
+
+fn min_coloring(graph: &[FixedBitSet]) -> Vec<usize> {
+    let n = graph.len();
+    for k in 1..=n {
+        let mut coloring = vec![usize::MAX; n];
+        if color_graph(0, k, &mut coloring, graph) {
+            return coloring;
+        }
+    }
+    unreachable!()
+}
+
+
 fn directory_representation_module<P: AsRef<Path>>(
     dir: P,
     ignore: &Path,
@@ -382,21 +426,21 @@ fn directory_representation_module<P: AsRef<Path>>(
             let mutually_exclusive_tokens = mutually_exclusive_token_indices.ones().map(|index| tokens[index].clone()).collect::<Vec<_>>();
             let enum_name = Ident::new(&format!("_MX_{}", i), Span::call_site());
             let variants = mutually_exclusive_tokens.clone().into_iter().map(|token| filename_to_variant(&token)).collect::<Vec<_>>();
-            let str_arms = variants.clone().into_iter().zip(mutually_exclusive_tokens.clone()).map(|(variant, token)| {
-                let lit = LitStr::new(&token, Span::call_site());
-                quote! { Self::#variant => #lit }
-            });
+            // let str_arms = variants.clone().into_iter().zip(mutually_exclusive_tokens.clone()).map(|(variant, token)| {
+            //     let lit = LitStr::new(&token, Span::call_site());
+            //     quote! { Self::#variant => #lit }
+            // });
             mx_enums.push(quote! {
                 pub enum #enum_name {
                     #(#variants,)*
                 }
-                impl #enum_name {
-                    pub fn str(&self) -> &'static str {
-                        match self {
-                            #(#str_arms,)*
-                        }
-                    }
-                }
+                // impl #enum_name {
+                //     pub fn str(&self) -> &'static str {
+                //         match self {
+                //             #(#str_arms,)*
+                //         }
+                //     }
+                // }
             });
             for (token, variant) in mutually_exclusive_tokens.into_iter().zip(variants) {
                 token_to_enum_name.insert(token, (i, quote!{ #enum_name::#variant }));
