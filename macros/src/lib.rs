@@ -84,56 +84,76 @@ impl DirectoryRepresentationIntermediary {
                 .ok_or(anyhow!("Could not convert file name to str"))?,
             proc_macro2::Span::call_site(),
         );
-        // read all file names and split them
-        let mut token_sets_file_paths = Vec::new();
-        // modules corresponding to subdirectories
+
+        let mut file_paths_token_counts = Vec::new();
         let mut sub_dirs = Vec::new();
+        let mut max_counts: HashMap<&str, usize> = HashMap::new();
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                token_sets_file_paths.push(tokenise_dir_entry(&path)?);
+                // the path as a string
+                let path_str = path.to_str()
+                    .ok_or(anyhow!("Could not convert file path to str"))?;
+                // file stem split into tokens
+                let tokens = path.file_stem().ok_or(anyhow!("Could not get file_stem"))?.to_str().ok_or(anyhow!("Could not convert file stem to str"))?.split("_");
+                // get counts of each token
+                let mut counts = HashMap::new();
+                for token in tokens {
+                    *counts.entry(token).or_insert(0) += 1;
+                }
+                // update the max counts
+                for (token, count) in counts {
+                    max_counts.entry(token).and_modify(|v| if count > *v {
+                        *v = count;
+                    }).or_insert(count);
+                }
+                file_paths_token_counts.push((path_str, counts));
             }
             if path.is_dir() {
                 sub_dirs.push(path)
             }
         }
-        // make unique (not using a hash set because i want a deterministic iteration)
-        let mut tokens: Vec<_> = token_sets_file_paths
-        .iter()
-        .map(|(tokens, _)| tokens.clone())
+
+        // order tokens for use in graph
+        let mut tokens: Vec<_> = max_counts.iter().collect();
+        tokens.sort();
+        let tokens: Vec<_> = tokens
+            .iter()
+            .map(|(token, max_count)| (0..**max_count).map(|i| (token, i)))
             .flatten()
             .collect();
-        tokens.sort();
-        tokens.dedup();
-        // create a map from tokens to indices in tokens
         let mut token_to_index = HashMap::new();
         for (i, token) in tokens.iter().enumerate() {
-            token_to_index.insert(token.clone(), i);
+            token_to_index.insert(token, i);
         }
-        
-        let num_files = token_sets_file_paths.len();
         let num_tokens = tokens.len();
+
         // convert each file into a bit set that says whether the file name contains a given token
-        // assumes there aren't file names that are made of the same set of tokens e.g. keyboard_w and w_keyboard
-        let mut bit_sets = vec![FixedBitSet::with_capacity(num_tokens); num_files];
-        for (i, (token_set, file_name)) in token_sets_file_paths.iter().enumerate() {
-            for token in token_set {
-                bit_sets[i].insert(token_to_index[token]);
+        let mut bit_sets = vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
+        for (i, (_path, token_counts)) in file_paths_token_counts.iter().enumerate() {
+            for (token, count) in token_counts {
+                bit_sets[i].insert(token_to_index[&(&token, *count)]);
             }
         }
+
+        // convert to a graph with edges where tokens appear in the same file name
         let non_exclusive = non_exclusive(&bit_sets, num_tokens);
         
+        // color the graph
         let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
 
-        let min_colors = token_sets_file_paths.iter().map(|(a, _)| a.len()).max().unwrap_or(0);
-        if min_colors != mx_count {
-            dbg!(min_colors, mx_count, dir.as_ref());
+        #[cfg(debug_assertions)]
+        {
+            let min_colors = file_paths_token_counts.iter().map(|(a, _)| a.len()).max().unwrap_or(0);
+            if min_colors != mx_count {
+                dbg!(min_colors, mx_count, dir.as_ref());
+            }
         }
 
         Ok(Self {
             dir_variant,
             file_name,
-            token_sets_file_paths,
+            token_sets_file_paths: file_paths_token_counts,
             sub_dirs,
             tokens,
             token_to_index,
