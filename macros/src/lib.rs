@@ -4,20 +4,41 @@ use hashbrown::HashMap;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
-use std::path::Path;
-use syn::{
-    parse_macro_input, Ident, LitStr
-};
+use std::path::{Path, PathBuf};
+use syn::{Ident, LitStr, parse_macro_input};
+
+mod graph_operations;
 
 #[proc_macro]
 pub fn directory_representation(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&input);
-    directory_representation_module(dir_path)
+    DirectoryRepresentationIntermediary::from_path(dir_path)
+        .expect("Could not create directory representation module")
+        .to_token_stream(
+            |non_exclusive, num_tokens| {
+                let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+                graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+            }
+        )
         .expect("Could not create directory representation module")
         .into()
 }
 
+fn tokenise_dir_entry(path: &PathBuf) -> Result<(Vec<String>, String)> {
+    Ok((
+        path.file_stem()
+            .ok_or(anyhow!("Could not get file stem"))?
+            .to_str()
+            .ok_or(anyhow!("Could not convert file stem to str"))?
+            .split("_")
+            .map(|x| x.to_owned())
+            .collect::<Vec<_>>(),
+        path.to_str()
+            .ok_or(anyhow!("Could not convert file path to str"))?
+            .to_owned(),
+    ))
+}
 
 fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
@@ -31,64 +52,21 @@ fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
     non_exclusive
 }
 
-
-/// Compute degeneracy ordering using a simple greedy peeling algorithm
-fn degeneracy_ordering(graph: &Vec<FixedBitSet>, n: usize) -> Vec<usize> {
-    let mut degrees: Vec<usize> = graph.iter().map(|neighbors| neighbors.count_ones(..)).collect();
-    let mut order = Vec::with_capacity(n);
-    let mut removed = FixedBitSet::with_capacity(n);
-
-    for _ in 0..n {
-        // Find vertex with smallest degree not yet removed
-        let mut min_deg = usize::MAX;
-        let mut min_v = None;
-        for v in 0..n {
-            if !removed.contains(v) && degrees[v] < min_deg {
-                min_deg = degrees[v];
-                min_v = Some(v);
-            }
-        }
-
-        if let Some(v) = min_v {
-            order.push(v);
-            removed.insert(v);
-            // Update degree of neighbors
-            for u in graph[v].ones() {
-                if !removed.contains(u) {
-                    degrees[u] -= 1;
-                }
-            }
-        }
-    }
-
-    order.reverse(); // For coloring, reverse it (lowest-degree last)
-    order
+struct DirectoryRepresentationIntermediary {
+    dir_variant: Ident,
+    file_name: LitStr,
+    token_sets_file_paths: Vec<(Vec<String>, String)>,
+    sub_dirs: Vec<PathBuf>,
+    tokens: Vec<String>,
+    token_to_index: HashMap<String, usize>,
+    num_files: usize,
+    num_tokens: usize,
+    bit_sets: Vec<FixedBitSet>,
+    non_exclusive: Vec<FixedBitSet>,
 }
 
-fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize], n: usize) -> (usize, Vec<usize>) {
-    let mut coloring = vec![usize::MAX; n];
-
-    for &v in order {
-        let mut used = FixedBitSet::with_capacity(n);
-        for u in graph[v].ones() {
-            if coloring[u] != usize::MAX {
-                used.insert(coloring[u]);
-            }
-        }
-
-        // Find the first available color
-        let color = (0..n).find(|c| !used.contains(*c)).expect("color not available");
-        coloring[v] = color;
-    }
-
-    let max_color: usize = coloring.iter().max().map_or(0, |x| x + 1);
-    (max_color, coloring) // colors are 0-based
-}
-
-fn directory_representation_module<P: AsRef<Path>>(
-    dir: P,
-) -> Result<proc_macro2::TokenStream> {
-    if dir.as_ref().is_dir() {
+impl DirectoryRepresentationIntermediary {
+    fn from_path<P: AsRef<Path>>(dir: P) -> Result<Self> {
         let dir_variant = filename_to_variant(
             dir.as_ref()
                 .file_name()
@@ -104,36 +82,24 @@ fn directory_representation_module<P: AsRef<Path>>(
             proc_macro2::Span::call_site(),
         );
         // read all file names and split them
-        let mut token_set_to_file_name = Vec::new();
-        // all tokens
-        let mut tokens = Vec::new();
+        let mut token_sets_file_paths = Vec::new();
         // modules corresponding to subdirectories
-        let mut submodules = Vec::new();
+        let mut sub_dirs = Vec::new();
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                let mut tokenised_file_stem = path
-                    .file_stem()
-                    .ok_or(anyhow!("Could not get file stem"))?
-                    .to_str()
-                    .ok_or(anyhow!("Could not convert file stem to str"))?
-                    .split("_")
-                    .map(|x| x.to_owned())
-                    .collect::<Vec<_>>();
-                tokenised_file_stem.sort();
-                tokenised_file_stem.dedup();
-                let file_name = path
-                    .to_str()
-                    .ok_or(anyhow!("Could not convert file path to str"))?
-                    .to_owned();
-                token_set_to_file_name.push((tokenised_file_stem.clone(), file_name));
-                tokens.extend(tokenised_file_stem);
+                token_sets_file_paths.push(tokenise_dir_entry(&path)?);
             }
             if path.is_dir() {
-                submodules.push(directory_representation_module(&path)?)
+                sub_dirs.push(path)
             }
         }
         // make unique (not using a hash set because i want a deterministic iteration)
+        let mut tokens: Vec<_> = token_sets_file_paths
+            .iter()
+            .map(|(tokens, _)| tokens.clone())
+            .flatten()
+            .collect();
         tokens.sort();
         tokens.dedup();
         // create a map from tokens to indices in tokens
@@ -142,71 +108,65 @@ fn directory_representation_module<P: AsRef<Path>>(
             token_to_index.insert(token.clone(), i);
         }
 
-        let num_files = token_set_to_file_name.len();
+        let num_files = token_sets_file_paths.len();
         let num_tokens = tokens.len();
         // convert each file into a bit set that says whether the file name contains a given token
         // assumes there aren't file names that are made of the same set of tokens e.g. keyboard_w and w_keyboard
         let mut bit_sets = vec![FixedBitSet::with_capacity(num_tokens); num_files];
-        for (i, (token_set, file_name)) in token_set_to_file_name.iter().enumerate() {
+        for (i, (token_set, file_name)) in token_sets_file_paths.iter().enumerate() {
             for token in token_set {
                 bit_sets[i].insert(token_to_index[token]);
             }
         }
         let non_exclusive = non_exclusive(&bit_sets, num_tokens);
+        Ok(Self {
+            dir_variant,
+            file_name,
+            token_sets_file_paths,
+            sub_dirs,
+            tokens,
+            token_to_index,
+            num_files,
+            num_tokens,
+            bit_sets,
+            non_exclusive,
+        })
+    }
 
-        dbg!(non_exclusive.iter().map(|v| format!("{}", v)).collect::<Vec<_>>());
+    fn to_token_stream(&self, graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>)) -> Result<proc_macro2::TokenStream> {
 
-        let order = degeneracy_ordering(&non_exclusive, num_tokens);
-        let (mx_count, coloring) = greedy_coloring(&non_exclusive, &order, num_tokens);
-        
-        let mx_enum_names: Vec<_> = (0..mx_count).map(|color| format_ident!("_MX_{}", color)).collect();
+        let (mx_count, coloring) = graph_coloring(&self.non_exclusive, self.num_tokens);
+
+        let mx_enum_names: Vec<_> = (0..mx_count)
+            .map(|color| format_ident!("_MX_{}", color))
+            .collect();
         let mut mx_enum_variants = vec![Vec::new(); mx_count];
-        for (&color, token) in coloring.iter().zip(tokens) {
+        for (&color, token) in coloring.iter().zip(self.tokens.iter()) {
             mx_enum_variants[color].push(filename_to_variant(&token));
         }
-        let mx_enums = mx_enum_names.iter().zip(mx_enum_variants).map(|(enum_name, variants)| quote! {
-            pub enum #enum_name {
-                #(#variants,)*
-            }
-        });
-        // for (i, mutually_exclusive_token_indices) in cliques.iter().enumerate() {
-        //     let mutually_exclusive_tokens = mutually_exclusive_token_indices.ones().map(|index| tokens[index].clone()).collect::<Vec<_>>();
-        //     let enum_name = Ident::new(&format!("_MX_{}", i), Span::call_site());
-        //     let variants = mutually_exclusive_tokens.clone().into_iter().map(|token| filename_to_variant(&token)).collect::<Vec<_>>();
-        //     // let str_arms = variants.clone().into_iter().zip(mutually_exclusive_tokens.clone()).map(|(variant, token)| {
-        //     //     let lit = LitStr::new(&token, Span::call_site());
-        //     //     quote! { Self::#variant => #lit }
-        //     // });
-        //     mx_enums.push(quote! {
-        //         pub enum #enum_name {
-        //             #(#variants,)*
-        //         }
-        //         // impl #enum_name {
-        //         //     pub fn str(&self) -> &'static str {
-        //         //         match self {
-        //         //             #(#str_arms,)*
-        //         //         }
-        //         //     }
-        //         // }
-        //     });
-        //     for (token, variant) in mutually_exclusive_tokens.into_iter().zip(variants) {
-        //         token_to_enum_name.insert(token, (i, quote!{ #enum_name::#variant }));
-        //     }
-        // }
-        let mut function_arms = Vec::with_capacity(num_files);
-        for (i, (token_set, file_name)) in token_set_to_file_name.iter().enumerate() {
+        let mx_enums = mx_enum_names
+            .iter()
+            .zip(mx_enum_variants)
+            .map(|(enum_name, variants)| {
+                quote! {
+                    pub enum #enum_name {
+                        #(#variants,)*
+                    }
+                }
+            });
+        
+        let mut function_arms = Vec::with_capacity(self.num_files);
+        for (token_set, file_name) in self.token_sets_file_paths.iter() {
             let mut variant_exprs = vec![None; mx_count];
             for token in token_set {
-                let color = coloring[token_to_index[token]];
+                let color = coloring[self.token_to_index[token]];
                 let enum_name = &mx_enum_names[color];
                 let variant = filename_to_variant(&token);
-                variant_exprs[color] = Some(quote!{ #enum_name::#variant });
+                variant_exprs[color] = Some(quote! { #enum_name::#variant });
             }
-            let variant_exprs_unwrap = variant_exprs.into_iter().map(|v| {
-                match v {
-                    Some(v) => quote! { Some(#v) },
-                    None => quote! { None },
-                }
+            let variant_exprs_unwrap = variant_exprs.into_iter().map(|v| match v {
+                Some(v) => quote! { Some(#v) },
+                None => quote! { None },
             });
             let lit = LitStr::new(file_name, Span::call_site());
             function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
@@ -217,9 +177,10 @@ fn directory_representation_module<P: AsRef<Path>>(
                 Option<#e>
             }
         });
-        let function = if num_files == 0 {
-            quote! {}
-        } else {
+        let function = 
+        // if self.num_files == 0 {
+        //     quote! {}
+        // } else {
             quote! {
                 pub fn file(tc: (#(#tctype,)*)) -> Option<&'static str> {
                     match tc {
@@ -228,17 +189,25 @@ fn directory_representation_module<P: AsRef<Path>>(
                     }
                 }
             }
-        };
-        return Ok(quote! {
+        // }
+        ;
+        let mut submodules = Vec::new();
+        for sub_dir in &self.sub_dirs {
+            submodules.push(DirectoryRepresentationIntermediary::from_path(sub_dir)?.to_token_stream(graph_coloring)?);
+        }
+
+        let dir_variant = &self.dir_variant;
+        let file_name  = &self.file_name;
+
+        Ok(quote! {
             pub mod #dir_variant {
                 pub const PATH: &'static str = #file_name;
                 #(#mx_enums)*
-                #(#submodules)*
                 #function
+                #(#submodules)*
             }
-        });
+        })
     }
-    Err(anyhow!(""))
 }
 
 fn filename_to_variant(name: &str) -> proc_macro2::Ident {
