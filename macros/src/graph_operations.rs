@@ -55,8 +55,7 @@ pub fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize], n: usize) -> (
     (max_color, coloring) // colors are 0-based
 }
 
-fn dsatur(graph: &Vec<FixedBitSet>) -> (usize, Vec<usize>) {
-    let n = graph.len();
+pub fn dsatur(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
     let mut colors = vec![None; n]; // None means uncolored
     let mut saturation_degree = vec![0; n]; // Saturation degrees
     let mut degrees = vec![0; n]; // Vertex degrees

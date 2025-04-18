@@ -13,13 +13,13 @@ mod graph_operations;
 pub fn directory_representation(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&input);
-    DirectoryRepresentationIntermediary::from_path(dir_path)
+    DirectoryRepresentationIntermediary::from_path(dir_path, |non_exclusive, num_tokens| {
+        let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+        graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+    })
         .expect("Could not create directory representation module")
         .to_token_stream(
-            |non_exclusive, num_tokens| {
-                let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
-                graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
-            }
+            
         )
         .expect("Could not create directory representation module")
         .into()
@@ -63,10 +63,13 @@ struct DirectoryRepresentationIntermediary {
     num_tokens: usize,
     bit_sets: Vec<FixedBitSet>,
     non_exclusive: Vec<FixedBitSet>,
+    mx_count: usize,
+    coloring: Vec<usize>,
+    graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
 }
 
 impl DirectoryRepresentationIntermediary {
-    fn from_path<P: AsRef<Path>>(dir: P) -> Result<Self> {
+    fn from_path<P: AsRef<Path>>(dir: P, graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>)) -> Result<Self> {
         let dir_variant = filename_to_variant(
             dir.as_ref()
                 .file_name()
@@ -96,8 +99,8 @@ impl DirectoryRepresentationIntermediary {
         }
         // make unique (not using a hash set because i want a deterministic iteration)
         let mut tokens: Vec<_> = token_sets_file_paths
-            .iter()
-            .map(|(tokens, _)| tokens.clone())
+        .iter()
+        .map(|(tokens, _)| tokens.clone())
             .flatten()
             .collect();
         tokens.sort();
@@ -107,7 +110,7 @@ impl DirectoryRepresentationIntermediary {
         for (i, token) in tokens.iter().enumerate() {
             token_to_index.insert(token.clone(), i);
         }
-
+        
         let num_files = token_sets_file_paths.len();
         let num_tokens = tokens.len();
         // convert each file into a bit set that says whether the file name contains a given token
@@ -119,6 +122,14 @@ impl DirectoryRepresentationIntermediary {
             }
         }
         let non_exclusive = non_exclusive(&bit_sets, num_tokens);
+        
+        let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
+
+        let min_colors = token_sets_file_paths.iter().map(|(a, _)| a.len()).max().unwrap_or(0);
+        if min_colors != mx_count {
+            dbg!(min_colors, mx_count, dir.as_ref());
+        }
+
         Ok(Self {
             dir_variant,
             file_name,
@@ -130,18 +141,19 @@ impl DirectoryRepresentationIntermediary {
             num_tokens,
             bit_sets,
             non_exclusive,
+            mx_count,
+            coloring,
+            graph_coloring,
         })
     }
 
-    fn to_token_stream(&self, graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>)) -> Result<proc_macro2::TokenStream> {
+    fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
 
-        let (mx_count, coloring) = graph_coloring(&self.non_exclusive, self.num_tokens);
-
-        let mx_enum_names: Vec<_> = (0..mx_count)
+        let mx_enum_names: Vec<_> = (0..self.mx_count)
             .map(|color| format_ident!("_MX_{}", color))
             .collect();
-        let mut mx_enum_variants = vec![Vec::new(); mx_count];
-        for (&color, token) in coloring.iter().zip(self.tokens.iter()) {
+        let mut mx_enum_variants = vec![Vec::new();self.mx_count];
+        for (&color, token) in self.coloring.iter().zip(self.tokens.iter()) {
             mx_enum_variants[color].push(filename_to_variant(&token));
         }
         let mx_enums = mx_enum_names
@@ -157,9 +169,9 @@ impl DirectoryRepresentationIntermediary {
         
         let mut function_arms = Vec::with_capacity(self.num_files);
         for (token_set, file_name) in self.token_sets_file_paths.iter() {
-            let mut variant_exprs = vec![None; mx_count];
+            let mut variant_exprs = vec![None; self.mx_count];
             for token in token_set {
-                let color = coloring[self.token_to_index[token]];
+                let color = self.coloring[self.token_to_index[token]];
                 let enum_name = &mx_enum_names[color];
                 let variant = filename_to_variant(&token);
                 variant_exprs[color] = Some(quote! { #enum_name::#variant });
@@ -171,7 +183,7 @@ impl DirectoryRepresentationIntermediary {
             let lit = LitStr::new(file_name, Span::call_site());
             function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
         }
-        let tctype = (0..mx_count).map(|i| {
+        let tctype = (0..self.mx_count).map(|i| {
             let e = format_ident!("_MX_{}", i);
             quote! {
                 Option<#e>
@@ -193,7 +205,7 @@ impl DirectoryRepresentationIntermediary {
         ;
         let mut submodules = Vec::new();
         for sub_dir in &self.sub_dirs {
-            submodules.push(DirectoryRepresentationIntermediary::from_path(sub_dir)?.to_token_stream(graph_coloring)?);
+            submodules.push(DirectoryRepresentationIntermediary::from_path(sub_dir, self.graph_coloring)?.to_token_stream()?);
         }
 
         let dir_variant = &self.dir_variant;
@@ -217,4 +229,24 @@ fn filename_to_variant(name: &str) -> proc_macro2::Ident {
         .collect::<String>();
     let base = format!("_{}", base);
     syn::parse_str::<proc_macro2::Ident>(&base).unwrap()
+}
+
+#[test]
+fn count_colors() -> Result<()> {
+    // let s = "../assets/bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/Double";
+    let s = "../assets/bevy_input_prompts/xelu/Xelu_Free_Controller&Key_Prompts/Xbox Series";
+    let x = DirectoryRepresentationIntermediary::from_path(s, |non_exclusive, num_tokens| {
+        let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+        graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+    })?;
+    println!("degeneracy ordering, greedy: {}", x.mx_count);
+    let x = DirectoryRepresentationIntermediary::from_path(s, |non_exclusive, num_tokens| {
+        graph_operations::dsatur(&non_exclusive, num_tokens)
+    })?;
+    println!("dsatur: {}", x.mx_count);
+    let x = DirectoryRepresentationIntermediary::from_path(s, |non_exclusive, num_tokens| {
+        graph_operations::color_graph(&non_exclusive, num_tokens)
+    })?;
+    println!("exact: {}", x.mx_count);
+    Ok(())
 }
