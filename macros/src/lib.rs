@@ -1,33 +1,19 @@
 use anyhow::{Result, anyhow};
-use std::collections::BinaryHeap;
-use std::cmp::Ordering;
-use bit_set::BitSet;
 use fixedbitset::FixedBitSet;
-use hashbrown::{HashMap, HashSet};
-// use petgraph::{
-//     Graph,
-//     algo::{maximal_cliques, toposort},
-//     data::Build,
-//     graph::{NodeIndex, UnGraph},
-//     visit::{GetAdjacencyMatrix, IntoNeighbors},
-// };
+use hashbrown::HashMap;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
-use quote::{TokenStreamExt, format_ident, quote};
-use std::{hash::Hash, path::Path};
+use quote::{format_ident, quote};
+use std::path::Path;
 use syn::{
-    Expr, Ident, LitBool, LitInt, LitStr, Token,
-    parse::{self, Parse},
-    parse_macro_input, parse2,
-    punctuated::Punctuated,
-    token::{Comma, Struct},
+    parse_macro_input, Ident, LitStr
 };
 
 #[proc_macro]
 pub fn directory_representation(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&input);
-    directory_representation_module(dir_path, dir_path.parent().unwrap_or(Path::new("")))
+    directory_representation_module(dir_path)
         .expect("Could not create directory representation module")
         .into()
 }
@@ -101,7 +87,6 @@ fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize], n: usize) -> (usiz
 
 fn directory_representation_module<P: AsRef<Path>>(
     dir: P,
-    ignore: &Path,
 ) -> Result<proc_macro2::TokenStream> {
     if dir.as_ref().is_dir() {
         let dir_variant = filename_to_variant(
@@ -145,7 +130,7 @@ fn directory_representation_module<P: AsRef<Path>>(
                 tokens.extend(tokenised_file_stem);
             }
             if path.is_dir() {
-                submodules.push(directory_representation_module(&path, ignore)?)
+                submodules.push(directory_representation_module(&path)?)
             }
         }
         // make unique (not using a hash set because i want a deterministic iteration)
@@ -179,7 +164,7 @@ fn directory_representation_module<P: AsRef<Path>>(
         for (&color, token) in coloring.iter().zip(tokens) {
             mx_enum_variants[color].push(filename_to_variant(&token));
         }
-        let mut mx_enums = mx_enum_names.iter().zip(mx_enum_variants).map(|(enum_name, variants)| quote! {
+        let mx_enums = mx_enum_names.iter().zip(mx_enum_variants).map(|(enum_name, variants)| quote! {
             pub enum #enum_name {
                 #(#variants,)*
             }
@@ -227,7 +212,7 @@ fn directory_representation_module<P: AsRef<Path>>(
             function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
         }
         let tctype = (0..mx_count).map(|i| {
-            let e = Ident::new(&format!("_MX_{}", i), Span::call_site());
+            let e = format_ident!("_MX_{}", i);
             quote! {
                 Option<#e>
             }
