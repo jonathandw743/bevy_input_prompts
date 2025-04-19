@@ -4,7 +4,7 @@ use hashbrown::HashMap;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
-use std::path::{Path, PathBuf};
+use std::{path::{Path, PathBuf}, rc::Rc};
 use syn::{Ident, LitStr, parse_macro_input};
 
 mod graph_operations;
@@ -55,10 +55,10 @@ fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
 struct DirectoryRepresentationIntermediary {
     dir_variant: Ident,
     file_name: LitStr,
-    token_sets_file_paths: Vec<(Vec<String>, String)>,
+    file_paths_token_counts: Vec<(PathBuf, HashMap<String, usize>)>,
     sub_dirs: Vec<PathBuf>,
-    tokens: Vec<String>,
-    token_to_index: HashMap<String, usize>,
+    tokens: Vec<(String, usize)>,
+    token_to_index: HashMap<(String, usize), usize>,
     num_files: usize,
     num_tokens: usize,
     bit_sets: Vec<FixedBitSet>,
@@ -85,66 +85,66 @@ impl DirectoryRepresentationIntermediary {
             proc_macro2::Span::call_site(),
         );
 
-        let mut file_paths_token_counts = Vec::new();
+        // let mut file_paths_token_counts = Vec::new();
         let mut sub_dirs = Vec::new();
-        let mut max_counts: HashMap<&str, usize> = HashMap::new();
+        let mut max_counts = HashMap::new();
+        let mut file_paths_token_counts = Vec::new();
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                // the path as a string
-                let path_str = path.to_str()
-                    .ok_or(anyhow!("Could not convert file path to str"))?;
                 // file stem split into tokens
                 let tokens = path.file_stem().ok_or(anyhow!("Could not get file_stem"))?.to_str().ok_or(anyhow!("Could not convert file stem to str"))?.split("_");
                 // get counts of each token
                 let mut counts = HashMap::new();
                 for token in tokens {
-                    *counts.entry(token).or_insert(0) += 1;
+                    *counts.entry(token.to_owned()).or_insert(0) += 1;
                 }
                 // update the max counts
-                for (token, count) in counts {
-                    max_counts.entry(token).and_modify(|v| if count > *v {
+                for (token, &count) in &counts {
+                    max_counts.entry(token.clone()).and_modify(|v| if count > *v {
                         *v = count;
                     }).or_insert(count);
                 }
-                file_paths_token_counts.push((path_str, counts));
-            }
-            if path.is_dir() {
-                sub_dirs.push(path)
+                file_paths_token_counts.push((path, counts));
+            } else if path.is_dir() {
+                sub_dirs.push(path);
             }
         }
 
         // order tokens for use in graph
-        let mut tokens: Vec<_> = max_counts.iter().collect();
+        let mut tokens = max_counts.into_iter().collect::<Vec<_>>();
         tokens.sort();
-        let tokens: Vec<_> = tokens
-            .iter()
-            .map(|(token, max_count)| (0..**max_count).map(|i| (token, i)))
+        let tokens = tokens
+            .into_iter()
+            .map(|(token, max_count)| (0..max_count).map(move |i| (token.clone(), i)))
             .flatten()
-            .collect();
+            .collect::<Vec<_>>();
         let mut token_to_index = HashMap::new();
         for (i, token) in tokens.iter().enumerate() {
-            token_to_index.insert(token, i);
+            token_to_index.insert(token.clone(), i);
         }
         let num_tokens = tokens.len();
+        let num_files = file_paths_token_counts.len();
 
         // convert each file into a bit set that says whether the file name contains a given token
-        let mut bit_sets = vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
+        let mut tokens_in_files = vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
         for (i, (_path, token_counts)) in file_paths_token_counts.iter().enumerate() {
-            for (token, count) in token_counts {
-                bit_sets[i].insert(token_to_index[&(&token, *count)]);
+            for (token, &count) in token_counts {
+                for index in 0..count {
+                    tokens_in_files[i].insert(token_to_index[&(token.clone(), index)]);
+                }
             }
         }
 
         // convert to a graph with edges where tokens appear in the same file name
-        let non_exclusive = non_exclusive(&bit_sets, num_tokens);
+        let non_exclusive = non_exclusive(&tokens_in_files, num_tokens);
         
         // color the graph
         let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
 
         #[cfg(debug_assertions)]
         {
-            let min_colors = file_paths_token_counts.iter().map(|(a, _)| a.len()).max().unwrap_or(0);
+            let min_colors = tokens_in_files.iter().map(|tokens_in_file| tokens_in_file.count_ones(..)).max().unwrap_or(0);
             if min_colors != mx_count {
                 dbg!(min_colors, mx_count, dir.as_ref());
             }
@@ -153,13 +153,15 @@ impl DirectoryRepresentationIntermediary {
         Ok(Self {
             dir_variant,
             file_name,
-            token_sets_file_paths: file_paths_token_counts,
+            file_paths_token_counts,
+            // paths,
+            // token_counts,
             sub_dirs,
             tokens,
             token_to_index,
             num_files,
             num_tokens,
-            bit_sets,
+            bit_sets: tokens_in_files,
             non_exclusive,
             mx_count,
             coloring,
@@ -174,7 +176,7 @@ impl DirectoryRepresentationIntermediary {
             .collect();
         let mut mx_enum_variants = vec![Vec::new();self.mx_count];
         for (&color, token) in self.coloring.iter().zip(self.tokens.iter()) {
-            mx_enum_variants[color].push(filename_to_variant(&token));
+            mx_enum_variants[color].push(token_to_variant(token));
         }
         let mx_enums = mx_enum_names
             .iter()
@@ -188,19 +190,21 @@ impl DirectoryRepresentationIntermediary {
             });
         
         let mut function_arms = Vec::with_capacity(self.num_files);
-        for (token_set, file_name) in self.token_sets_file_paths.iter() {
+        for (file_path, token_counts) in self.file_paths_token_counts.iter() {
             let mut variant_exprs = vec![None; self.mx_count];
-            for token in token_set {
-                let color = self.coloring[self.token_to_index[token]];
-                let enum_name = &mx_enum_names[color];
-                let variant = filename_to_variant(&token);
-                variant_exprs[color] = Some(quote! { #enum_name::#variant });
+            for (token, count) in token_counts {
+                for index in 0..*count {
+                    let color = self.coloring[self.token_to_index[&(token.clone(), index)]];
+                    let enum_name = &mx_enum_names[color];
+                    let variant = token_to_variant(&(token.clone(), index));
+                    variant_exprs[color] = Some(quote! { #enum_name::#variant });
+                }
             }
             let variant_exprs_unwrap = variant_exprs.into_iter().map(|v| match v {
                 Some(v) => quote! { Some(#v) },
                 None => quote! { None },
             });
-            let lit = LitStr::new(file_name, Span::call_site());
+            let lit = LitStr::new(file_path.to_str().ok_or(anyhow!("Could not convert file path to str"))?, Span::call_site());
             function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
         }
         let tctype = (0..self.mx_count).map(|i| {
@@ -251,6 +255,19 @@ fn filename_to_variant(name: &str) -> proc_macro2::Ident {
     syn::parse_str::<proc_macro2::Ident>(&base).unwrap()
 }
 
+fn token_to_variant(token: &(String, usize)) -> proc_macro2::Ident {
+    let base = token.0
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '_' })
+        .collect::<String>();
+    // tokens like "Foo$2" and the second instance of "Foo" will map to the same variant
+    // let base = format!("_{}_{}", base, token.1);
+    // two tokens that have the same string should never be in the same enum as they will always be in the same file name
+    let base = format!("_{}", base);
+    syn::parse_str(&base).expect("Could not parse str")
+}
+
+
 #[test]
 fn count_colors() -> Result<()> {
     // let s = "../assets/bevy_input_prompts/kenney/kenney_input-prompts/Keyboard & Mouse/Double";
@@ -269,4 +286,13 @@ fn count_colors() -> Result<()> {
     })?;
     println!("exact: {}", x.mx_count);
     Ok(())
+}
+
+fn foo() {
+    struct Foo;
+    let mut v = Vec::new();
+    v.push({
+        let f = Rc::new(Foo);
+        (f.clone(), f)
+    });
 }
