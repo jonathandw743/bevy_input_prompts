@@ -52,6 +52,7 @@ struct DirectoryRepresentationIntermediary {
     mx_count: usize,
     coloring: Vec<usize>,
     graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
+    colors_to_indices: Vec<Vec<usize>>,
 }
 
 impl DirectoryRepresentationIntermediary {
@@ -142,6 +143,11 @@ impl DirectoryRepresentationIntermediary {
         // color the graph
         let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
 
+        let mut colors_to_indices = vec![Vec::new(); mx_count];
+        for (token_index, &color) in coloring.iter().enumerate() {
+            colors_to_indices[color].push(token_index);
+        }
+
         #[cfg(debug_assertions)]
         {
             let min_colors = tokens_in_files
@@ -150,7 +156,15 @@ impl DirectoryRepresentationIntermediary {
                 .max()
                 .unwrap_or(0);
             if min_colors != mx_count {
-                dbg!(min_colors, mx_count, dir.as_ref());
+                dbg!(dir.as_ref(), min_colors, mx_count);
+            }
+        }
+
+        let mut g = HashMap::new();
+        for tokens_in_file in &tokens_in_files {
+            let mut indices = vec![None; mx_count];
+            for token_index in tokens_in_file.ones() {
+                indices[coloring[token_index]] = Some(token_index);
             }
         }
 
@@ -168,6 +182,7 @@ impl DirectoryRepresentationIntermediary {
             mx_count,
             coloring,
             graph_coloring,
+            colors_to_indices
         })
     }
 
