@@ -7,7 +7,7 @@ use proc_macro2::Span;
 use quote::{format_ident, quote};
 use std::{
     borrow::Cow,
-    collections::{HashSet, VecDeque},
+    collections::{HashSet, VecDeque, vec_deque},
     iter::once,
     path::{Path, PathBuf},
     rc::Rc,
@@ -186,10 +186,42 @@ impl DirectoryRepresentationIntermediary {
         // possibly inefficient, should create my own multi_cartesian product
 
         let mut possible_file_tokens = Vec::new();
-        let mut s = vec![Vec::with_capacity(color_count)];
-        while let Some(x) = s.pop() {
-            if x.len() == color_count {
-                possible_file_tokens.push(x);
+        // let mut real_file_indices = vec![0; file_tokens.len()];
+        let mut s = Vec::new();
+        s.push(Vec::with_capacity(color_count));
+        let mut edges = Vec::new();
+        let mut i = 0;
+        while i < s.len() {
+            let x = s[i].clone();
+            // if x.len() == color_count {
+            // let bit_set = FixedBitSet::from_iter(
+            //     x.into_iter().filter_map(|token_index| token_index),
+            // );
+            // for (index, file_tokens) in file_tokens.iter().enumerate() {
+            //     if &bit_set == file_tokens {
+            //         real_file_indices[index] = possible_file_tokens.len();
+            //     }
+            // }
+            // possible_file_tokens.push(bit_set);
+            if x.len() + 1 == color_count {
+                let origin = possible_file_tokens.len();
+                {
+                    let mut x = x.clone();
+                    x.push(None);
+                    let bit_set =
+                        FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
+                    possible_file_tokens.push(bit_set);
+                    // possible_file_tokens.push(x);
+                }
+                for token_index in color_to_tokens[x.len()].ones() {
+                    edges.push((origin, s.len()));
+                    let mut x = x.clone();
+                    x.push(Some(token_index));
+                    let bit_set =
+                        FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
+                    possible_file_tokens.push(bit_set);
+                    // possible_file_tokens.push(x);
+                }
             } else {
                 {
                     let mut x = x.clone();
@@ -202,16 +234,26 @@ impl DirectoryRepresentationIntermediary {
                     s.push(x);
                 }
             }
+            i += 1;
         }
+
         // dbg!(possible_file_tokens.iter().map(|x| {
         //     x.iter().map(|n| match n {
         //         Some(n) => format!("{}", n),
         //         None => "_".to_string(),
         //     }).join(" ")
         // }).collect::<Vec<_>>());
-        
 
-        // dbg!(color_to_tokens.iter().map(|x| format!("{}", x)).collect::<Vec<_>>());
+        // dbg!(
+        //     possible_file_tokens
+        //         .iter()
+        //         .map(|x| format!("{}", x))
+        //         .collect::<Vec<_>>()
+        // );
+
+        // dbg!(&real_file_indices);
+
+        // dbg!(graph);
 
         // let possible_file_tokens = color_to_tokens
         //     .iter()
@@ -231,7 +273,6 @@ impl DirectoryRepresentationIntermediary {
 
         // let mut possible_files_graph = HashMap::new();
 
-        
         let mut predictions = Vec::new();
 
         // dbg!(possible_file_tokens.map(|x| format!("{}", x)).collect::<Vec<_>>());
@@ -286,21 +327,21 @@ impl DirectoryRepresentationIntermediary {
 
     fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
         // create mutually exculsive enums using graph coloring
-        let mx_enums =
-            self.color_to_tokens
-                .iter()
-                .enumerate()
-                .map(|(color, token_indices)| {
-                    let enum_name = format_ident!("_MX_{}", color);
-                    let variants = token_indices
-                        .ones()
-                        .map(|token_index| token_to_ident(&self.tokens[token_index]));
-                    quote! {
-                        pub enum #enum_name {
-                            #(#variants,)*
-                        }
+        let mx_enums = self
+            .color_to_tokens
+            .iter()
+            .enumerate()
+            .map(|(color, token_indices)| {
+                let enum_name = format_ident!("_MX_{}", color);
+                let variants = token_indices
+                    .ones()
+                    .map(|token_index| token_to_ident(&self.tokens[token_index]));
+                quote! {
+                    pub enum #enum_name {
+                        #(#variants,)*
                     }
-                });
+                }
+            });
         // create function from possible files to paths
         let mut function_arms = Vec::new();
         for (file_tokens, file_path) in self.file_tokens.iter().zip(&self.file_paths) {
