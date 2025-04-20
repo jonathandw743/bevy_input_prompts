@@ -193,16 +193,6 @@ impl DirectoryRepresentationIntermediary {
         let mut i = 0;
         while i < s.len() {
             let x = s[i].clone();
-            // if x.len() == color_count {
-            // let bit_set = FixedBitSet::from_iter(
-            //     x.into_iter().filter_map(|token_index| token_index),
-            // );
-            // for (index, file_tokens) in file_tokens.iter().enumerate() {
-            //     if &bit_set == file_tokens {
-            //         real_file_indices[index] = possible_file_tokens.len();
-            //     }
-            // }
-            // possible_file_tokens.push(bit_set);
             if x.len() + 1 == color_count {
                 let origin = possible_file_tokens.len();
                 {
@@ -211,7 +201,6 @@ impl DirectoryRepresentationIntermediary {
                     let bit_set =
                         FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
                     possible_file_tokens.push(bit_set);
-                    // possible_file_tokens.push(x);
                 }
                 for token_index in color_to_tokens[x.len()].ones() {
                     edges.push((origin, s.len()));
@@ -220,7 +209,6 @@ impl DirectoryRepresentationIntermediary {
                     let bit_set =
                         FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
                     possible_file_tokens.push(bit_set);
-                    // possible_file_tokens.push(x);
                 }
             } else {
                 {
