@@ -35,6 +35,8 @@ struct DirectoryRepresentationIntermediary {
     dir_paths: Vec<PathBuf>,
     tokens: Vec<(String, usize)>,
     file_tokens: Vec<FixedBitSet>,
+    coloring: Vec<usize>,
+    color_count: usize,
     color_to_token_indices: Vec<Vec<usize>>,
     predictions: Vec<(Vec<Option<usize>>, Vec<Option<usize>>)>,
 }
@@ -138,9 +140,9 @@ impl DirectoryRepresentationIntermediary {
         }
         // color token graph to find sets of mutually exclusive tokens
         // token_index -> color
-        let (k, coloring) = graph_coloring(&token_graph, tokens.len());
+        let (color_count, coloring) = graph_coloring(&token_graph, tokens.len());
         // color -> [token_index, token_index, ...]
-        let mut color_to_token_indices = vec![Vec::new(); k];
+        let mut color_to_token_indices = vec![Vec::new(); color_count];
         for (token_index, &color) in coloring.iter().enumerate() {
             color_to_token_indices[color].push(token_index);
         }
@@ -152,15 +154,15 @@ impl DirectoryRepresentationIntermediary {
                 .map(|file_tokens| file_tokens.count_ones(..))
                 .max()
                 .unwrap_or(0);
-            if min_colors != k {
-                dbg!(dir.as_ref(), min_colors, k);
+            if min_colors != color_count {
+                dbg!(dir.as_ref(), min_colors, color_count);
             }
         }
 
         // flood fill graph of possible files to create predictions
         let mut predictions = Vec::new();
         for file_tokens in &file_tokens {
-            let mut indices = vec![None; k];
+            let mut indices = vec![None; color_count];
             for token_index in file_tokens.ones() {
                 indices[coloring[token_index]] = Some(token_index);
             }
@@ -194,12 +196,15 @@ impl DirectoryRepresentationIntermediary {
             dir_paths,
             tokens,
             file_tokens,
+            coloring,
+            color_count,
             color_to_token_indices,
             predictions,
         })
     }
 
     fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
+        // create mutually exculsive enums using graph coloring
         let mx_enum = self.color_to_token_indices.iter().enumerate().map(|(color, token_indices)| {
             let enum_name = format_ident!("_MX_{}", color);
             let variants = token_indices.iter().map(|&token_index| token_to_ident(&self.tokens[token_index]));
@@ -209,30 +214,19 @@ impl DirectoryRepresentationIntermediary {
                 }
             }
         });
-        
-        let mut function_arms = Vec::with_capacity(self.num_files);
-        for (file_path, token_counts) in self.file_paths_token_counts.iter() {
-            let mut variant_exprs = vec![None; self.mx_count];
-            for (token, count) in token_counts {
-                for index in 0..*count {
-                    let color = self.coloring[self.token_to_index[&(token.clone(), index)]];
-                    let enum_name = &mx_enum_names[color];
-                    let variant = token_to_ident(&(token.clone(), index));
-                    variant_exprs[color] = Some(quote! { #enum_name::#variant });
-                }
+        // create function from possible files to paths
+        let mut function_arms = Vec::new();
+        for (file_tokens, file_path) in self.file_tokens.iter().zip(self.file_paths) {
+            let mut variants = vec![quote! { None }; self.color_count];
+            for token_index in file_tokens.ones() {
+                let color = self.coloring[token_index];
+                let enum_name = format_ident!("_MX_{}", color);
+                let variant = token_to_ident(&self.tokens[token_index]);
+                variants[color] = quote! { Some( #enum_name :: #variant ) };
             }
-            let variant_exprs_unwrap = variant_exprs.into_iter().map(|v| match v {
-                Some(v) => quote! { Some(#v) },
-                None => quote! { None },
-            });
-            let lit = LitStr::new(
-                file_path
-                    .to_str()
-                    .ok_or(anyhow!("Could not convert file path to str"))?,
-                Span::call_site(),
-            );
-            function_arms.push(quote! { (#(#variant_exprs_unwrap,)*) => Some(#lit) });
-        }
+            let file_path = LitStr::new(file_path.to_str().ok_or(anyhow!("Could not convert file path to str"))?, Span::call_site());
+            function_arms.push(quote! { (#(#variants,)*) => #file_path });
+        };
         let tctype = (0..self.mx_count).map(|i| {
             let e = format_ident!("_MX_{}", i);
             quote! {
