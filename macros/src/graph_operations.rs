@@ -51,8 +51,8 @@ pub fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize], n: usize) -> (
         coloring[v] = color;
     }
 
-    let max_color: usize = coloring.iter().max().map_or(0, |x| x + 1);
-    (max_color, coloring) // colors are 0-based
+    let color_count: usize = coloring.iter().max().map_or(0, |x| x + 1);
+    (color_count, coloring) // colors are 0-based
 }
 
 pub fn dsatur(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {

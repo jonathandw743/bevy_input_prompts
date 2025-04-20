@@ -802,6 +802,7 @@ dependencies = [
  "bit-set 0.8.0",
  "fixedbitset 0.5.7",
  "hashbrown 0.15.2",
+ "itertools 0.14.0",
  "petgraph 0.8.1",
  "proc-macro2",
  "quote",
