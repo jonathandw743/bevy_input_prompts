@@ -26,9 +26,7 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
     .into()
 }
 
-fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
-  
-}
+fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {}
 
 struct DirectoryRepresentationIntermediary {
     dir_variant: Ident,
@@ -116,59 +114,44 @@ impl DirectoryRepresentationIntermediary {
         for (i, token) in tokens.iter().enumerate() {
             token_to_index.insert(token.clone(), i);
         }
-        // file_paths[i] <-> file_tokens[i] = (token_index, token_index, ...)
+        // file_paths[i] <-> file_tokens[i] = FixedBitSet with contained token indices set
         let file_tokens = file_word_counts.into_iter().map(|counts| {
-            counts.into_iter().map(|(token, max_count)| {
+            FixedBitSet::from_iter(counts.into_iter().map(|(token, max_count)| {
                 (0..max_count).map(move |i| token_to_index[&(token.clone(), i)])
-            })
+            }).flatten())
         });
-        // 
-        // convert to a graph with edges where tokens appear in the same file name
-    //     let mut tokens_in_files =
-    //     vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
-    // for (i, (_path, token_counts)) in file_paths_token_counts.iter().enumerate() {
-    //     for (token, &count) in token_counts {
-    //         for index in 0..count {
-    //             tokens_in_files[i].insert(token_to_index[&(token.clone(), index)]);
-    //         }
-    //     }
-    // }
-    
-        let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
-        for bit in 0..n {
-            for bit_set in bit_sets {
-                if bit_set.contains(bit) {
-                    non_exclusive[bit].union_with(bit_set);
+        // undirected graph where there is an edge between tokens if they ever appear in the same file 
+        let mut token_graph = vec![FixedBitSet::with_capacity(tokens.len()); tokens.len()];
+        for token_index in 0..tokens.len() {
+            for file_tokens in &file_tokens {
+                if file_tokens.contains(token_index) {
+                    token_graph[token_index].union_with(file_tokens);
                 }
             }
         }
-        // non_exclusive
-
-        let mut 
-
-        // color the graph
-        let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
-
-        let mut colors_to_indices = vec![Vec::new(); mx_count];
+        // color token graph to find sets of mutually exclusive tokens
+        let (k, coloring) = graph_coloring(&token_graph, tokens.len());
+        // color -> [token_index, token_index, ...]
+        let mut color_to_token_indices = vec![Vec::new(); k];
         for (token_index, &color) in coloring.iter().enumerate() {
-            colors_to_indices[color].push(token_index);
+            color_to_token_indices[color].push(token_index);
         }
 
         #[cfg(debug_assertions)]
         {
-            let min_colors = tokens_in_files
+            let min_colors = file_tokens
                 .iter()
                 .map(|tokens_in_file| tokens_in_file.count_ones(..))
                 .max()
                 .unwrap_or(0);
-            if min_colors != mx_count {
-                dbg!(dir.as_ref(), min_colors, mx_count);
+            if min_colors != k {
+                dbg!(dir.as_ref(), min_colors, k);
             }
         }
 
         let mut g = HashMap::new();
         for tokens_in_file in &tokens_in_files {
-            let mut indices = vec![None; mx_count];
+            let mut indices = vec![None; k];
             for token_index in tokens_in_file.ones() {
                 indices[coloring[token_index]] = Some(token_index);
             }
@@ -184,11 +167,11 @@ impl DirectoryRepresentationIntermediary {
             num_files,
             num_tokens,
             bit_sets: tokens_in_files,
-            non_exclusive,
-            mx_count,
+            non_exclusive: token_graph,
+            mx_count: k,
             coloring,
             graph_coloring,
-            colors_to_indices,
+            colors_to_indices: color_to_token_indices,
         })
     }
 
