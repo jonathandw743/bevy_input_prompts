@@ -5,7 +5,10 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
 use std::{
-    collections::{HashSet, VecDeque}, path::{Path, PathBuf}, rc::Rc
+    borrow::Cow,
+    collections::{HashSet, VecDeque},
+    path::{Path, PathBuf},
+    rc::Rc,
 };
 use syn::{Ident, LitStr, parse_macro_input};
 
@@ -25,23 +28,15 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
     .into()
 }
 
-fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {}
-
 struct DirectoryRepresentationIntermediary {
-    dir_variant: Ident,
-    file_name: LitStr,
-    file_paths_token_counts: Vec<(PathBuf, HashMap<String, usize>)>,
-    sub_dirs: Vec<PathBuf>,
+    dir_ident: Ident,
+    path: LitStr,
+    file_paths: Vec<PathBuf>,
+    dir_paths: Vec<PathBuf>,
     tokens: Vec<(String, usize)>,
-    token_to_index: HashMap<(String, usize), usize>,
-    num_files: usize,
-    num_tokens: usize,
-    bit_sets: Vec<FixedBitSet>,
-    non_exclusive: Vec<FixedBitSet>,
-    mx_count: usize,
-    coloring: Vec<usize>,
-    graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
-    colors_to_indices: Vec<Vec<usize>>,
+    file_tokens: Vec<FixedBitSet>,
+    color_to_token_indices: Vec<Vec<usize>>,
+    predictions: Vec<(Vec<Option<usize>>, Vec<Option<usize>>)>,
 }
 
 impl DirectoryRepresentationIntermediary {
@@ -49,21 +44,21 @@ impl DirectoryRepresentationIntermediary {
         dir: P,
         graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
     ) -> Result<Self> {
-        // let dir_variant = filename_to_variant(
-        //     dir.as_ref()
-        //         .file_name()
-        //         .ok_or(anyhow!("Could not get file_name"))?
-        //         .to_str()
-        //         .ok_or(anyhow!("Could not convert filename to str"))?,
-        // );
-        // let file_name = syn::LitStr::new(
-        //     dir.as_ref()
-        //         //    .strip_prefix(ignore)?
-        //         .to_str()
-        //         .ok_or(anyhow!("Could not convert file name to str"))?,
-        //     proc_macro2::Span::call_site(),
-        // );
-
+        // it's fine if non-utf8 characters get replaced
+        let dir_ident = dir_to_ident(
+            &dir.as_ref()
+                .file_name()
+                .ok_or(anyhow!("Could not get file_name"))?
+                .to_string_lossy(),
+        );
+        // it's not fine if non-utf8 characters get replaced
+        let path = syn::LitStr::new(
+            dir.as_ref()
+                .to_str()
+                .ok_or(anyhow!("Could not convert file name to str"))?,
+            proc_macro2::Span::call_site(),
+        );
+        // get all the contained files
         let mut file_paths = Vec::new();
         let mut dir_paths = Vec::new();
         for dir_entry in std::fs::read_dir(&dir)? {
@@ -74,6 +69,7 @@ impl DirectoryRepresentationIntermediary {
                 dir_paths.push(path);
             }
         }
+        // tokenise
         let mut file_word_counts = Vec::new();
         for file_path in &file_paths {
             let mut word_counts = HashMap::new();
@@ -86,7 +82,9 @@ impl DirectoryRepresentationIntermediary {
             {
                 *word_counts.entry(token.to_owned()).or_insert(0) += 1;
             }
+            file_word_counts.push(word_counts);
         }
+        // get max counts
         let mut max_word_counts = HashMap::new();
         for counts in &file_word_counts {
             for (word, &count) in counts {
@@ -105,7 +103,7 @@ impl DirectoryRepresentationIntermediary {
         // [(word, index), (word, index), ...]
         let tokens = max_word_counts
             .into_iter()
-            .map(|(word, max_count)| (0..max_count).map(|index| (word.clone(), index)))
+            .map(|(word, max_count)| (0..max_count).map(move |index| (word.clone(), index)))
             .flatten()
             .collect::<Vec<_>>();
         // token_to_index[(word, index)] = token_index
@@ -114,12 +112,22 @@ impl DirectoryRepresentationIntermediary {
             token_to_index.insert(token.clone(), i);
         }
         // file_paths[i] <-> file_tokens[i] = FixedBitSet with contained token indices set
-        let file_tokens = file_word_counts.into_iter().map(|counts| {
-            FixedBitSet::from_iter(counts.into_iter().map(|(token, max_count)| {
-                (0..max_count).map(move |i| token_to_index[&(token.clone(), i)])
-            }).flatten())
-        }).collect::<Vec<_>>();
-        // undirected graph where there is an edge between tokens if they ever appear in the same file 
+        let file_tokens = file_word_counts
+            .into_iter()
+            .map(move |counts| {
+                let token_to_index = &token_to_index;
+                FixedBitSet::from_iter(
+                    counts
+                        .into_iter()
+                        .map(move |(word, max_count)| {
+                            let token_to_index = token_to_index;
+                            (0..max_count).map(move |index| token_to_index[&(word.clone(), index)])
+                        })
+                        .flatten(),
+                )
+            })
+            .collect::<Vec<_>>();
+        // undirected graph where there is an edge between tokens if they ever appear in the same file
         let mut token_graph = vec![FixedBitSet::with_capacity(tokens.len()); tokens.len()];
         for token_index in 0..tokens.len() {
             for file_tokens in &file_tokens {
@@ -156,22 +164,23 @@ impl DirectoryRepresentationIntermediary {
             for token_index in file_tokens.ones() {
                 indices[coloring[token_index]] = Some(token_index);
             }
-            predictions.push((indices, indices));
+            predictions.push((indices.clone(), indices));
         }
         let mut visited = HashSet::new();
         let mut i = 0;
         while i >= predictions.len() {
-            let file_node = predictions[i];
+            let file_node = predictions[i].clone();
+            i += 1;
             if visited.contains(&file_node.0) {
                 continue;
             }
-            visited.insert(file_node.0);
+            visited.insert(file_node.0.clone());
             for (color, token_index) in file_node.0.iter().enumerate() {
                 if token_index.is_some() {
                     continue;
                 }
-                for token_index in color_to_token_indices[coloring[color]] {
-                    let mut new_file_node = file_node;
+                for &token_index in &color_to_token_indices[coloring[color]] {
+                    let mut new_file_node = file_node.clone();
                     new_file_node.0[color] = Some(token_index);
                     predictions.push(new_file_node);
                 }
@@ -179,42 +188,28 @@ impl DirectoryRepresentationIntermediary {
         }
 
         Ok(Self {
-            dir_variant,
-            file_name,
-            file_paths_token_counts,
-            sub_dirs,
+            dir_ident,
+            path,
+            file_paths,
+            dir_paths,
             tokens,
-            token_to_index,
-            num_files,
-            num_tokens,
-            bit_sets: tokens_in_files,
-            non_exclusive: token_graph,
-            mx_count: k,
-            coloring,
-            graph_coloring,
-            colors_to_indices: color_to_token_indices,
+            file_tokens,
+            color_to_token_indices,
+            predictions,
         })
     }
 
     fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
-        let mx_enum_names: Vec<_> = (0..self.mx_count)
-            .map(|color| format_ident!("_MX_{}", color))
-            .collect();
-        let mut mx_enum_variants = vec![Vec::new(); self.mx_count];
-        for (&color, token) in self.coloring.iter().zip(self.tokens.iter()) {
-            mx_enum_variants[color].push(token_to_variant(token));
-        }
-        let mx_enums = mx_enum_names
-            .iter()
-            .zip(mx_enum_variants)
-            .map(|(enum_name, variants)| {
-                quote! {
-                    pub enum #enum_name {
-                        #(#variants,)*
-                    }
+        let mx_enum = self.color_to_token_indices.iter().enumerate().map(|(color, token_indices)| {
+            let enum_name = format_ident!("_MX_{}", color);
+            let variants = token_indices.iter().map(|&token_index| token_to_ident(&self.tokens[token_index]));
+            quote! {
+                pub enum #enum_name {
+                    #(#variants,)*
                 }
-            });
-
+            }
+        });
+        
         let mut function_arms = Vec::with_capacity(self.num_files);
         for (file_path, token_counts) in self.file_paths_token_counts.iter() {
             let mut variant_exprs = vec![None; self.mx_count];
@@ -222,7 +217,7 @@ impl DirectoryRepresentationIntermediary {
                 for index in 0..*count {
                     let color = self.coloring[self.token_to_index[&(token.clone(), index)]];
                     let enum_name = &mx_enum_names[color];
-                    let variant = token_to_variant(&(token.clone(), index));
+                    let variant = token_to_ident(&(token.clone(), index));
                     variant_exprs[color] = Some(quote! { #enum_name::#variant });
                 }
             }
@@ -274,7 +269,7 @@ impl DirectoryRepresentationIntermediary {
     }
 }
 
-fn filename_to_variant(name: &str) -> proc_macro2::Ident {
+fn dir_to_ident(name: &str) -> proc_macro2::Ident {
     let base = name
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '_' })
@@ -283,7 +278,7 @@ fn filename_to_variant(name: &str) -> proc_macro2::Ident {
     syn::parse_str::<proc_macro2::Ident>(&base).unwrap()
 }
 
-fn token_to_variant(token: &(String, usize)) -> proc_macro2::Ident {
+fn token_to_ident(token: &(String, usize)) -> proc_macro2::Ident {
     let base = token
         .0
         .chars()
