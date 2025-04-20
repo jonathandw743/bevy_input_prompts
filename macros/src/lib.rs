@@ -27,15 +27,7 @@ pub fn directory_representation(input: TokenStream) -> TokenStream {
 }
 
 fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
-    let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
-    for bit in 0..n {
-        for bit_set in bit_sets {
-            if bit_set.contains(bit) {
-                non_exclusive[bit].union_with(bit_set);
-            }
-        }
-    }
-    non_exclusive
+  
 }
 
 struct DirectoryRepresentationIntermediary {
@@ -60,85 +52,99 @@ impl DirectoryRepresentationIntermediary {
         dir: P,
         graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
     ) -> Result<Self> {
-        let dir_variant = filename_to_variant(
-            dir.as_ref()
-                .file_name()
-                .ok_or(anyhow!("Could not get file_name"))?
-                .to_str()
-                .ok_or(anyhow!("Could not convert filename to str"))?,
-        );
-        let file_name = syn::LitStr::new(
-            dir.as_ref()
-                //    .strip_prefix(ignore)?
-                .to_str()
-                .ok_or(anyhow!("Could not convert file name to str"))?,
-            proc_macro2::Span::call_site(),
-        );
+        // let dir_variant = filename_to_variant(
+        //     dir.as_ref()
+        //         .file_name()
+        //         .ok_or(anyhow!("Could not get file_name"))?
+        //         .to_str()
+        //         .ok_or(anyhow!("Could not convert filename to str"))?,
+        // );
+        // let file_name = syn::LitStr::new(
+        //     dir.as_ref()
+        //         //    .strip_prefix(ignore)?
+        //         .to_str()
+        //         .ok_or(anyhow!("Could not convert file name to str"))?,
+        //     proc_macro2::Span::call_site(),
+        // );
 
-        // let mut file_paths_token_counts = Vec::new();
-        let mut sub_dirs = Vec::new();
-        let mut max_counts = HashMap::new();
-        let mut file_paths_token_counts = Vec::new();
+        let mut file_paths = Vec::new();
+        let mut dir_paths = Vec::new();
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                // file stem split into tokens
-                let tokens = path
-                    .file_stem()
-                    .ok_or(anyhow!("Could not get file_stem"))?
-                    .to_str()
-                    .ok_or(anyhow!("Could not convert file stem to str"))?
-                    .split("_");
-                // get counts of each token
-                let mut counts = HashMap::new();
-                for token in tokens {
-                    *counts.entry(token.to_owned()).or_insert(0) += 1;
-                }
-                // update the max counts
-                for (token, &count) in &counts {
-                    max_counts
-                        .entry(token.clone())
-                        .and_modify(|v| {
-                            if count > *v {
-                                *v = count;
-                            }
-                        })
-                        .or_insert(count);
-                }
-                file_paths_token_counts.push((path, counts));
+                file_paths.push(path);
             } else if path.is_dir() {
-                sub_dirs.push(path);
+                dir_paths.push(path);
             }
         }
-
-        // order tokens for use in graph
-        let mut tokens = max_counts.into_iter().collect::<Vec<_>>();
-        tokens.sort();
-        let tokens = tokens
+        let mut file_word_counts = Vec::new();
+        for file_path in &file_paths {
+            let mut word_counts = HashMap::new();
+            for token in file_path
+                .file_stem()
+                .ok_or(anyhow!("Could not get file stem"))?
+                .to_str()
+                .ok_or(anyhow!("Could not convert file stem to str"))?
+                .split("_")
+            {
+                *word_counts.entry(token.to_owned()).or_insert(0) += 1;
+            }
+        }
+        let mut max_word_counts = HashMap::new();
+        for counts in &file_word_counts {
+            for (word, &count) in counts {
+                max_word_counts
+                    .entry(word.clone())
+                    .and_modify(|v| {
+                        if count > *v {
+                            *v = count;
+                        }
+                    })
+                    .or_insert(count);
+            }
+        }
+        let mut max_word_counts = max_word_counts.into_iter().collect::<Vec<_>>();
+        max_word_counts.sort();
+        // [(word, index), (word, index), ...]
+        let tokens = max_word_counts
             .into_iter()
-            .map(|(token, max_count)| (0..max_count).map(move |i| (token.clone(), i)))
+            .map(|(word, max_count)| (0..max_count).map(|index| (word.clone(), index)))
             .flatten()
             .collect::<Vec<_>>();
+        // token_to_index[(word, index)] = token_index
         let mut token_to_index = HashMap::new();
         for (i, token) in tokens.iter().enumerate() {
             token_to_index.insert(token.clone(), i);
         }
-        let num_tokens = tokens.len();
-        let num_files = file_paths_token_counts.len();
-
-        // convert each file into a bit set that says whether the file name contains a given token
-        let mut tokens_in_files =
-            vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
-        for (i, (_path, token_counts)) in file_paths_token_counts.iter().enumerate() {
-            for (token, &count) in token_counts {
-                for index in 0..count {
-                    tokens_in_files[i].insert(token_to_index[&(token.clone(), index)]);
+        // file_paths[i] <-> file_tokens[i] = (token_index, token_index, ...)
+        let file_tokens = file_word_counts.into_iter().map(|counts| {
+            counts.into_iter().map(|(token, max_count)| {
+                (0..max_count).map(move |i| token_to_index[&(token.clone(), i)])
+            })
+        });
+        // 
+        // convert to a graph with edges where tokens appear in the same file name
+    //     let mut tokens_in_files =
+    //     vec![FixedBitSet::with_capacity(num_tokens); file_paths_token_counts.len()];
+    // for (i, (_path, token_counts)) in file_paths_token_counts.iter().enumerate() {
+    //     for (token, &count) in token_counts {
+    //         for index in 0..count {
+    //             tokens_in_files[i].insert(token_to_index[&(token.clone(), index)]);
+    //         }
+    //     }
+    // }
+    
+        let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
+        for bit in 0..n {
+            for bit_set in bit_sets {
+                if bit_set.contains(bit) {
+                    non_exclusive[bit].union_with(bit_set);
                 }
             }
         }
+        // non_exclusive
 
-        // convert to a graph with edges where tokens appear in the same file name
-        let non_exclusive = non_exclusive(&tokens_in_files, num_tokens);
+        let mut 
 
         // color the graph
         let (mx_count, coloring) = graph_coloring(&non_exclusive, num_tokens);
@@ -182,7 +188,7 @@ impl DirectoryRepresentationIntermediary {
             mx_count,
             coloring,
             graph_coloring,
-            colors_to_indices
+            colors_to_indices,
         })
     }
 
