@@ -5,8 +5,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
 use std::{
-    path::{Path, PathBuf},
-    rc::Rc,
+    collections::{HashSet, VecDeque}, path::{Path, PathBuf}, rc::Rc
 };
 use syn::{Ident, LitStr, parse_macro_input};
 
@@ -119,7 +118,7 @@ impl DirectoryRepresentationIntermediary {
             FixedBitSet::from_iter(counts.into_iter().map(|(token, max_count)| {
                 (0..max_count).map(move |i| token_to_index[&(token.clone(), i)])
             }).flatten())
-        });
+        }).collect::<Vec<_>>();
         // undirected graph where there is an edge between tokens if they ever appear in the same file 
         let mut token_graph = vec![FixedBitSet::with_capacity(tokens.len()); tokens.len()];
         for token_index in 0..tokens.len() {
@@ -130,6 +129,7 @@ impl DirectoryRepresentationIntermediary {
             }
         }
         // color token graph to find sets of mutually exclusive tokens
+        // token_index -> color
         let (k, coloring) = graph_coloring(&token_graph, tokens.len());
         // color -> [token_index, token_index, ...]
         let mut color_to_token_indices = vec![Vec::new(); k];
@@ -141,7 +141,7 @@ impl DirectoryRepresentationIntermediary {
         {
             let min_colors = file_tokens
                 .iter()
-                .map(|tokens_in_file| tokens_in_file.count_ones(..))
+                .map(|file_tokens| file_tokens.count_ones(..))
                 .max()
                 .unwrap_or(0);
             if min_colors != k {
@@ -149,11 +149,32 @@ impl DirectoryRepresentationIntermediary {
             }
         }
 
-        let mut g = HashMap::new();
-        for tokens_in_file in &tokens_in_files {
+        // flood fill graph of possible files to create predictions
+        let mut predictions = Vec::new();
+        for file_tokens in &file_tokens {
             let mut indices = vec![None; k];
-            for token_index in tokens_in_file.ones() {
+            for token_index in file_tokens.ones() {
                 indices[coloring[token_index]] = Some(token_index);
+            }
+            predictions.push((indices, indices));
+        }
+        let mut visited = HashSet::new();
+        let mut i = 0;
+        while i >= predictions.len() {
+            let file_node = predictions[i];
+            if visited.contains(&file_node.0) {
+                continue;
+            }
+            visited.insert(file_node.0);
+            for (color, token_index) in file_node.0.iter().enumerate() {
+                if token_index.is_some() {
+                    continue;
+                }
+                for token_index in color_to_token_indices[coloring[color]] {
+                    let mut new_file_node = file_node;
+                    new_file_node.0[color] = Some(token_index);
+                    predictions.push(new_file_node);
+                }
             }
         }
 
