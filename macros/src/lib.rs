@@ -127,21 +127,16 @@ impl DirectoryRepresentationIntermediary {
             token_to_index.insert(token.clone(), i);
         }
         // file_paths[i] <-> file_tokens[i] = FixedBitSet with contained token indices set
-        let file_tokens = file_word_counts
-            .into_iter()
-            .map(move |counts| {
-                let token_to_index = &token_to_index;
-                FixedBitSet::from_iter(
-                    counts
-                        .into_iter()
-                        .map(move |(word, max_count)| {
-                            let token_to_index = token_to_index;
-                            (0..max_count).map(move |index| token_to_index[&(word.clone(), index)])
-                        })
-                        .flatten(),
-                )
-            })
-            .collect::<Vec<_>>();
+        let mut file_tokens = Vec::with_capacity(file_word_counts.len());
+        for counts in file_word_counts {
+            let token_to_index = &token_to_index;
+            let mut token_indices = Vec::new();
+            for (word, &count) in &counts {
+                token_indices
+                    .extend((0..count).map(move |index| token_to_index[&(word.clone(), index)]));
+            }
+            file_tokens.push(FixedBitSet::from_iter(token_indices));
+        }
         // undirected graph where there is an edge between tokens if they ever appear in the same file
         let mut token_graph = vec![FixedBitSet::with_capacity(tokens.len()); tokens.len()];
         for token_index in 0..tokens.len() {
@@ -175,40 +170,26 @@ impl DirectoryRepresentationIntermediary {
             color_to_tokens[color].insert(token_index);
         }
 
-        // #[cfg(debug_assertions)]
-        // {
-        //     let min_colors = file_tokens
-        //         .iter()
-        //         .map(|file_tokens| file_tokens.count_ones(..))
-        //         .max()
-        //         .unwrap_or(0);
-        //     if min_colors != color_count {
-        //         dbg!(dir.as_ref(), min_colors, color_count);
-        //     }
-        //     let mut x = 1;
-        //     for c in &color_to_tokens {
-        //         x *= c.count_ones(..) + 1;
-        //     }
-        //     dbg!(x);
-        // }
-
-        // let mut possible_files = Vec::new();
-        // let mut function = |x| {
-        //     possible_files.push(x);
-        // };
-        // for (color, token_indices) in color_to_token_indices.iter().enumerate() {
-        //     function = |x| {
-        //         for token_index in token_indices {
-        //             let mut x = x.clone();
-        //             x.push(token_index);
-        //             function(x);
-        //         }
-        //     };
-        // }
-        // function(Vec::new());
-        // dbg!(possible_files);
-
-        // possibly inefficient, should create my own multi_cartesian product
+        #[cfg(debug_assertions)]
+        {
+            let min_colors = file_tokens
+                .iter()
+                .map(|file_tokens| file_tokens.count_ones(..))
+                .max()
+                .unwrap_or(0);
+            dbg!(
+                min_colors == color_count,
+                dir.as_ref(),
+                min_colors,
+                color_count
+            );
+            let mut num_possible_files = 1;
+            for c in &color_to_tokens {
+                num_possible_files *= c.count_ones(..) + 1;
+            }
+            dbg!(num_possible_files);
+            dbg!("-----");
+        }
 
         // create all possible files
         let mut possible_files = VecDeque::new();
@@ -235,164 +216,50 @@ impl DirectoryRepresentationIntermediary {
             n *= c.count_ones(..) + 1;
         }
         let mut edges = Vec::new();
-        let mut m = 1;
-        for i in (0..color_count).rev() {
-            let count = color_to_tokens[i].count_ones(..);
-            for j in (0..n).step_by(m * (count + 1)) {
-                for k in (0..(m * (count + 1))).step_by(m) {
-                    // no edge to self
-                    if k == 0 {
-                        continue;
-                    }
-                    edges.push((j, j + k));
+        for i in 0..n {
+            let mut m = 1;
+            for color in (0..color_count).rev() {
+                let count = color_to_tokens[color].count_ones(..);
+                let offset = i % (m * (count + 1)) - i % m;
+                if offset != 0 {
+                    edges.push((i, i - offset));
                 }
+                m *= count + 1;
             }
-            m *= count + 1;
         }
+        //     for j in (0..n).step_by(m * (count + 1)) {
+        //         for k in (0..(m * (count + 1))).step_by(m) {
+        //             // no edge to self
+        //             if k == 0 {
+        //                 continue;
+        //             }
+        //             edges.push((j, j + k));
+        //         }
+        //     }
+        // }
+
         // create that graph
         // edges that represent a low information token being added should appear first
         let mut graph =
             vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
-        for edge in edges {
+        for edge in &edges {
             graph[edge.0].insert(edge.1);
         }
-
-        // let queue =
-
-        // let node = 9000;
-        // let edges = &graph[node];
-        // for edge in edges.ones() {
-        //     dbg!(node, edge);
-        //     let x = queue[node]
-        //         .iter()
-        //         .map(|n| match n {
-        //             Some(n) => format!("{:?}", tokens[*n]),
-        //             None => "_".to_string(),
-        //         })
-        //         .join(" ");
-        //     dbg!(x);
-        //     let x = queue[edge]
-        //         .iter()
-        //         .map(|n| match n {
-        //             Some(n) => format!("{:?}", tokens[*n]),
-        //             None => "_".to_string(),
-        //         })
-        //         .join(" ");
-        //     dbg!(x);
-        // }
-
-        // let mut boundary = 1;
-        // for (i, token_count) in color_to_tokens.iter().map(|token_indices| token_indices.count_ones(..) + 1).enumerate() {
-
-        //     boundary *= token_count;
-        // }
-
-        // let mut boundaries = vec![1];
-        // for token_indices in color_to_tokens {
-        //     let lower
-        //     boundaries.push(boundaries.last().unwrap() * token_indices.count_ones(..));
-        // }
-
-        // dbg!(edges.iter().map(|x| format!("{} {}", x.0, x.1)).collect::<Vec<_>>());
-
-        // let mut graph = vec![
-        //     FixedBitSet::with_capacity(possible_file_tokens.len());
-        //     possible_file_tokens.len()
-        // ];
-        // for (origin, target) in edges {
-        //     graph[origin].insert(target);
-        // }
-
-        // dbg!(
-        //     queue
-        //         .iter()
-        //         .map(|x| {
-        //             x.iter()
-        //                 .map(|n| match n {
-        //                     Some(n) => format!("{:?}", tokens[*n]),
-        //                     None => "_".to_string(),
-        //                 })
-        //                 .join(" ")
-        //         })
-        //         .collect::<Vec<_>>()
-        // );
-
-        // for (origin, target) in &edges { // [0..100] {
-        //     let x = queue[*origin]
-        //         .iter()
-        //         .map(|n| match n {
-        //             Some(n) => format!("{:?}", tokens[*n]),
-        //             None => "_".to_string(),
-        //         })
-        //         .join(" ");
-        //     dbg!(x);
-
-        //     let x = queue[*target]
-        //         .iter()
-        //         .map(|n| match n {
-        //             Some(n) => format!("{:?}", tokens[*n]),
-        //             None => "_".to_string(),
-        //         })
-        //         .join(" ");
-        //     dbg!(x);
-        //     dbg!("---");
-        // }
-
-        // dbg!(
-        //     graph
-        //         .iter()
-        //         .map(|x| format!("{}", x))
-        //         .collect::<Vec<_>>()
-        // );
-
-        // dbg!(
-        //     graph
-        //         .iter()
-        //         .map(|x| x.ones().map(|x| format!("{}", x)).join(" "))
-        //         .collect::<Vec<_>>()
-        // );
-
-        // dbg!(&real_file_indices);
-
-        // dbg!(graph);
-
-        // let possible_file_tokens = color_to_tokens
-        //     .iter()
-        //     .map(|token_indices| {
-        //         once(None)
-        //             .chain(token_indices.ones().map(|token_index| Some(token_index)))
-        //             .collect::<Vec<_>>()
-        //     })
-        //     .multi_cartesian_product()
-        //     .map(|token_indices| {
-        //         FixedBitSet::from_iter(
-        //             token_indices
-        //                 .into_iter()
-        //                 .filter_map(|token_index| token_index),
-        //         )
-        //     });
-
-        // let mut possible_files_graph = HashMap::new();
-
-        // let mut predictions = Vec::new();
-
-        // dbg!(possible_file_tokens.map(|x| format!("{}", x)).collect::<Vec<_>>());
-        // for possible_file in &possible_files {
-        //     for file_tokens in &file_tokens {}
-        // }
-        let mut predictions = Vec::new();
+        let mut transposed_graph =
+            vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
+        for edge in &edges {
+            transposed_graph[edge.1].insert(edge.0);
+        }
+        // create predictions for what the user might mean that remove certain tokens
+        // by flood filling from real files to possible files with extra tokens
+        let mut initial_predictions = Vec::new();
         let mut visited = FixedBitSet::with_capacity(possible_files.len());
         for file_tokens in &file_tokens {
             let mut m = 1;
-            // let mut indices = vec![None; color_count];
             let mut index = 0;
             for i in 1..=color_count {
                 let color = color_count - i;
                 let count = color_to_tokens[color].count_ones(..);
-                // for token_index in file_tokens.ones() {
-                //     indices[coloring[token_index]] = Some(token_index);
-                // }
-                // possible_files.push(indices);
                 for file_token in file_tokens.ones() {
                     for (j, token) in color_to_tokens[color].ones().enumerate() {
                         if file_token == token {
@@ -403,56 +270,68 @@ impl DirectoryRepresentationIntermediary {
                 m *= count + 1;
             }
             // NOTE: if files aren't deterministically ordered, predictions could change
-            // NOTE: just sorting by file path for now
-            // dbg!(file_tokens.ones().collect::<Vec<_>>());
-            // dbg!(file_tokens.ones().map(|x| &tokens[x]).collect::<Vec<_>>());
-            // dbg!(&index);
-            predictions.push((index, index));
+            // NOTE: just sorting by file path for now (above)
+            initial_predictions.push((index, index));
             visited.insert(index);
-            // dbg!(&possible_files[index]);
-            // dbg!(&graph[index].ones().collect::<Vec<_>>());
-            // dbg!("-----");
         }
-
         // flood fill graph of possible files to create predictions
-        // let mut predictions = Vec::new();
+        let mut predictions = initial_predictions.clone();
         let mut i = 0;
         while i < predictions.len() {
-            // if visited.contains(predictions[i].0) {
-            //     continue;
-            // }
-            // visited.insert(predictions[i].0);
             for edge in graph[predictions[i].0].ones() {
+                // doing visited check here is more performant than before the loop
+                // this also means only the predicitons we want will be added to predictions
                 if visited.contains(edge) {
                     continue;
                 }
                 visited.insert(edge);
                 predictions.push((edge, predictions[i].1));
             }
-            // let file_node = predictions[i].clone();
-            // dbg!(&file_node);
-            // for (color, token_index) in predictions[i].0.iter().enumerate() {
-            //     if token_index.is_some() {
-            //         continue;
-            //     }
-            //     for &token_index in &color_to_token_indices[coloring[color]] {
-            //         let mut new_file_node = file_node.clone();
-            //         new_file_node.0[color] = Some(token_index);
-            //         if !visited.contains(&new_file_node.0) {
-            //             visited.insert(new_file_node.0.clone());
-            //             predictions.push(new_file_node);
-            //         }
-            //     }
-            // }
-
+            for edge in transposed_graph[predictions[i].0].ones() {
+                if visited.contains(edge) {
+                    continue;
+                }
+                visited.insert(edge);
+                predictions.push((edge, predictions[i].1));
+            }
             i += 1;
         }
-        // dbg!(predictions);
-        // dbg!(&possible_files[125]);
-        // dbg!(&possible_files[124]);
-        // dbg!(&tokens[0]);
-        // dbg!(&tokens[65]);
-        // dbg!(&tokens[13]);
+        // let mut transposed_predictions = initial_predictions.clone();
+        // let mut i = 0;
+        // while i < transposed_predictions.len() {
+        //     for edge in transposed_graph[transposed_predictions[i].0].ones() {
+        //         if visited.contains(edge) {
+        //             continue;
+        //         }
+        //         visited.insert(edge);
+        //         transposed_predictions.push((edge, transposed_predictions[i].1));
+        //     }
+        //     i += 1;
+        // }
+        // dbg!(format!("{}", visited.union(&transposed_visited).collect::<FixedBitSet>()));
+        dbg!(format!("{}", visited));
+
+        // let predictions = [predictions, transposed_predictions].concat();
+        // let predictions = predictions.ext
+
+        let d = token_to_index[&("down".to_string(), 0)];
+        let a = token_to_index[&("arrow".to_string(), 0)];
+        let o = token_to_index[&("outline".to_string(), 0)];
+        // dbg!(d);
+        for (i, possible_file) in possible_files.iter().enumerate() {
+            if possible_file == &vec![Some(d), Some(a), None, Some(o), None] {
+                dbg!(i);
+                dbg!(&possible_files[i]);
+                dbg!(&graph[i].ones().collect::<Vec<_>>());
+                for edge in graph[i].ones() {
+                    dbg!(&possible_files[edge]);
+                }
+                dbg!(&transposed_graph[i].ones().collect::<Vec<_>>());
+                for edge in transposed_graph[i].ones() {
+                    dbg!(&possible_files[edge]);
+                }
+            }
+        }
 
         Ok(Self {
             dir_ident,
@@ -483,6 +362,7 @@ impl DirectoryRepresentationIntermediary {
                     .ones()
                     .map(|token_index| token_to_ident(&self.tokens[token_index]));
                 quote! {
+                    #[derive(Debug)]
                     pub enum #enum_name {
                         #(#variants,)*
                     }

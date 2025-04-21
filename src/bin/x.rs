@@ -47,52 +47,54 @@ use petgraph::{Graph, algo::toposort};
 // }
 
 fn main() {
-    {
-        use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Keyboard___Mouse::_Double::*;
-        dbg!(file((
-            Some(_MX_0::_f6),
-            Some(_MX_1::_keyboard),
-            Some(_MX_2::_outline),
-            Some(_MX_3::_mouse),
-            Some(_MX_4::_alternative)
-        )));
-        dbg!(file((
-            Some(_MX_0::_f6),
-            Some(_MX_1::_keyboard),
-            Some(_MX_2::_outline),
-            None,
-            None,
-        )));
-        dbg!(file((
-            Some(_MX_0::_f6),
-            Some(_MX_1::_keyboard),
-            None,
-            None,
-            None,
-        )));
-        dbg!(file((
-            Some(_MX_0::_tab),
-            Some(_MX_1::_keyboard),
-            Some(_MX_2::_outline),
-            Some(_MX_3::_icon),
-            Some(_MX_4::_alternative),
-        )));
-        dbg!(file((
-            Some(_MX_0::_tab),
-            Some(_MX_1::_keyboard),
-            Some(_MX_2::_outline),
-            Some(_MX_3::_icon),
-            None,
-        )));
-    }
-    {
-        use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Flairs::_Default::*;
-        dbg!(file((
-            Some(_MX_0::_icon),
-            Some(_MX_1::_controller),
-            Some(_MX_2::_empty),
-            Some(_MX_3::_battery),
-            None,
-        )));
-    }
+    use bevy_input_prompts::directory_representation::_Default::*;
+    dbg!(predict((Some(_MX_0::_down), Some(_MX_1::_arrow), None, Some(_MX_3::_outline), None)));
+    // {
+    //     use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Keyboard___Mouse::_Double::*;
+    //     dbg!(file((
+    //         Some(_MX_0::_f6),
+    //         Some(_MX_1::_keyboard),
+    //         Some(_MX_2::_outline),
+    //         Some(_MX_3::_mouse),
+    //         Some(_MX_4::_alternative)
+    //     )));
+    //     dbg!(file((
+    //         Some(_MX_0::_f6),
+    //         Some(_MX_1::_keyboard),
+    //         Some(_MX_2::_outline),
+    //         None,
+    //         None,
+    //     )));
+    //     dbg!(file((
+    //         Some(_MX_0::_f6),
+    //         Some(_MX_1::_keyboard),
+    //         None,
+    //         None,
+    //         None,
+    //     )));
+    //     dbg!(file((
+    //         Some(_MX_0::_tab),
+    //         Some(_MX_1::_keyboard),
+    //         Some(_MX_2::_outline),
+    //         Some(_MX_3::_icon),
+    //         Some(_MX_4::_alternative),
+    //     )));
+    //     dbg!(file((
+    //         Some(_MX_0::_tab),
+    //         Some(_MX_1::_keyboard),
+    //         Some(_MX_2::_outline),
+    //         Some(_MX_3::_icon),
+    //         None,
+    //     )));
+    // }
+    // {
+    //     use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Flairs::_Default::*;
+    //     dbg!(file((
+    //         Some(_MX_0::_icon),
+    //         Some(_MX_1::_controller),
+    //         Some(_MX_2::_empty),
+    //         Some(_MX_3::_battery),
+    //         None,
+    //     )));
+    // }
 }
