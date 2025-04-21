@@ -185,45 +185,76 @@ impl DirectoryRepresentationIntermediary {
 
         // possibly inefficient, should create my own multi_cartesian product
 
-        let mut possible_file_tokens = Vec::new();
         // let mut real_file_indices = vec![0; file_tokens.len()];
-        let mut s = Vec::new();
-        s.push(Vec::with_capacity(color_count));
-        let mut edges = Vec::new();
-        let mut i = 0;
-        while i < s.len() {
-            let x = s[i].clone();
-            if x.len() + 1 == color_count {
-                let origin = possible_file_tokens.len();
-                {
-                    let mut x = x.clone();
-                    x.push(None);
-                    let bit_set =
-                        FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
-                    possible_file_tokens.push(bit_set);
-                }
-                for token_index in color_to_tokens[x.len()].ones() {
-                    edges.push((origin, s.len()));
-                    let mut x = x.clone();
-                    x.push(Some(token_index));
-                    let bit_set =
-                        FixedBitSet::from_iter(x.into_iter().filter_map(|token_index| token_index));
-                    possible_file_tokens.push(bit_set);
-                }
-            } else {
-                {
-                    let mut x = x.clone();
-                    x.push(None);
-                    s.push(x);
-                }
-                for token_index in color_to_tokens[x.len()].ones() {
-                    let mut x = x.clone();
-                    x.push(Some(token_index));
-                    s.push(x);
-                }
-            }
-            i += 1;
+        // let mut queue = vec![Vec::with_capacity(color_count)];
+        // let mut edges = vec![Vec::new(); color_count];
+        // let mut i = 0;
+        // while i < queue.len() {
+        //     let partial = queue[i].clone();
+        //     i += 1;
+        //     if partial.len() == color_count {
+        //         continue;
+        //     }
+        //     let origin = queue.len();
+        //     {
+        //         let mut new_partial = partial.clone();
+        //         new_partial.push(None);
+        //         queue.push(new_partial);
+        //     }
+        //     for token_index in color_to_tokens[partial.len()].ones() {
+        //         edges[partial.len()].push((origin, queue.len()));
+        //         let mut new_partial = partial.clone();
+        //         new_partial.push(Some(token_index));
+        //         queue.push(new_partial);
+        //     }
+        // }
+        // let mut new_edges = Vec::new();
+        // let mut boundary = 1;
+        // for (i, token_count) in color_to_tokens.iter().map(|token_indices| token_indices.count_ones(..) + 1).enumerate() {
+
+        //     boundary *= token_count;
+        // }
+
+        let counts = color_to_tokens.iter().map(|x| x.count_ones(..)).collect::<Vec<_>>();
+        let mut n = 1;
+        for &c in &counts {
+            n *= c + 1;
         }
+        dbg!(n);
+        let mut edges = Vec::new();
+            let mut m = 1;
+            for j in 1..=color_count {
+                let count = counts[color_count - j];
+                if i % (count + 1) == 0 {
+                    for k in (0..n).step_by(count + 1) {
+                        edges.push((k, k + m));
+                    }
+                }
+                m *= count + 1;
+            }
+        }
+        dbg!(edges);
+        // let mut boundary = 1;
+        // for (i, token_count) in color_to_tokens.iter().map(|token_indices| token_indices.count_ones(..) + 1).enumerate() {
+            
+        //     boundary *= token_count;
+        // }
+
+        // let mut boundaries = vec![1];
+        // for token_indices in color_to_tokens {
+        //     let lower 
+        //     boundaries.push(boundaries.last().unwrap() * token_indices.count_ones(..));
+        // }
+
+        // dbg!(&edges);
+
+        // let mut graph = vec![
+        //     FixedBitSet::with_capacity(possible_file_tokens.len());
+        //     possible_file_tokens.len()
+        // ];
+        // for (origin, target) in edges {
+        //     graph[origin].insert(target);
+        // }
 
         // dbg!(possible_file_tokens.iter().map(|x| {
         //     x.iter().map(|n| match n {
@@ -236,6 +267,13 @@ impl DirectoryRepresentationIntermediary {
         //     possible_file_tokens
         //         .iter()
         //         .map(|x| format!("{}", x))
+        //         .collect::<Vec<_>>()
+        // );
+
+        // dbg!(
+        //     graph
+        //         .iter()
+        //         .map(|x| x.ones().map(|x| format!("{}", x)).join(" "))
         //         .collect::<Vec<_>>()
         // );
 
