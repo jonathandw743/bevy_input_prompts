@@ -20,10 +20,17 @@ mod graph_operations;
 pub fn directory_representation(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&input);
-    DirectoryRepresentationIntermediary::from_path(dir_path, |non_exclusive, num_tokens| {
-        let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
-        graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
-    })
+    DirectoryRepresentationIntermediary::from_path(
+        dir_path,
+        |non_exclusive, num_tokens| {
+            let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+            graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+        }, // |non_exclusive, num_tokens| {
+           //     graph_operations::cliques(&non_exclusive, num_tokens)
+           // let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+           // graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+           // },
+    )
     .expect("Could not create directory representation module")
     .to_token_stream()
     .expect("Could not create directory representation module")
@@ -40,7 +47,7 @@ struct DirectoryRepresentationIntermediary {
     coloring: Vec<usize>,
     color_count: usize,
     color_to_tokens: Vec<FixedBitSet>,
-    predictions: Vec<(Vec<Option<usize>>, Vec<Option<usize>>)>,
+    // predictions: Vec<(Vec<Option<usize>>, Vec<Option<usize>>)>,
     graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
 }
 
@@ -74,6 +81,8 @@ impl DirectoryRepresentationIntermediary {
                 dir_paths.push(path);
             }
         }
+        // sort file paths as the order may affect predictions made
+        file_paths.sort();
         // tokenise
         let mut file_word_counts = Vec::new();
         for file_path in &file_paths {
@@ -142,8 +151,23 @@ impl DirectoryRepresentationIntermediary {
             }
         }
         // color token graph to find sets of mutually exclusive tokens
-        // token_index -> color
         let (color_count, coloring) = graph_coloring(&token_graph, tokens.len());
+        let mut num_of_color = vec![0; color_count];
+        for &color in &coloring {
+            num_of_color[color] += 1;
+        }
+        let mut colors_sort = (0..color_count).collect::<Vec<_>>();
+        // negative allows low information tokens to be set first later
+        colors_sort.sort_by_key(|&color| -num_of_color[color]);
+        let mut inverse_colors_sort = vec![0; color_count];
+        for color in 0..color_count {
+            inverse_colors_sort[colors_sort[color]] = color;
+        }
+        // token_index -> color
+        let coloring = coloring
+            .into_iter()
+            .map(|x| inverse_colors_sort[x])
+            .collect::<Vec<_>>();
         // color -> [token_index, token_index, ...]
         let mut color_to_tokens = vec![FixedBitSet::with_capacity(tokens.len()); color_count];
         for (token_index, &color) in coloring.iter().enumerate() {
@@ -185,34 +209,37 @@ impl DirectoryRepresentationIntermediary {
 
         // possibly inefficient, should create my own multi_cartesian product
 
-        // let mut real_file_indices = vec![0; file_tokens.len()];
-        let mut queue = VecDeque::new();
-        queue.push_back(Vec::with_capacity(color_count));
-        while let Some(partial) = queue.pop_front() {
+        // create all possible files
+        let mut possible_files = VecDeque::new();
+        possible_files.push_back(Vec::with_capacity(color_count));
+        while let Some(partial) = possible_files.pop_front() {
             if partial.len() == color_count {
+                possible_files.push_front(partial);
                 break;
             }
             {
                 let mut new_partial = partial.clone();
                 new_partial.push(None);
-                queue.push_back(new_partial);
+                possible_files.push_back(new_partial);
             }
             for token_index in color_to_tokens[partial.len()].ones() {
                 let mut new_partial = partial.clone();
                 new_partial.push(Some(token_index));
-                queue.push_back(new_partial);
+                possible_files.push_back(new_partial);
             }
         }
+        // create edges from all possible files to possible files where one token has been added
         let mut n = 1;
         for c in &color_to_tokens {
             n *= c.count_ones(..) + 1;
         }
         let mut edges = Vec::new();
         let mut m = 1;
-        for i in 1..=color_count {
-            let count = color_to_tokens[color_count - i].count_ones(..);
+        for i in (0..color_count).rev() {
+            let count = color_to_tokens[i].count_ones(..);
             for j in (0..n).step_by(m * (count + 1)) {
                 for k in (0..(m * (count + 1))).step_by(m) {
+                    // no edge to self
                     if k == 0 {
                         continue;
                     }
@@ -221,6 +248,38 @@ impl DirectoryRepresentationIntermediary {
             }
             m *= count + 1;
         }
+        // create that graph
+        // edges that represent a low information token being added should appear first
+        let mut graph = vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
+        for edge in edges {
+            graph[edge.0].insert(edge.1);
+        }
+
+        // let queue = 
+
+
+        // let node = 9000;
+        // let edges = &graph[node];
+        // for edge in edges.ones() {
+        //     dbg!(node, edge);
+        //     let x = queue[node]
+        //         .iter()
+        //         .map(|n| match n {
+        //             Some(n) => format!("{:?}", tokens[*n]),
+        //             None => "_".to_string(),
+        //         })
+        //         .join(" ");
+        //     dbg!(x);
+        //     let x = queue[edge]
+        //         .iter()
+        //         .map(|n| match n {
+        //             Some(n) => format!("{:?}", tokens[*n]),
+        //             None => "_".to_string(),
+        //         })
+        //         .join(" ");
+        //     dbg!(x);
+        // }
+
         // let mut boundary = 1;
         // for (i, token_count) in color_to_tokens.iter().map(|token_indices| token_indices.count_ones(..) + 1).enumerate() {
 
@@ -243,15 +302,43 @@ impl DirectoryRepresentationIntermediary {
         //     graph[origin].insert(target);
         // }
 
-        // dbg!(queue.iter().map(|x| {
-        //     x.iter().map(|n| match n {
-        //         Some(n) => format!("{:?}", tokens[*n]),
-        //         None => "_".to_string(),
-        //     }).join(" ")
-        // }).collect::<Vec<_>>());
-
         // dbg!(
         //     queue
+        //         .iter()
+        //         .map(|x| {
+        //             x.iter()
+        //                 .map(|n| match n {
+        //                     Some(n) => format!("{:?}", tokens[*n]),
+        //                     None => "_".to_string(),
+        //                 })
+        //                 .join(" ")
+        //         })
+        //         .collect::<Vec<_>>()
+        // );
+
+        // for (origin, target) in &edges { // [0..100] {
+        //     let x = queue[*origin]
+        //         .iter()
+        //         .map(|n| match n {
+        //             Some(n) => format!("{:?}", tokens[*n]),
+        //             None => "_".to_string(),
+        //         })
+        //         .join(" ");
+        //     dbg!(x);
+
+        //     let x = queue[*target]
+        //         .iter()
+        //         .map(|n| match n {
+        //             Some(n) => format!("{:?}", tokens[*n]),
+        //             None => "_".to_string(),
+        //         })
+        //         .join(" ");
+        //     dbg!(x);
+        //     dbg!("---");
+        // }
+
+        // dbg!(
+        //     graph
         //         .iter()
         //         .map(|x| format!("{}", x))
         //         .collect::<Vec<_>>()
@@ -292,6 +379,7 @@ impl DirectoryRepresentationIntermediary {
         // for possible_file in &possible_files {
         //     for file_tokens in &file_tokens {}
         // }
+        let mut predictions = Vec::new();
         for file_tokens in &file_tokens {
             let mut m = 1;
             // let mut indices = vec![None; color_count];
@@ -312,33 +400,57 @@ impl DirectoryRepresentationIntermediary {
                 }
                 m *= count + 1;
             }
+            // NOTE: if files aren't deterministically ordered, predictions could change
+            // NOTE: just sorting by file path for now
             // dbg!(file_tokens.ones().collect::<Vec<_>>());
+            // dbg!(file_tokens.ones().map(|x| &tokens[x]).collect::<Vec<_>>());
             // dbg!(&index);
-            // dbg!(&queue[index]);
+            predictions.push((index, index));
+            // dbg!(&possible_files[index]);
+            // dbg!(&graph[index].ones().collect::<Vec<_>>());
+            // dbg!("-----");
         }
 
         // flood fill graph of possible files to create predictions
-        let mut predictions = Vec::new();
-        // let mut visited = HashSet::new();
-        // let mut i = 0;
-        // while i < predictions.len() {
-        //     let file_node = predictions[i].clone();
-        //     dbg!(&file_node);
-        //     for (color, token_index) in file_node.0.iter().enumerate() {
-        //         if token_index.is_some() {
-        //             continue;
-        //         }
-        //         for &token_index in &color_to_token_indices[coloring[color]] {
-        //             let mut new_file_node = file_node.clone();
-        //             new_file_node.0[color] = Some(token_index);
-        //             if !visited.contains(&new_file_node.0) {
-        //                 visited.insert(new_file_node.0.clone());
-        //                 predictions.push(new_file_node);
-        //             }
-        //         }
-        //     }
-        //     i += 1;
-        // }
+        // let mut predictions = Vec::new();
+        let mut visited = FixedBitSet::with_capacity(possible_files.len());
+        let mut i = 0;
+        while i < predictions.len() {
+            // if visited.contains(predictions[i].0) {
+            //     continue;
+            // }
+            // visited.insert(predictions[i].0);
+            for edge in graph[predictions[i].0].ones() {
+                if visited.contains(edge) {
+                    continue;
+                }
+                visited.insert(edge);
+                predictions.push((edge, predictions[i].1));
+            }
+            // let file_node = predictions[i].clone();
+            // dbg!(&file_node);
+            // for (color, token_index) in predictions[i].0.iter().enumerate() {
+            //     if token_index.is_some() {
+            //         continue;
+            //     }
+            //     for &token_index in &color_to_token_indices[coloring[color]] {
+            //         let mut new_file_node = file_node.clone();
+            //         new_file_node.0[color] = Some(token_index);
+            //         if !visited.contains(&new_file_node.0) {
+            //             visited.insert(new_file_node.0.clone());
+            //             predictions.push(new_file_node);
+            //         }
+            //     }
+            // }
+
+            i += 1;
+        }
+        // dbg!(predictions);
+        // dbg!(&possible_files[125]);
+        // dbg!(&possible_files[124]);
+        // dbg!(&tokens[0]);
+        // dbg!(&tokens[65]);
+        // dbg!(&tokens[13]);
 
         Ok(Self {
             dir_ident,
@@ -350,8 +462,10 @@ impl DirectoryRepresentationIntermediary {
             coloring,
             color_count,
             color_to_tokens,
-            predictions,
             graph_coloring,
+
+            possible_files,
+            predictions,
         })
     }
 

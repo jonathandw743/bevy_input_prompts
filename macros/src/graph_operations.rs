@@ -2,6 +2,12 @@ use std::collections::{BinaryHeap, HashSet};
 
 use fixedbitset::FixedBitSet;
 
+/// for this specific use case, i have tested:
+/// degeneracy ordering -> greedy - low number of colors fast
+/// dsatur - many colors (idk why, dsatur is supposed to be good), fast
+/// inverse graph clique covering - many colors, fast
+/// exact coloring (brute force backtracking solution) - way too slow
+
 /// Compute degeneracy ordering using a simple greedy peeling algorithm
 pub fn degeneracy_ordering(graph: &Vec<FixedBitSet>, n: usize) -> Vec<usize> {
     let mut degrees: Vec<usize> = graph.iter().map(|neighbors| neighbors.count_ones(..)).collect();
@@ -190,4 +196,115 @@ pub fn color_graph(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
     // dbg!(&best_coloring, &best_color_count);
 
     (best_color_count, best_coloring)
+}
+
+
+/// Finds maximal cliques containing all the vertices in r, some of the
+/// vertices in p, and none of the vertices in x.
+fn bron_kerbosch_pivot(
+    non_exclusive: &Vec<FixedBitSet>,
+    r: FixedBitSet,
+    mut p: FixedBitSet,
+    mut x: FixedBitSet,
+    n: usize,
+    // ignore: &HashSet<usize>,
+) -> Vec<FixedBitSet> {
+    let mut cliques = Vec::with_capacity(1);
+    if p.is_clear() {
+        if x.is_clear() {
+            cliques.push(r);
+        }
+        return cliques;
+    }
+    // pick the pivot u to be the vertex with max degree
+    // println!("{}", p);
+    let u = p.ones()
+        .max_by_key(|&v| {
+            let mut neighbours = 0;
+            for i in 0..n {
+                // if ignore.contains(&v) || ignore.contains(&i) {
+                //     continue;
+                // }
+                if !non_exclusive[v].contains(i) && !non_exclusive[i].contains(v) {
+                    neighbours += 1;
+                }
+                // if mx_contains_edge(mx, v, i) {
+                //     neighbours += 1;
+                // }
+            }
+            neighbours
+        })
+        .expect("there should be a vertex with max degree");
+    let mut todo = p
+        .ones()
+        //skip neighbors of pivot
+        .filter(|&v| {
+            // if ignore.contains(&v) {
+            //     return false;
+            // }
+            if u == v {
+                return true;
+            }
+            !(!non_exclusive[u].contains(v) && !non_exclusive[v].contains(u))
+        })
+        .collect::<Vec<_>>();
+    while let Some(v) = todo.pop() {
+        let mut neighbors = FixedBitSet::from_iter(0..n);
+        neighbors.difference_with(&non_exclusive[v]);
+        // for ig in ignore {
+        //     neighbors.remove(*ig);
+        // }
+
+        p.remove(v);
+        let mut next_r = r.clone();
+        next_r.insert(v);
+
+        let mut next_p = p.clone();
+        next_p.intersect_with(&neighbors);
+
+        let mut next_x = x.clone();
+        next_x.intersect_with(&neighbors);
+
+        cliques.extend(bron_kerbosch_pivot(non_exclusive, next_r, next_p, next_x, n));
+
+        x.insert(v);
+    }
+
+    cliques
+}
+
+// fn non_exclusive(bit_sets: &Vec<FixedBitSet>, n: usize) -> Vec<FixedBitSet> {
+//     let mut non_exclusive = vec![FixedBitSet::with_capacity(n); n];
+//     for bit in 0..n {
+//         for bit_set in bit_sets {
+//             if bit_set.contains(bit) {
+//                 non_exclusive[bit].union_with(bit_set);
+//             }
+//         }
+//     }
+//     non_exclusive
+// }
+
+pub fn cliques(non_exclusive: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
+    let mut cliques = Vec::new();
+    let mut i = 0;
+    let mut p = FixedBitSet::from_iter(0..n);
+    while i < n {
+        let r = FixedBitSet::with_capacity(n);
+        let x = FixedBitSet::with_capacity(n);
+        let c = bron_kerbosch_pivot(&non_exclusive, r, p.clone(), x, n);
+        let c = c.into_iter().max_by_key(|c| c.count_ones(..)).unwrap();
+        i += c.count_ones(..);
+        for a in c.ones() {
+            p.remove(a);
+        }
+        cliques.push(c.into_ones().collect::<Vec<_>>());
+    }
+    let mut coloring = vec![cliques.len(); n];
+    for (color, clique) in cliques.iter().enumerate() {
+        for &token_index in clique {
+            coloring[token_index] = color;
+        }
+    }
+    (cliques.len(), coloring)
 }
