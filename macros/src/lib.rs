@@ -47,8 +47,9 @@ struct DirectoryRepresentationIntermediary {
     coloring: Vec<usize>,
     color_count: usize,
     color_to_tokens: Vec<FixedBitSet>,
-    // predictions: Vec<(Vec<Option<usize>>, Vec<Option<usize>>)>,
     graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
+    possible_files: VecDeque<Vec<Option<usize>>>,
+    predictions: Vec<(usize, usize)>,
 }
 
 impl DirectoryRepresentationIntermediary {
@@ -174,22 +175,22 @@ impl DirectoryRepresentationIntermediary {
             color_to_tokens[color].insert(token_index);
         }
 
-        #[cfg(debug_assertions)]
-        {
-            let min_colors = file_tokens
-                .iter()
-                .map(|file_tokens| file_tokens.count_ones(..))
-                .max()
-                .unwrap_or(0);
-            if min_colors != color_count {
-                dbg!(dir.as_ref(), min_colors, color_count);
-            }
-            let mut x = 1;
-            for c in &color_to_tokens {
-                x *= c.count_ones(..) + 1;
-            }
-            dbg!(x);
-        }
+        // #[cfg(debug_assertions)]
+        // {
+        //     let min_colors = file_tokens
+        //         .iter()
+        //         .map(|file_tokens| file_tokens.count_ones(..))
+        //         .max()
+        //         .unwrap_or(0);
+        //     if min_colors != color_count {
+        //         dbg!(dir.as_ref(), min_colors, color_count);
+        //     }
+        //     let mut x = 1;
+        //     for c in &color_to_tokens {
+        //         x *= c.count_ones(..) + 1;
+        //     }
+        //     dbg!(x);
+        // }
 
         // let mut possible_files = Vec::new();
         // let mut function = |x| {
@@ -250,13 +251,13 @@ impl DirectoryRepresentationIntermediary {
         }
         // create that graph
         // edges that represent a low information token being added should appear first
-        let mut graph = vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
+        let mut graph =
+            vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
         for edge in edges {
             graph[edge.0].insert(edge.1);
         }
 
-        // let queue = 
-
+        // let queue =
 
         // let node = 9000;
         // let edges = &graph[node];
@@ -380,6 +381,7 @@ impl DirectoryRepresentationIntermediary {
         //     for file_tokens in &file_tokens {}
         // }
         let mut predictions = Vec::new();
+        let mut visited = FixedBitSet::with_capacity(possible_files.len());
         for file_tokens in &file_tokens {
             let mut m = 1;
             // let mut indices = vec![None; color_count];
@@ -406,6 +408,7 @@ impl DirectoryRepresentationIntermediary {
             // dbg!(file_tokens.ones().map(|x| &tokens[x]).collect::<Vec<_>>());
             // dbg!(&index);
             predictions.push((index, index));
+            visited.insert(index);
             // dbg!(&possible_files[index]);
             // dbg!(&graph[index].ones().collect::<Vec<_>>());
             // dbg!("-----");
@@ -413,7 +416,6 @@ impl DirectoryRepresentationIntermediary {
 
         // flood fill graph of possible files to create predictions
         // let mut predictions = Vec::new();
-        let mut visited = FixedBitSet::with_capacity(possible_files.len());
         let mut i = 0;
         while i < predictions.len() {
             // if visited.contains(predictions[i].0) {
@@ -487,7 +489,7 @@ impl DirectoryRepresentationIntermediary {
                 }
             });
         // create function from possible files to paths
-        let mut function_arms = Vec::new();
+        let mut file_function_arms = Vec::new();
         for (file_tokens, file_path) in self.file_tokens.iter().zip(&self.file_paths) {
             let mut variants = vec![quote! { None }; self.color_count];
             for token_index in file_tokens.ones() {
@@ -502,7 +504,7 @@ impl DirectoryRepresentationIntermediary {
                     .ok_or(anyhow!("Could not convert file path to str"))?,
                 Span::call_site(),
             );
-            function_arms.push(quote! { (#(#variants,)*) => Some( #file_path ) });
+            file_function_arms.push(quote! { (#(#variants,)*) => Some( #file_path ) });
         }
         let function_input_type = (0..self.color_count).map(|i| {
             let enum_name = format_ident!("_MX_{}", i);
@@ -510,10 +512,51 @@ impl DirectoryRepresentationIntermediary {
                 Option< #enum_name >
             }
         });
-        let function = quote! {
-            pub fn file(possible_file: (#(#function_input_type,)*)) -> Option<&'static str> {
+        let file_function_input_type = function_input_type.clone();
+        let file_function = quote! {
+            pub fn file(possible_file: (#(#file_function_input_type,)*)) -> Option<&'static str> {
                 match possible_file {
-                    #(#function_arms,)*
+                    #(#file_function_arms,)*
+                    _ => None
+                }
+            }
+        };
+        // create function that maps from possible files to actual files by removing tokens
+        let mut predict_function_arms = Vec::new();
+        for (possible, actual) in &self.predictions {
+            let possible_variants =
+                self.possible_files[*possible]
+                    .iter()
+                    .enumerate()
+                    .map(|(i, token_index)| match token_index {
+                        Some(token_index) => {
+                            let enum_name = format_ident!("_MX_{}", i);
+                            let variant = token_to_ident(&self.tokens[*token_index]);
+                            quote! { Some( #enum_name :: #variant ) }
+                        }
+                        None => quote! { None },
+                    });
+            let actual_variants =
+                self.possible_files[*actual]
+                    .iter()
+                    .enumerate()
+                    .map(|(i, token_index)| match token_index {
+                        Some(token_index) => {
+                            let enum_name = format_ident!("_MX_{}", i);
+                            let variant = token_to_ident(&self.tokens[*token_index]);
+                            quote! { Some( #enum_name :: #variant ) }
+                        }
+                        None => quote! { None },
+                    });
+            predict_function_arms.push(quote! {
+                (#(#possible_variants,)*) => Some( (#(#actual_variants,)*) )
+            });
+        }
+        let predict_function_input_type = function_input_type.clone();
+        let predict_function = quote! {
+            pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> Option<(#(#function_input_type,)*)> {
+                match possible_file {
+                    #(#predict_function_arms,)*
                     _ => None
                 }
             }
@@ -534,7 +577,8 @@ impl DirectoryRepresentationIntermediary {
             pub mod #dir_ident {
                 pub const PATH: &'static str = #path;
                 #(#mx_enums)*
-                #function
+                #file_function
+                #predict_function
                 #(#submodules)*
             }
         })
