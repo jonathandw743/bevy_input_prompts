@@ -170,26 +170,26 @@ impl DirectoryRepresentationIntermediary {
             color_to_tokens[color].insert(token_index);
         }
 
-        #[cfg(debug_assertions)]
-        {
-            let min_colors = file_tokens
-                .iter()
-                .map(|file_tokens| file_tokens.count_ones(..))
-                .max()
-                .unwrap_or(0);
-            dbg!(
-                min_colors == color_count,
-                dir.as_ref(),
-                min_colors,
-                color_count
-            );
-            let mut num_possible_files = 1;
-            for c in &color_to_tokens {
-                num_possible_files *= c.count_ones(..) + 1;
-            }
-            dbg!(num_possible_files);
-            dbg!("-----");
-        }
+        // #[cfg(debug_assertions)]
+        // {
+        //     let min_colors = file_tokens
+        //         .iter()
+        //         .map(|file_tokens| file_tokens.count_ones(..))
+        //         .max()
+        //         .unwrap_or(0);
+        //     dbg!(
+        //         min_colors == color_count,
+        //         dir.as_ref(),
+        //         min_colors,
+        //         color_count
+        //     );
+        //     let mut num_possible_files = 1;
+        //     for c in &color_to_tokens {
+        //         num_possible_files *= c.count_ones(..) + 1;
+        //     }
+        //     dbg!(num_possible_files);
+        //     dbg!("-----");
+        // }
 
         // create all possible files
         let mut possible_files = VecDeque::new();
@@ -309,29 +309,29 @@ impl DirectoryRepresentationIntermediary {
         //     i += 1;
         // }
         // dbg!(format!("{}", visited.union(&transposed_visited).collect::<FixedBitSet>()));
-        dbg!(format!("{}", visited));
+        // dbg!(format!("{}", visited));
 
         // let predictions = [predictions, transposed_predictions].concat();
         // let predictions = predictions.ext
 
-        let d = token_to_index[&("down".to_string(), 0)];
-        let a = token_to_index[&("arrow".to_string(), 0)];
-        let o = token_to_index[&("outline".to_string(), 0)];
-        // dbg!(d);
-        for (i, possible_file) in possible_files.iter().enumerate() {
-            if possible_file == &vec![Some(d), Some(a), None, Some(o), None] {
-                dbg!(i);
-                dbg!(&possible_files[i]);
-                dbg!(&graph[i].ones().collect::<Vec<_>>());
-                for edge in graph[i].ones() {
-                    dbg!(&possible_files[edge]);
-                }
-                dbg!(&transposed_graph[i].ones().collect::<Vec<_>>());
-                for edge in transposed_graph[i].ones() {
-                    dbg!(&possible_files[edge]);
-                }
-            }
-        }
+        // let d = token_to_index[&("down".to_string(), 0)];
+        // let a = token_to_index[&("arrow".to_string(), 0)];
+        // let o = token_to_index[&("outline".to_string(), 0)];
+        // // dbg!(d);
+        // for (i, possible_file) in possible_files.iter().enumerate() {
+        //     if possible_file == &vec![Some(d), Some(a), None, Some(o), None] {
+        //         dbg!(i);
+        //         dbg!(&possible_files[i]);
+        //         dbg!(&graph[i].ones().collect::<Vec<_>>());
+        //         for edge in graph[i].ones() {
+        //             dbg!(&possible_files[edge]);
+        //         }
+        //         dbg!(&transposed_graph[i].ones().collect::<Vec<_>>());
+        //         for edge in transposed_graph[i].ones() {
+        //             dbg!(&possible_files[edge]);
+        //         }
+        //     }
+        // }
 
         Ok(Self {
             dir_ident,
