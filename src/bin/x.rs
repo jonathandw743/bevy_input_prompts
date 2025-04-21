@@ -48,7 +48,7 @@ use petgraph::{Graph, algo::toposort};
 
 fn main() {
     use bevy_input_prompts::directory_representation::_Default::*;
-    dbg!(predict((Some(_MX_0::_down), Some(_MX_1::_arrow), None, Some(_MX_3::_outline), None)));
+    // dbg!(predict((Some(_MX_0::_down), Some(_MX_1::_arrow), None, Some(_MX_3::_outline), None)));
     // {
     //     use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Keyboard___Mouse::_Double::*;
     //     dbg!(file((

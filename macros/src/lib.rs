@@ -275,8 +275,9 @@ impl DirectoryRepresentationIntermediary {
             visited.insert(index);
         }
         // flood fill graph of possible files to create predictions
-        let mut predictions = initial_predictions.clone();
         let mut i = 0;
+        let mut predictions = initial_predictions.clone();
+        // removing tokens to create addition predictions
         while i < predictions.len() {
             for edge in graph[predictions[i].0].ones() {
                 // doing visited check here is more performant than before the loop
@@ -287,6 +288,11 @@ impl DirectoryRepresentationIntermediary {
                 visited.insert(edge);
                 predictions.push((edge, predictions[i].1));
             }
+            i += 1;
+        }
+        predictions.extend(initial_predictions.clone().into_iter());
+        // adding tokens to create removal predictions
+        while i < predictions.len() {
             for edge in transposed_graph[predictions[i].0].ones() {
                 if visited.contains(edge) {
                     continue;
@@ -296,20 +302,20 @@ impl DirectoryRepresentationIntermediary {
             }
             i += 1;
         }
-        // let mut transposed_predictions = initial_predictions.clone();
-        // let mut i = 0;
-        // while i < transposed_predictions.len() {
-        //     for edge in transposed_graph[transposed_predictions[i].0].ones() {
-        //         if visited.contains(edge) {
-        //             continue;
-        //         }
-        //         visited.insert(edge);
-        //         transposed_predictions.push((edge, transposed_predictions[i].1));
-        //     }
-        //     i += 1;
-        // }
+        let mut i = 0;
+        // removing tokens to create all other predictions
+        while i < predictions.len() {
+            for edge in transposed_graph[predictions[i].0].ones() {
+                if visited.contains(edge) {
+                    continue;
+                }
+                visited.insert(edge);
+                predictions.push((edge, predictions[i].1));
+            }
+            i += 1;
+        }
         // dbg!(format!("{}", visited.union(&transposed_visited).collect::<FixedBitSet>()));
-        // dbg!(format!("{}", visited));
+        dbg!(format!("{}", visited));
 
         // let predictions = [predictions, transposed_predictions].concat();
         // let predictions = predictions.ext
@@ -437,7 +443,6 @@ impl DirectoryRepresentationIntermediary {
             pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> Option<(#(#function_input_type,)*)> {
                 match possible_file {
                     #(#predict_function_arms,)*
-                    _ => None
                 }
             }
         };
