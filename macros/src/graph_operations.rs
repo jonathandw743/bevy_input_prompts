@@ -1,4 +1,7 @@
-use std::collections::{BinaryHeap, HashSet};
+use std::{
+    collections::{BTreeSet, BinaryHeap, HashSet},
+    ops::Deref,
+};
 
 use fixedbitset::FixedBitSet;
 
@@ -9,8 +12,11 @@ use fixedbitset::FixedBitSet;
 /// exact coloring (brute force backtracking solution) - way too slow
 
 /// Compute degeneracy ordering using a simple greedy peeling algorithm
-pub fn degeneracy_ordering(graph: &Vec<FixedBitSet>, n: usize) -> Vec<usize> {
-    let mut degrees: Vec<usize> = graph.iter().map(|neighbors| neighbors.count_ones(..)).collect();
+pub fn degeneracy_ordering<I>(graph: &[I], n: usize) -> Vec<usize>
+where
+    for<'a> &'a I: IntoIterator<Item = &'a usize>,
+{
+    let mut degrees: Vec<usize> = graph.iter().map(|neighbors| neighbors.into_iter().count()).collect();
     let mut order = Vec::with_capacity(n);
     let mut removed = FixedBitSet::with_capacity(n);
 
@@ -29,31 +35,35 @@ pub fn degeneracy_ordering(graph: &Vec<FixedBitSet>, n: usize) -> Vec<usize> {
             order.push(v);
             removed.insert(v);
             // Update degree of neighbors
-            for u in graph[v].ones() {
+            for &u in &graph[v] {
                 if !removed.contains(u) {
                     degrees[u] -= 1;
                 }
             }
         }
     }
-
-    order.reverse(); // For coloring, reverse it (lowest-degree last)
     order
 }
 
-pub fn greedy_coloring(graph: &Vec<FixedBitSet>, order: &[usize], n: usize) -> (usize, Vec<usize>) {
+pub fn greedy_coloring<I>(graph: &[I], order: &[usize], n: usize) -> (usize, Vec<usize>)
+where
+    for<'a> &'a I: IntoIterator<Item = &'a usize>,
+{
     let mut coloring = vec![usize::MAX; n];
+    let mut used = HashSet::new();
 
     for &v in order {
-        let mut used = FixedBitSet::with_capacity(n);
-        for u in graph[v].ones() {
+        used.clear();
+        for &u in &graph[v] {
             if coloring[u] != usize::MAX {
                 used.insert(coloring[u]);
             }
         }
 
         // Find the first available color
-        let color = (0..n).find(|c| !used.contains(*c)).expect("color not available");
+        let color = (0..n)
+            .find(|c| !used.contains(c))
+            .expect("graph of n nodes should be colourable by n colors");
         coloring[v] = color;
     }
 
@@ -127,77 +137,76 @@ pub fn dsatur(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
     (max_color + 1, coloring) // Return color count and the coloring
 }
 
-/// Exact graph coloring using backtracking
-pub fn color_graph(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
-    let order = degeneracy_ordering(graph, n);
-    let mut colors = vec![None; n];
-    let (initial_upper_bound, initial_coloring) = greedy_coloring(graph, &order, n);
-    //let (initial_upper_bound, initial_coloring) = dsatur(graph);
-    let mut best_coloring = initial_coloring.clone();
-    let mut best_color_count = initial_upper_bound;
-    // dbg!(&best_coloring, &best_color_count);
+// /// Exact graph coloring using backtracking
+// pub fn color_graph(graph: &Vec<FixedBitSet>, n: usize) -> (usize, Vec<usize>) {
+//     let order = degeneracy_ordering(graph, n);
+//     let mut colors = vec![None; n];
+//     let (initial_upper_bound, initial_coloring) = greedy_coloring(graph, &order, n);
+//     //let (initial_upper_bound, initial_coloring) = dsatur(graph);
+//     let mut best_coloring = initial_coloring.clone();
+//     let mut best_color_count = initial_upper_bound;
+//     // dbg!(&best_coloring, &best_color_count);
 
-    fn backtrack(
-        graph: &Vec<FixedBitSet>,
-        order: &[usize],
-        idx: usize,
-        colors: &mut [Option<usize>],
-        max_color: usize,
-        best_coloring: &mut Vec<usize>,
-        best_color_count: &mut usize,
-    ) {
-        if idx == order.len() {
-            if max_color < *best_color_count {
-                *best_color_count = max_color;
-                for (i, &c) in colors.iter().enumerate() {
-                    best_coloring[i] = c.unwrap();
-                }
-            }
-            return;
-        }
+//     fn backtrack(
+//         graph: &Vec<FixedBitSet>,
+//         order: &[usize],
+//         idx: usize,
+//         colors: &mut [Option<usize>],
+//         max_color: usize,
+//         best_coloring: &mut Vec<usize>,
+//         best_color_count: &mut usize,
+//     ) {
+//         if idx == order.len() {
+//             if max_color < *best_color_count {
+//                 *best_color_count = max_color;
+//                 for (i, &c) in colors.iter().enumerate() {
+//                     best_coloring[i] = c.unwrap();
+//                 }
+//             }
+//             return;
+//         }
 
-        let v = order[idx];
-        let mut used = FixedBitSet::with_capacity(max_color + 1);
-        for u in graph[v].ones() {
-            if let Some(c) = colors[u] {
-                used.insert(c);
-            }
-        }
+//         let v = order[idx];
+//         let mut used = FixedBitSet::with_capacity(max_color + 1);
+//         for u in graph[v].ones() {
+//             if let Some(c) = colors[u] {
+//                 used.insert(c);
+//             }
+//         }
 
-        for color in 0..=*best_color_count {
-            if !used.contains(color) {
-                colors[v] = Some(color);
-                let new_max = max_color.max(color + 1);
-                if new_max <= *best_color_count {
-                    backtrack(
-                        graph,
-                        order,
-                        idx + 1,
-                        colors,
-                        new_max,
-                        best_coloring,
-                        best_color_count,
-                    );
-                }
-                colors[v] = None;
-            }
-        }
-    }
+//         for color in 0..=*best_color_count {
+//             if !used.contains(color) {
+//                 colors[v] = Some(color);
+//                 let new_max = max_color.max(color + 1);
+//                 if new_max <= *best_color_count {
+//                     backtrack(
+//                         graph,
+//                         order,
+//                         idx + 1,
+//                         colors,
+//                         new_max,
+//                         best_coloring,
+//                         best_color_count,
+//                     );
+//                 }
+//                 colors[v] = None;
+//             }
+//         }
+//     }
 
-    backtrack(
-        graph,
-        &order,
-        0,
-        &mut colors,
-        0,
-        &mut best_coloring,
-        &mut best_color_count,
-    );
-    // dbg!(&best_coloring, &best_color_count);
+//     backtrack(
+//         graph,
+//         &order,
+//         0,
+//         &mut colors,
+//         0,
+//         &mut best_coloring,
+//         &mut best_color_count,
+//     );
+//     // dbg!(&best_coloring, &best_color_count);
 
-    (best_color_count, best_coloring)
-}
-
+//     (best_color_count, best_coloring)
+// }
 
 /// Finds maximal cliques containing all the vertices in r, some of the
 /// vertices in p, and none of the vertices in x.
@@ -218,7 +227,8 @@ fn bron_kerbosch_pivot(
     }
     // pick the pivot u to be the vertex with max degree
     // println!("{}", p);
-    let u = p.ones()
+    let u = p
+        .ones()
         .max_by_key(|&v| {
             let mut neighbours = 0;
             for i in 0..n {
@@ -265,7 +275,13 @@ fn bron_kerbosch_pivot(
         let mut next_x = x.clone();
         next_x.intersect_with(&neighbors);
 
-        cliques.extend(bron_kerbosch_pivot(non_exclusive, next_r, next_p, next_x, n));
+        cliques.extend(bron_kerbosch_pivot(
+            non_exclusive,
+            next_r,
+            next_p,
+            next_x,
+            n,
+        ));
 
         x.insert(v);
     }

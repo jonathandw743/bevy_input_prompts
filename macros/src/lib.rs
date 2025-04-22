@@ -1,12 +1,19 @@
 use anyhow::{Result, anyhow};
 use fixedbitset::FixedBitSet;
 use hashbrown::HashMap;
+use indexmap::IndexSet;
 use itertools::Itertools;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote};
 use std::{
-    borrow::Cow, collections::{vec_deque, HashSet, VecDeque}, fmt::Debug, iter::once, ops::Range, path::{Path, PathBuf}, rc::Rc
+    borrow::Cow,
+    collections::{BTreeSet, HashSet, VecDeque, vec_deque},
+    fmt::Debug,
+    iter::once,
+    ops::Range,
+    path::{Path, PathBuf},
+    rc::Rc,
 };
 use syn::{Ident, LitStr, parse_macro_input};
 
@@ -33,32 +40,40 @@ mod graph_operations;
 //     .into()
 // }
 
-type GraphColoring = fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>);
+// struct Graph(Vec<FixedBitSet>);
 
-struct Graph(Vec<FixedBitSet>);
+// impl Debug for Graph {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         f.debug_tuple("Graph")
+//             .field(&self.0.iter().map(|x| format!("{}", x)).collect::<Vec<_>>())
+//             .finish()
+//     }
+// }
 
-impl Debug for Graph {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Graph")
-            .field(&self.0.iter().map(|x| format!("{}", x)).collect::<Vec<_>>())
-            .finish()
-    }
+fn graph_coloring<I>(graph: &[I], n: usize) -> (usize, Vec<usize>)
+where
+    for<'a> &'a I: IntoIterator<Item = &'a usize>,
+{
+    let mut order = graph_operations::degeneracy_ordering(graph, n);
+    order.reverse();
+    graph_operations::greedy_coloring(graph, &order, n)
 }
 
 #[derive(Debug)]
 struct DirectoryTokens {
+    file_token_indices_original: Vec<Vec<usize>>,
     tokens: Vec<(String, usize)>,
     // coloring: Vec<usize>,
     // color_to_tokens: Graph,
     tokens_sort: Vec<usize>,
+    inverse_tokens_sort: Vec<usize>,
     color_bounds: Vec<usize>,
+    color_count: usize,
+    // token_graph: ,
 }
 
 impl DirectoryTokens {
-    pub fn from_file_paths<P: AsRef<Path>>(
-        file_paths: Vec<P>,
-        graph_coloring: GraphColoring,
-    ) -> Result<Self> {
+    pub fn from_file_paths<P: AsRef<Path>>(file_paths: Vec<P>) -> Result<Self> {
         // tokenise
         let mut file_word_counts = Vec::with_capacity(file_paths.len());
         for file_path in file_paths {
@@ -103,7 +118,7 @@ impl DirectoryTokens {
             token_to_index.insert(token.clone(), i);
         }
         // file_paths[i] <-> file_tokens[i] = FixedBitSet with contained token indices set
-        let mut file_tokens = Vec::with_capacity(file_word_counts.len());
+        let mut file_token_indices_original = Vec::with_capacity(file_word_counts.len());
         for counts in file_word_counts {
             let token_to_index = &token_to_index;
             let mut token_indices = Vec::new();
@@ -111,14 +126,14 @@ impl DirectoryTokens {
                 token_indices
                     .extend((0..count).map(move |index| token_to_index[&(word.clone(), index)]));
             }
-            file_tokens.push(FixedBitSet::from_iter(token_indices));
+            file_token_indices_original.push(token_indices);
         }
         // undirected graph where there is an edge between tokens if they ever appear in the same file
-        let mut token_graph = vec![FixedBitSet::with_capacity(tokens.len()); tokens.len()];
+        let mut token_graph = vec![IndexSet::new(); tokens.len()];
         for token_index in 0..tokens.len() {
-            for file_tokens in &file_tokens {
-                if file_tokens.contains(token_index) {
-                    token_graph[token_index].union_with(file_tokens);
+            for file_token_indices in &file_token_indices_original {
+                if file_token_indices.contains(&token_index) {
+                    token_graph[token_index].extend(file_token_indices);
                 }
             }
         }
@@ -132,6 +147,10 @@ impl DirectoryTokens {
         tokens_sort.sort_by(|&token_index_0, &token_index_1| {
             num_of_colors[coloring[token_index_0]].cmp(&num_of_colors[coloring[token_index_1]])
         });
+        let mut inverse_tokens_sort = vec![0; tokens_sort.len()];
+        for (i, &j) in tokens_sort.iter().enumerate() {
+            inverse_tokens_sort[j] = i;
+        }
         num_of_colors.sort();
         let mut color_bounds = Vec::with_capacity(color_count + 1);
         let mut bound = 0;
@@ -140,40 +159,40 @@ impl DirectoryTokens {
             bound += num_of_color;
             color_bounds.push(bound);
         }
-        // dbg!(&tokens_sort);
-
-        // let mut colors_sort = (0..color_count).collect::<Vec<_>>();
-        // colors_sort.sort_by(|&color_0, &color_1| num_of_color[color_1].cmp(&num_of_color[color_0]));
-        // let mut inverse_colors_sort = vec![0; color_count];
-        // for color in 0..color_count {
-        //     inverse_colors_sort[colors_sort[color]] = color;
-        // }
-        // // token_index -> color
-        // let coloring = coloring
-        //     .into_iter()
-        //     .map(|x| inverse_colors_sort[x])
-        //     .collect::<Vec<_>>();
-        // // color -> [token_index, token_index, ...]
-        // let mut color_to_tokens =
-        //     Graph(vec![FixedBitSet::with_capacity(tokens.len()); color_count]);
-        // for (token_index, &color) in coloring.iter().enumerate() {
-        //     color_to_tokens.0[color].insert(token_index);
-        // }
         Ok(Self {
             tokens,
-            // coloring,
-            // color_to_tokens,
             tokens_sort,
+            inverse_tokens_sort,
             color_bounds,
+            file_token_indices_original,
+            color_count,
         })
     }
-
     fn get_token(&self, token_index: usize) -> &(String, usize) {
         &self.tokens[self.tokens_sort[token_index]]
     }
-
     fn tokens_indices_of_color(&self, color: usize) -> Range<usize> {
         self.color_bounds[color]..self.color_bounds[color + 1]
+    }
+    fn file_tokens(&self) -> impl Iterator<Item = impl Iterator<Item = &(String, usize)>> {
+        self.file_token_indices_original.iter().map(|file_token_indices| file_token_indices.iter().map(|&x| &self.tokens[x]))
+    }
+    fn file_token_indices(&self) -> impl Iterator<Item = Vec<Option<usize>>> {
+        self.file_token_indices_original.iter().map(|file_token_indices| {
+            let mut token_indices = file_token_indices.iter().map(|&index| self.inverse_tokens_sort[index]).collect::<Vec<_>>();
+            token_indices.sort();
+            let mut v = vec![None; self.color_count];
+            let mut i = 0;
+            let mut color = 0;
+            while i < token_indices.len() && color < self.color_count {
+                if self.tokens_indices_of_color(color).contains(&token_indices[i]) {
+                    v[color] = Some(token_indices[i]);
+                    i += 1;
+                }
+                color += 1;
+            }
+            v
+        })
     }
 }
 
@@ -190,12 +209,14 @@ fn directory_tokens() -> Result<()> {
     }
     // sort file paths as the order may affect predictions made
     file_paths.sort();
-    let d = DirectoryTokens::from_file_paths(file_paths, |non_exclusive, num_tokens| {
-        let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
-        graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
-    })?;
-    for i in d.tokens_indices_of_color(4) {
-        dbg!(d.get_token(i));
+    let d = DirectoryTokens::from_file_paths(file_paths)?;
+    println!("{:?}", d);
+    for i in d.file_tokens() {
+        println!("{:?}", i.collect::<Vec<_>>());
+    }
+    println!("{:?}", d.file_token_indices().collect::<Vec<_>>());
+    for n in 0..d.color_count {
+        println!("{:?}", d.tokens_indices_of_color(n).map(|x| d.get_token(x)).collect::<Vec<_>>());
     }
     Ok(())
 }
