@@ -2,3 +2,6 @@
 /input_prompts
 known_gamepads.txt
 macro_expansion_temp
+flame-graph.html
+flame.json
+flamegraph.svg

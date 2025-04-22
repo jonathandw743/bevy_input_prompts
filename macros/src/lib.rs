@@ -57,6 +57,8 @@ impl DirectoryRepresentationIntermediary {
         dir: P,
         graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
     ) -> Result<Self> {
+        flame::start("all");
+        flame::start("setup");
         // it's fine if non-utf8 characters get replaced
         let dir_ident = dir_to_ident(
             &dir.as_ref()
@@ -146,8 +148,12 @@ impl DirectoryRepresentationIntermediary {
                 }
             }
         }
+        flame::end("setup");
+        flame::start("graph coloring");
         // color token graph to find sets of mutually exclusive tokens
         let (color_count, coloring) = graph_coloring(&token_graph, tokens.len());
+        flame::end("graph coloring");
+
         let mut num_of_color = vec![0; color_count];
         for &color in &coloring {
             num_of_color[color] += 1;
@@ -190,7 +196,7 @@ impl DirectoryRepresentationIntermediary {
         //     dbg!(num_possible_files);
         //     dbg!("-----");
         // }
-
+        flame::start("creating possible files");
         // create all possible files
         let mut possible_files = VecDeque::new();
         possible_files.push_back(Vec::with_capacity(color_count));
@@ -210,23 +216,37 @@ impl DirectoryRepresentationIntermediary {
                 possible_files.push_back(new_partial);
             }
         }
+        flame::end("creating possible files");
+        flame::start("creating graph");
         // create edges from all possible files to possible files where one token has been added
+        flame::start("allocation");
+        let mut graph = vec![Vec::with_capacity(possible_files.len()); possible_files.len()];
+        let mut transposed_graph = vec![Vec::with_capacity(possible_files.len()); possible_files.len()];
+        flame::end("allocation");
+        flame::start("n");
+        let mut ns = Vec::with_capacity(color_count + 1);
         let mut n = 1;
+        ns.push(n);
         for c in &color_to_tokens {
             n *= c.count_ones(..) + 1;
+            ns.push(n);
         }
-        let mut edges = Vec::new();
+        flame::end("n");
+        flame::start("edges");
         for i in 0..n {
-            let mut m = 1;
             for color in (0..color_count).rev() {
                 let count = color_to_tokens[color].count_ones(..);
-                let offset = i % (m * (count + 1)) - i % m;
+                let offset = i % ns[color + 1] - i % ns[color];
                 if offset != 0 {
-                    edges.push((i, i - offset));
+                    graph[i].push(i - offset);
+                    transposed_graph[i - offset].push(i);
                 }
-                m *= count + 1;
             }
         }
+        flame::end("edges");
+        // dbg!(graph.iter().map(|x| format!("{}", x)).collect::<Vec<_>>());
+        flame::end("creating graph");
+
         //     for j in (0..n).step_by(m * (count + 1)) {
         //         for k in (0..(m * (count + 1))).step_by(m) {
         //             // no edge to self
@@ -240,32 +260,28 @@ impl DirectoryRepresentationIntermediary {
 
         // create that graph
         // edges that represent a low information token being added should appear first
-        let mut graph =
-            vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
-        for edge in &edges {
-            graph[edge.0].insert(edge.1);
-        }
-        let mut transposed_graph =
-            vec![FixedBitSet::with_capacity(possible_files.len()); possible_files.len()];
-        for edge in &edges {
-            transposed_graph[edge.1].insert(edge.0);
-        }
+        flame::start("graph setup");
         // create predictions for what the user might mean that remove certain tokens
         // by flood filling from real files to possible files with extra tokens
+        let mut token_to_index_in_colors = vec![0; tokens.len()];
+        for (color, tokens) in color_to_tokens.iter().enumerate() {
+            for (i, token) in tokens.ones().enumerate() {
+                token_to_index_in_colors[token] = i;
+            }
+        }
         let mut initial_predictions = Vec::new();
         let mut visited = FixedBitSet::with_capacity(possible_files.len());
         for file_tokens in &file_tokens {
+            let mut file_tokens_possible_file = vec![None; color_count];
+            for file_token in file_tokens.ones() {
+                file_tokens_possible_file[coloring[file_token]] = Some(file_token);
+            }
             let mut m = 1;
             let mut index = 0;
-            for i in 1..=color_count {
-                let color = color_count - i;
+            for color in (0..color_count).rev() {
                 let count = color_to_tokens[color].count_ones(..);
-                for file_token in file_tokens.ones() {
-                    for (j, token) in color_to_tokens[color].ones().enumerate() {
-                        if file_token == token {
-                            index += m * (j + 1);
-                        }
-                    }
+                if let Some(file_token) = file_tokens_possible_file[color] {
+                    index += m * (token_to_index_in_colors[file_token] + 1);
                 }
                 m *= count + 1;
             }
@@ -274,12 +290,15 @@ impl DirectoryRepresentationIntermediary {
             initial_predictions.push((index, index));
             visited.insert(index);
         }
+        flame::end("graph setup");
+        flame::start("traversing graph");
         // flood fill graph of possible files to create predictions
+        flame::start("1");
         let mut i = 0;
         let mut predictions = initial_predictions.clone();
         // removing tokens to create addition predictions
         while i < predictions.len() {
-            for edge in graph[predictions[i].0].ones() {
+            for &edge in graph[predictions[i].0].iter() {
                 // doing visited check here is more performant than before the loop
                 // this also means only the predicitons we want will be added to predictions
                 if visited.contains(edge) {
@@ -290,10 +309,13 @@ impl DirectoryRepresentationIntermediary {
             }
             i += 1;
         }
+        flame::end("1");
+        flame::start("2");
+
         predictions.extend(initial_predictions.clone().into_iter());
         // adding tokens to create removal predictions
         while i < predictions.len() {
-            for edge in transposed_graph[predictions[i].0].ones() {
+            for &edge in transposed_graph[predictions[i].0].iter() {
                 if visited.contains(edge) {
                     continue;
                 }
@@ -302,10 +324,12 @@ impl DirectoryRepresentationIntermediary {
             }
             i += 1;
         }
+        flame::end("2");
+        flame::start("3");
         let mut i = 0;
         // removing tokens to create all other predictions
         while i < predictions.len() {
-            for edge in transposed_graph[predictions[i].0].ones() {
+            for &edge in transposed_graph[predictions[i].0].iter() {
                 if visited.contains(edge) {
                     continue;
                 }
@@ -314,8 +338,11 @@ impl DirectoryRepresentationIntermediary {
             }
             i += 1;
         }
+        flame::end("3");
+        flame::end("traversing graph");
+
         // dbg!(format!("{}", visited.union(&transposed_visited).collect::<FixedBitSet>()));
-        dbg!(format!("{}", visited));
+        // dbg!(format!("{}", visited));
 
         // let predictions = [predictions, transposed_predictions].concat();
         // let predictions = predictions.ext
@@ -338,6 +365,9 @@ impl DirectoryRepresentationIntermediary {
         //         }
         //     }
         // }
+        flame::end("all");
+        flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
+        flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
 
         Ok(Self {
             dir_ident,
@@ -435,12 +465,12 @@ impl DirectoryRepresentationIntermediary {
                         None => quote! { None },
                     });
             predict_function_arms.push(quote! {
-                (#(#possible_variants,)*) => Some( (#(#actual_variants,)*) )
+                (#(#possible_variants,)*) => (#(#actual_variants,)*)
             });
         }
         let predict_function_input_type = function_input_type.clone();
         let predict_function = quote! {
-            pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> Option<(#(#function_input_type,)*)> {
+            pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> (#(#function_input_type,)*) {
                 match possible_file {
                     #(#predict_function_arms,)*
                 }
