@@ -233,16 +233,38 @@ impl DirectoryRepresentationIntermediary {
         }
         flame::end("n");
         flame::start("edges");
+        let color_counts: Vec<usize> = color_to_tokens
+            .iter()
+            .map(|c| c.count_ones(..))
+            .collect();
         for i in 0..n {
             for color in (0..color_count).rev() {
-                let count = color_to_tokens[color].count_ones(..);
+                let count = color_counts[color];
                 let offset = i % ns[color + 1] - i % ns[color];
                 if offset != 0 {
                     graph[i].push(i - offset);
                     transposed_graph[i - offset].push(i);
-                }
+                }   
             }
         }
+        // let mut mods: Vec<Vec<usize>> = Vec::with_capacity(n);
+        // for i in 0..n {
+        //     let mut row = Vec::with_capacity(color_count + 1);
+        //     for j in 0..=color_count {
+        //         row.push(i % ns[j]);
+        //     }
+        //     mods.push(row);
+        // }
+        // for i in 0..n {
+        //     for color in (0..color_count).rev() {
+        //         let offset = mods[i][color + 1] - mods[i][color];
+        //         if offset != 0 {
+        //             let target = i - offset;
+        //             graph[i].push(target);
+        //             transposed_graph[target].push(i);
+        //         }
+        //     }
+        // }
         flame::end("edges");
         // dbg!(graph.iter().map(|x| format!("{}", x)).collect::<Vec<_>>());
         flame::end("creating graph");
