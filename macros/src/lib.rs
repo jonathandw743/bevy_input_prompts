@@ -19,26 +19,26 @@ use syn::{Ident, LitStr, parse_macro_input};
 
 mod graph_operations;
 
-// #[proc_macro]
-// pub fn directory_representation(input: TokenStream) -> TokenStream {
-//     let input = parse_macro_input!(input as LitStr).value();
-//     let dir_path = Path::new(&input);
-//     DirectoryRepresentationIntermediary::from_path(
-//         dir_path,
-//         |non_exclusive, num_tokens| {
-//             let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
-//             graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
-//         }, // |non_exclusive, num_tokens| {
-//            //     graph_operations::cliques(&non_exclusive, num_tokens)
-//            // let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
-//            // graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
-//            // },
-//     )
-//     .expect("Could not create directory representation module")
-//     .to_token_stream()
-//     .expect("Could not create directory representation module")
-//     .into()
-// }
+#[proc_macro]
+pub fn directory_representation(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as LitStr).value();
+    let dir_path = Path::new(&input);
+    DirectoryRepresentationIntermediary::from_path(
+        dir_path,
+        // |non_exclusive, num_tokens| {
+        //     let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+        //     graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+        // }, // |non_exclusive, num_tokens| {
+           //     graph_operations::cliques(&non_exclusive, num_tokens)
+           // let order = graph_operations::degeneracy_ordering(&non_exclusive, num_tokens);
+           // graph_operations::greedy_coloring(&non_exclusive, &order, num_tokens)
+           // },
+    )
+    .expect("Could not create directory representation module")
+    .to_token_stream()
+    .expect("Could not create directory representation module")
+    .into()
+}
 
 // struct Graph(Vec<FixedBitSet>);
 
@@ -251,7 +251,6 @@ struct DirectoryRepresentationIntermediary {
 impl DirectoryRepresentationIntermediary {
     fn from_path<P: AsRef<Path>>(
         dir: P,
-        graph_coloring: fn(&Vec<FixedBitSet>, usize) -> (usize, Vec<usize>),
     ) -> Result<Self> {
         flame::start("all");
         flame::start("setup");
@@ -284,6 +283,7 @@ impl DirectoryRepresentationIntermediary {
         file_paths.sort();
 
         let directory_tokens = DirectoryTokens::from_file_paths(&file_paths)?;
+        flame::end("setup");
 
         // #[cfg(debug_assertions)]
         // {
@@ -352,12 +352,23 @@ impl DirectoryRepresentationIntermediary {
         flame::start("edges");
         for i in 0..n {
             for color in 0..directory_tokens.color_count {
-                let count = color_counts[color];
                 let offset = i % ns[color + 1] - i % ns[color];
                 if offset != 0 {
                     graph[i].push(i - offset);
                     transposed_graph[i - offset].push(i);
                 }
+            }
+        }
+        for (origin, edges) in graph.iter().enumerate() {
+            for target in edges {
+                let x = (possible_files[origin].iter().map(|x| match x {
+                    Some(x) => format!("{}", directory_tokens.get_token(*x).0),
+                    None => "_".to_string()
+                }).join(" "), possible_files[*target].iter().map(|x| match x {
+                    Some(x) => format!("{}", directory_tokens.get_token(*x).0),
+                    None => "_".to_string()
+                }).join(" "));
+                dbg!(x);
             }
         }
         // let mut mods: Vec<Vec<usize>> = Vec::with_capacity(n);
@@ -412,14 +423,16 @@ impl DirectoryRepresentationIntermediary {
             let mut index = 0;
             for (color, &count) in color_counts.iter().enumerate() {
                 if let Some(file_token_index) = file_tokens_possible_file[color] {
-                    index += m * (file_token_index + 1);
+                    index += m * (file_token_index - directory_tokens.token_indices_of_color(color).start + 1);
                 }
                 m *= count + 1;
             }
+            // dbg!(index);
             // NOTE: if files aren't deterministically ordered, predictions could change
             // NOTE: just sorting by file path for now (above)
             initial_predictions.push((index, index));
             visited.insert(index);
+            // dbg!(index);
         }
         // for file_tokens in &file_tokens {
         //     let mut file_tokens_possible_file = vec![None; color_count];
@@ -460,35 +473,35 @@ impl DirectoryRepresentationIntermediary {
             i += 1;
         }
         flame::end("1");
-        flame::start("2");
+        // flame::start("2");
 
-        predictions.extend(initial_predictions.clone().into_iter());
-        // adding tokens to create removal predictions
-        while i < predictions.len() {
-            for &edge in transposed_graph[predictions[i].0].iter() {
-                if visited.contains(edge) {
-                    continue;
-                }
-                visited.insert(edge);
-                predictions.push((edge, predictions[i].1));
-            }
-            i += 1;
-        }
-        flame::end("2");
-        flame::start("3");
-        let mut i = 0;
-        // removing tokens to create all other predictions
-        while i < predictions.len() {
-            for &edge in transposed_graph[predictions[i].0].iter() {
-                if visited.contains(edge) {
-                    continue;
-                }
-                visited.insert(edge);
-                predictions.push((edge, predictions[i].1));
-            }
-            i += 1;
-        }
-        flame::end("3");
+        // predictions.extend(initial_predictions.clone().into_iter());
+        // // adding tokens to create removal predictions
+        // while i < predictions.len() {
+        //     for &edge in transposed_graph[predictions[i].0].iter() {
+        //         if visited.contains(edge) {
+        //             continue;
+        //         }
+        //         visited.insert(edge);
+        //         predictions.push((edge, predictions[i].1));
+        //     }
+        //     i += 1;
+        // }
+        // flame::end("2");
+        // flame::start("3");
+        // let mut i = 0;
+        // // removing tokens to create all other predictions
+        // while i < predictions.len() {
+        //     for &edge in transposed_graph[predictions[i].0].iter() {
+        //         if visited.contains(edge) {
+        //             continue;
+        //         }
+        //         visited.insert(edge);
+        //         predictions.push((edge, predictions[i].1));
+        //     }
+        //     i += 1;
+        // }
+        // flame::end("3");
         flame::end("traversing graph");
 
         // dbg!(format!("{}", visited.union(&transposed_visited).collect::<FixedBitSet>()));
@@ -530,7 +543,6 @@ impl DirectoryRepresentationIntermediary {
             // color_count,
             // color_to_tokens,
             // graph_coloring,
-
             directory_tokens,
 
             possible_files,
@@ -540,32 +552,39 @@ impl DirectoryRepresentationIntermediary {
 
     fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
         // create mutually exculsive enums using graph coloring
-        let mx_enums = self
-            .color_to_tokens
-            .iter()
-            .enumerate()
-            .map(|(color, token_indices)| {
-                let enum_name = format_ident!("_MX_{}", color);
-                let variants = token_indices
-                    .ones()
-                    .map(|token_index| token_to_ident(&self.tokens[token_index]));
-                quote! {
-                    #[derive(Debug)]
-                    pub enum #enum_name {
-                        #(#variants,)*
-                    }
+        let mx_enums = (0..self.directory_tokens.color_count).map(|color| {
+            let token_indices = self.directory_tokens.token_indices_of_color(color);
+            let enum_name = format_ident!("_MX_{}", color);
+            let variants = token_indices
+                .map(|token_index| token_to_ident(&self.directory_tokens.get_token(token_index)));
+            quote! {
+                #[derive(Debug)]
+                pub enum #enum_name {
+                    #(#variants,)*
                 }
-            });
+            }
+        });
         // create function from possible files to paths
         let mut file_function_arms = Vec::new();
-        for (file_tokens, file_path) in self.file_tokens.iter().zip(&self.file_paths) {
-            let mut variants = vec![quote! { None }; self.color_count];
-            for token_index in file_tokens.ones() {
-                let color = self.coloring[token_index];
-                let enum_name = format_ident!("_MX_{}", color);
-                let variant = token_to_ident(&self.tokens[token_index]);
-                variants[color] = quote! { Some( #enum_name :: #variant ) };
-            }
+        for (file_tokens, file_path) in self.directory_tokens.file_token_indices().zip(&self.file_paths) {
+            // let mut variants = vec![quote! { None }; self.color_count];
+            // for token_index in file_tokens.ones() {
+            //     let color = self.coloring[token_index];
+            //     let enum_name = format_ident!("_MX_{}", color);
+            //     let variant = token_to_ident(&self.tokens[token_index]);
+            //     variants[color] = quote! { Some( #enum_name :: #variant ) };
+            // }
+            let variants = file_tokens.iter().enumerate().map(|(color, file_token)| {
+                match file_token {
+                    Some(file_token) => {
+                        let enum_name = format_ident!("_MX_{}", color);
+                        let file_token = self.directory_tokens.get_token(*file_token);
+                        let variant = token_to_ident(file_token);
+                        quote! { Some( #enum_name :: #variant ) }
+                    },
+                    None => quote! { None },
+                }
+            });
             let file_path = LitStr::new(
                 file_path
                     .to_str()
@@ -574,7 +593,7 @@ impl DirectoryRepresentationIntermediary {
             );
             file_function_arms.push(quote! { (#(#variants,)*) => Some( #file_path ) });
         }
-        let function_input_type = (0..self.color_count).map(|i| {
+        let function_input_type = (0..self.directory_tokens.color_count).map(|i| {
             let enum_name = format_ident!("_MX_{}", i);
             quote! {
                 Option< #enum_name >
@@ -599,7 +618,7 @@ impl DirectoryRepresentationIntermediary {
                     .map(|(i, token_index)| match token_index {
                         Some(token_index) => {
                             let enum_name = format_ident!("_MX_{}", i);
-                            let variant = token_to_ident(&self.tokens[*token_index]);
+                            let variant = token_to_ident(&self.directory_tokens.get_token(*token_index));
                             quote! { Some( #enum_name :: #variant ) }
                         }
                         None => quote! { None },
@@ -611,7 +630,7 @@ impl DirectoryRepresentationIntermediary {
                     .map(|(i, token_index)| match token_index {
                         Some(token_index) => {
                             let enum_name = format_ident!("_MX_{}", i);
-                            let variant = token_to_ident(&self.tokens[*token_index]);
+                            let variant = token_to_ident(&self.directory_tokens.get_token(*token_index));
                             quote! { Some( #enum_name :: #variant ) }
                         }
                         None => quote! { None },
@@ -632,7 +651,7 @@ impl DirectoryRepresentationIntermediary {
         let mut submodules = Vec::new();
         for sub_dir in &self.dir_paths {
             submodules.push(
-                DirectoryRepresentationIntermediary::from_path(sub_dir, self.graph_coloring)?
+                DirectoryRepresentationIntermediary::from_path(sub_dir)?
                     .to_token_stream()?,
             );
         }
