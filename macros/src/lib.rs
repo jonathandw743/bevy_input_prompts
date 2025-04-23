@@ -3,12 +3,12 @@ use fixedbitset::FixedBitSet;
 use hashbrown::HashMap;
 use indexmap::IndexSet;
 use itertools::Itertools;
-use proc_macro2::{Span, extra::DelimSpan};
+// use proc_macro2::{Span, extra::DelimSpan};
 use quote::quote;
-use syn::{
-    Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
-    spanned::Spanned,
-};
+// use syn::{
+//     Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
+//     spanned::Spanned,
+// };
 // use proc_macro2::Span;
 // use quote::{format_ident, quote};
 use std::{
@@ -20,6 +20,8 @@ use std::{
     path::{Path, PathBuf},
     rc::Rc,
 };
+// use proc_macro2::{TokenStream, TokenTree, Group, Delimiter, Span};
+use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 // use std::str::FromStr;
 
 // mod graph_operations;
@@ -30,6 +32,7 @@ mod iter_graphs;
 pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input as syn::LitStr).value();
     let dir_path = Path::new(&input);
+    flame::start("main");
     let x = DirectoryRepresentationIntermediary::from_path(
         dir_path,
         // |non_exclusive, num_tokens| {
@@ -43,9 +46,12 @@ pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::T
     )
     .expect("Could not create directory representation module")
     .to_token_stream()
-    .expect("Could not create directory representation module")
-    .into();
-    dbg!("lkjsdkasj;lkfsdjlfskdf");
+    .expect("Could not create directory representation module");
+    flame::end("main");
+    flame::start("into");
+    let x = x.into();
+    flame::end("into");
+    // dbg!("lkjsdkasj;lkfsdjlfskdf");
     flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
     flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
     x
@@ -765,7 +771,6 @@ impl DirectoryRepresentationIntermediary {
             possible_actual_files.push((possible_file, actual_file));
         }
         flame::end("collection");
-        flame::start("streaming");
         // slow section
         // let mut predict_function_arms = Vec::new();
         // for (possible_file, actual_file) in &possible_actual_files {
@@ -803,226 +808,249 @@ impl DirectoryRepresentationIntermediary {
         //     }
         //     predict_function_arms.push_str("),");
         // }
-        let mut predict_function_arms = Vec::new();
-        for (possible, actual) in &possible_actual_files {
-            let mut pat_elems = Punctuated::new();
-            for (i, token_index) in possible.iter().enumerate() {
-                pat_elems.push(match token_index {
-                    Some(token_index) => syn::Pat::TupleStruct(syn::PatTupleStruct {
-                        attrs: vec![],
-                        qself: None,
-                        path: syn::Path {
-                            leading_colon: None,
-                            segments: {
-                                let mut segments = Punctuated::new();
-                                segments.push(syn::PathSegment {
-                                    ident: syn::Ident::new("Some", Span::call_site()),
-                                    arguments: syn::PathArguments::None,
-                                });
-                                segments
-                            },
-                        },
-                        paren_token: Default::default(),
-                        elems: {
-                            let mut elems = Punctuated::new();
-                            elems.push(syn::Pat::Path(syn::PatPath {
-                                attrs: vec![],
-                                qself: None,
-                                path: syn::Path {
-                                    leading_colon: None,
-                                    segments: {
-                                        let mut segments = Punctuated::new();
-                                        segments.push(syn::PathSegment {
-                                            ident: syn::Ident::new(
-                                                &format!("_MX_{}", i),
-                                                Span::call_site(),
-                                            ),
-                                            arguments: syn::PathArguments::None,
-                                        });
-                                        segments.push(syn::PathSegment {
-                                            ident: syn::Ident::new(
-                                                &format!(
-                                                    "_{}",
-                                                    self.directory_tokens
-                                                        .get_token(*token_index)
-                                                        .0
-                                                        .chars()
-                                                        .map(|c| {
-                                                            if c.is_alphanumeric() {
-                                                                c
-                                                            } else {
-                                                                '_'
-                                                            }
-                                                        })
-                                                        .collect::<String>()
-                                                ),
-                                                Span::call_site(),
-                                            ),
-                                            arguments: syn::PathArguments::None,
-                                        });
-                                        segments
-                                    },
-                                },
-                            }));
-                            elems
-                        },
-                    }),
-                    None => syn::Pat::Path(syn::PatPath {
-                        attrs: vec![],
-                        qself: None,
-                        path: syn::Path {
-                            leading_colon: None,
-                            segments: {
-                                let mut segments = Punctuated::new();
-                                segments.push(syn::PathSegment {
-                                    ident: syn::Ident::new("None", Span::call_site()),
-                                    arguments: syn::PathArguments::None,
-                                });
-                                segments
-                            },
-                        },
-                    }),
-                });
-            }
-            let mut elems = Punctuated::new();
-            for (i, token_index) in possible.iter().enumerate() {
-                elems.push(match token_index {
-                    Some(token_index) => syn::Expr::Call(syn::ExprCall {
-                        attrs: vec![],
-                        func: Box::new(syn::Expr::Path(syn::ExprPath {
-                            attrs: vec![],
-                            qself: None,
-                            path: syn::Path {
-                                leading_colon: None,
-                                segments: {
-                                    let mut segments = Punctuated::new();
-                                    segments.push(syn::PathSegment {
-                                        ident: syn::Ident::new("Some", Span::call_site()),
-                                        arguments: syn::PathArguments::None,
-                                    });
-                                    segments
-                                },
-                            },
-                        })),
-                        paren_token: Default::default(),
-                        args: {
-                            let mut args = Punctuated::new();
-                            args.push(syn::Expr::Path(syn::ExprPath {
-                                attrs: vec![],
-                                qself: None,
-                                path: syn::Path {
-                                    leading_colon: None,
-                                    segments: {
-                                        let mut segments = Punctuated::new();
-                                        segments.push(syn::PathSegment {
-                                            ident: syn::Ident::new(
-                                                &format!("_MX_{}", i),
-                                                Span::call_site(),
-                                            ),
-                                            arguments: syn::PathArguments::None,
-                                        });
-                                        segments.push(syn::PathSegment {
-                                            ident: syn::Ident::new(
-                                                &format!(
-                                                    "_{}",
-                                                    self.directory_tokens
-                                                        .get_token(*token_index)
-                                                        .0
-                                                        .chars()
-                                                        .map(|c| {
-                                                            if c.is_alphanumeric() {
-                                                                c
-                                                            } else {
-                                                                '_'
-                                                            }
-                                                        })
-                                                        .collect::<String>()
-                                                ),
-                                                Span::call_site(),
-                                            ),
-                                            arguments: syn::PathArguments::None,
-                                        });
-                                        segments
-                                    },
-                                },
-                            }));
-                            args
-                        },
-                    }),
-                    None => syn::Expr::Path(syn::ExprPath {
-                        attrs: vec![],
-                        qself: None,
-                        path: syn::Path {
-                            leading_colon: None,
-                            segments: {
-                                let mut segments = Punctuated::new();
-                                segments.push(syn::PathSegment {
-                                    ident: syn::Ident::new("None", Span::call_site()),
-                                    arguments: syn::PathArguments::None,
-                                });
-                                segments
-                            },
-                        },
-                    }),
-                });
-            }
-            // let possible_variants = syn::Expr::Tuple(syn::ExprTuple {
-            //     attrs: vec![],
-            //     paren_token: Default::default(),
-            //     elems: ,
-            // });
-            // predict_function_arms.push(syn::Expr::Match(syn::ExprMatch {
-            //     attrs: vec![],
-            //     match_token: Default::default(),
-            //     expr: syn::Expr,
-            //     brace_token: Default::default(),
-            //     arms: todo!(),
-            // }));
-            predict_function_arms.push(syn::Arm {
-                attrs: vec![],
-                pat: syn::Pat::Tuple(syn::PatTuple {
-                    attrs: vec![],
-                    paren_token: Default::default(),
-                    elems: pat_elems,
-                }),
-                guard: None,
-                fat_arrow_token: Default::default(),
-                body: Box::new(syn::Expr::Tuple(syn::ExprTuple {
-                    attrs: vec![],
-                    paren_token: Default::default(),
-                    elems,
-                })),
-                comma: Some(Default::default()),
-            });
-        }
-        let predict_function_match = syn::Expr::Match(syn::ExprMatch {
-            attrs: vec![],
-            match_token: Default::default(),
-            expr: Box::new(syn::Expr::Path(syn::ExprPath {
-                attrs: vec![],
-                qself: None,
-                path: syn::Path {
-                    leading_colon: None,
-                    segments: {
-                        let mut segments = Punctuated::new();
-                        segments.push(syn::PathSegment {
-                            ident: syn::Ident::new("possible_file", Span::call_site()),
-                            arguments: syn::PathArguments::None,
-                        });
-                        segments
-                    },
-                },
-            })),
-            brace_token: Default::default(),
-            arms: predict_function_arms,
-        });
+        // let mut predict_function_arms = Vec::new();
+        flame::start("tt vec");
+        let predict_function_match = TokenStream::from_iter([
+            TokenTree::Ident(Ident::new("match", Span::call_site())),
+            TokenTree::Ident(Ident::new("possible_file", Span::call_site())),
+            TokenTree::Group(Group::new(
+                Delimiter::Brace,
+                TokenStream::from_iter(
+                    possible_actual_files
+                        .iter()
+                        .flat_map(|(possible, actual)| {
+                            [
+                                TokenTree::Group(Group::new(
+                                    Delimiter::Parenthesis,
+                                    TokenStream::from_iter(
+                                        possible
+                                            .iter()
+                                            .enumerate()
+                                            .flat_map(|(color, token_index)| match token_index {
+                                                Some(token_index) => vec![
+                                                    TokenTree::Ident(Ident::new(
+                                                        "Some",
+                                                        Span::call_site(),
+                                                    )),
+                                                    TokenTree::Group(Group::new(
+                                                        Delimiter::Parenthesis,
+                                                        TokenStream::from_iter([
+                                                            TokenTree::Ident(Ident::new(
+                                                                &format!("_MX_{}", color),
+                                                                Span::call_site(),
+                                                            )),
+                                                            TokenTree::Punct(Punct::new(
+                                                                ':',
+                                                                Spacing::Joint,
+                                                            )),
+                                                            TokenTree::Punct(Punct::new(
+                                                                ':',
+                                                                Spacing::Alone,
+                                                            )),
+                                                            TokenTree::Ident(Ident::new(
+                                                                &format!(
+                                                                    "_{}",
+                                                                    self.directory_tokens
+                                                                        .get_token(*token_index)
+                                                                        .0
+                                                                        .chars()
+                                                                        .map(|c| {
+                                                                            if c.is_alphanumeric() {
+                                                                                c
+                                                                            } else {
+                                                                                '_'
+                                                                            }
+                                                                        })
+                                                                        .collect::<String>(),
+                                                                ),
+                                                                Span::call_site(),
+                                                            )),
+                                                        ]),
+                                                    )),
+                                                    TokenTree::Punct(Punct::new(
+                                                        ',',
+                                                        Spacing::Alone,
+                                                    )),
+                                                ],
+                                                None => vec![
+                                                    TokenTree::Ident(Ident::new(
+                                                        "None",
+                                                        Span::call_site(),
+                                                    )),
+                                                    TokenTree::Punct(Punct::new(
+                                                        ',',
+                                                        Spacing::Alone,
+                                                    )),
+                                                ],
+                                            }),
+                                    ),
+                                )),
+                                TokenTree::Punct(Punct::new('=', Spacing::Joint)),
+                                TokenTree::Punct(Punct::new('>', Spacing::Alone)),
+                                TokenTree::Group(Group::new(
+                                    Delimiter::Parenthesis,
+                                    TokenStream::from_iter(
+                                        actual
+                                            .iter()
+                                            .enumerate()
+                                            .flat_map(|(color, token_index)| match token_index {
+                                                Some(token_index) => vec![
+                                                    TokenTree::Ident(Ident::new(
+                                                        "Some",
+                                                        Span::call_site(),
+                                                    )),
+                                                    TokenTree::Group(Group::new(
+                                                        Delimiter::Parenthesis,
+                                                        TokenStream::from_iter([
+                                                            TokenTree::Ident(Ident::new(
+                                                                &format!("_MX_{}", color),
+                                                                Span::call_site(),
+                                                            )),
+                                                            TokenTree::Punct(Punct::new(
+                                                                ':',
+                                                                Spacing::Joint,
+                                                            )),
+                                                            TokenTree::Punct(Punct::new(
+                                                                ':',
+                                                                Spacing::Alone,
+                                                            )),
+                                                            TokenTree::Ident(Ident::new(
+                                                                &format!(
+                                                                    "_{}",
+                                                                    self.directory_tokens
+                                                                        .get_token(*token_index)
+                                                                        .0
+                                                                        .chars()
+                                                                        .map(|c| {
+                                                                            if c.is_alphanumeric() {
+                                                                                c
+                                                                            } else {
+                                                                                '_'
+                                                                            }
+                                                                        })
+                                                                        .collect::<String>(),
+                                                                ),
+                                                                Span::call_site(),
+                                                            )),
+                                                        ]),
+                                                    )),
+                                                    TokenTree::Punct(Punct::new(
+                                                        ',',
+                                                        Spacing::Alone,
+                                                    )),
+                                                ],
+                                                None => vec![
+                                                    TokenTree::Ident(Ident::new(
+                                                        "None",
+                                                        Span::call_site(),
+                                                    )),
+                                                    TokenTree::Punct(Punct::new(
+                                                        ',',
+                                                        Spacing::Alone,
+                                                    )),
+                                                ],
+                                            }),
+                                    ),
+                                )),
+                                TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+                            ]
+                        }),
+                ),
+            )),
+        ]);
+        // let mut arms = Vec::new();
+        //     ,
+        //         let mut variants = Vec::new();
+        //         for (color, token_index) in possible.iter().enumerate() {
+
+        //         }
+        //         arms.push(TokenTree::Group(Group::new(
+        //             Delimiter::Parenthesis,
+        //             TokenStream::from_iter(variants),
+        //         )));
+        //         arms.push(TokenTree::Punct(Punct::new('=', Spacing::Joint)));
+        //         arms.push(TokenTree::Punct(Punct::new('>', Spacing::Alone)));
+        //         let mut variants = Vec::new();
+        //         for (color, token_index) in actual.iter().enumerate() {
+        //             match token_index {
+        //                 Some(token_index) => {
+        //                     variants.push(TokenTree::Ident(Ident::new("Some", Span::call_site())));
+        //                     variants.push(TokenTree::Group(Group::new(
+        //                         Delimiter::Parenthesis,
+        //                         TokenStream::from_iter([
+        //                             TokenTree::Ident(Ident::new(
+        //                                 &format!("_MX_{}", color),
+        //                                 Span::call_site(),
+        //                             )),
+        //                             TokenTree::Punct(Punct::new(':', Spacing::Joint)),
+        //                             TokenTree::Punct(Punct::new(':', Spacing::Alone)),
+        //                             TokenTree::Ident(Ident::new(
+        //                                 &format!(
+        //                                     "_{}",
+        //                                     self.directory_tokens
+        //                                         .get_token(*token_index)
+        //                                         .0
+        //                                         .chars()
+        //                                         .map(|c| if c.is_alphanumeric() { c } else { '_' })
+        //                                         .collect::<String>(),
+        //                                 ),
+        //                                 Span::call_site(),
+        //                             )),
+        //                         ]),
+        //                     )));
+        //                     variants.push(TokenTree::Punct(Punct::new(',', Spacing::Alone)));
+        //                 }
+        //                 None => {
+        //                     variants.push(TokenTree::Ident(Ident::new("None", Span::call_site())));
+        //                     variants.push(TokenTree::Punct(Punct::new(',', Spacing::Alone)));
+        //                 }
+        //             }
+        //         }
+        //         arms.push(TokenTree::Group(Group::new(
+        //             Delimiter::Parenthesis,
+        //             TokenStream::from_iter(variants),
+        //         )));
+        //         arms.push(TokenTree::Punct(Punct::new(',', Spacing::Alone)));
+
+        //     })
+        // )))]);
+
+        // predict_function_match.push(TokenTree::Group(Group::new(
+        //     Delimiter::Brace,
+        //     TokenStream::from_iter(arms),
+        // )));
+        flame::end("tt vec");
+        // flame::start("from_iter");
+        // let predict_function_match = TokenStream::from_iter(predict_function_match);
+        // flame::end("from_iter");
+        // let predict_function_match = syn::Expr::Match(syn::ExprMatch {
+        //     attrs: vec![],
+        //     match_token: Default::default(),
+        //     expr: Box::new(syn::Expr::Path(syn::ExprPath {
+        //         attrs: vec![],
+        //         qself: None,
+        //         path: syn::Path {
+        //             leading_colon: None,
+        //             segments: {
+        //                 let mut segments = Punctuated::new();
+        //                 segments.push(syn::PathSegment {
+        //                     ident: syn::Ident::new("possible_file", Span::call_site()),
+        //                     arguments: syn::PathArguments::None,
+        //                 });
+        //                 segments
+        //             },
+        //         },
+        //     })),
+        //     brace_token: Default::default(),
+        //     arms: predict_function_arms,
+        // });
         // let x = quote! {#predict_function_match};
-        flame::end("streaming");
         // flame::start("big parse");
         // dbg!(&predict_function_arms);
         // let predict_function_arms = syn::parse_str::<syn::Expr>(&predict_function_arms)?;
         // let predict_function_arms = proc_macro2::TokenStream::from_str(&predict_function_arms).expect("bad token stream from_str");
         // flame::end("big parse");
+
         flame::end("predict_function_arms");
         flame::start("pft");
         let predict_function_input_type = function_input_type.clone();
