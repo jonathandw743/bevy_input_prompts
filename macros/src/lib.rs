@@ -3,8 +3,12 @@ use fixedbitset::FixedBitSet;
 use hashbrown::HashMap;
 use indexmap::IndexSet;
 use itertools::Itertools;
-use proc_macro2::Span;
-use syn::Token;
+use proc_macro2::{Span, extra::DelimSpan};
+use quote::quote;
+use syn::{
+    Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
+    spanned::Spanned,
+};
 // use proc_macro2::Span;
 // use quote::{format_ident, quote};
 use std::{
@@ -41,6 +45,7 @@ pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::T
     .to_token_stream()
     .expect("Could not create directory representation module")
     .into();
+    dbg!("lkjsdkasj;lkfsdjlfskdf");
     flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
     flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
     x
@@ -254,7 +259,7 @@ impl DirectoryTokens {
             // let possible_files_bound = self.possible_files_bounds[color];
             // let num_of_color = self.num_of_colors[color];
             let x =
-            (index % self.possible_files_bounds[color + 1]) / self.possible_files_bounds[color];
+                (index % self.possible_files_bounds[color + 1]) / self.possible_files_bounds[color];
             if x != 0 {
                 Some(index - x * self.possible_files_bounds[color])
             } else {
@@ -327,10 +332,15 @@ fn directory_tokens_test() -> Result<()> {
         // dbg!(&x);
         let x = d.possible_file(x);
         // dbg!(&x);
-        println!("{:?}", x.iter().map(|x| match x {
-            Some(x) => &d.get_token(*x).0,
-            None => "_"
-        }).collect::<Vec<_>>());
+        println!(
+            "{:?}",
+            x.iter()
+                .map(|x| match x {
+                    Some(x) => &d.get_token(*x).0,
+                    None => "_",
+                })
+                .collect::<Vec<_>>()
+        );
     }
 
     Ok(())
@@ -609,7 +619,7 @@ impl DirectoryRepresentationIntermediary {
         flame::end("2");
 
         flame::start("3");
-        
+
         let mut i = j;
         // removing tokens to create all other predictions
         while i < predictions.len() {
@@ -651,7 +661,6 @@ impl DirectoryRepresentationIntermediary {
         // }
         flame::end("all");
 
-        
         Ok(Self {
             dir_ident,
             path,
@@ -674,18 +683,21 @@ impl DirectoryRepresentationIntermediary {
         flame::start("to token stream");
         // create mutually exculsive enums using graph coloring
         flame::start("mx_enums");
-        let mx_enums = (0..self.directory_tokens.color_count).map(|color| {
-            let token_indices = self.directory_tokens.token_indices_of_color(color);
-            let enum_name = quote::format_ident!("_MX_{}", color);
-            let variants = token_indices
-                .map(|token_index| token_to_ident(&self.directory_tokens.get_token(token_index)));
-            quote::quote! {
-                #[derive(Debug)]
-                pub enum #enum_name {
-                    #(#variants,)*
+        let mx_enums = (0..self.directory_tokens.color_count)
+            .map(|color| {
+                let token_indices = self.directory_tokens.token_indices_of_color(color);
+                let enum_name = quote::format_ident!("_MX_{}", color);
+                let variants = token_indices.map(|token_index| {
+                    token_to_ident(&self.directory_tokens.get_token(token_index))
+                });
+                quote::quote! {
+                    #[derive(Debug)]
+                    pub enum #enum_name {
+                        #(#variants,)*
+                    }
                 }
-            }
-        }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
         flame::end("mx_enums");
         // create function from possible files to paths
         flame::start("file_function_arms");
@@ -755,56 +767,268 @@ impl DirectoryRepresentationIntermediary {
         flame::end("collection");
         flame::start("streaming");
         // slow section
+        // let mut predict_function_arms = Vec::new();
+        // for (possible_file, actual_file) in &possible_actual_files {
+        //     // let mut poss = Vec::new();
+        //     for (color, token_index) in possible_file.iter().enumerate() {
+        //         match token_index {
+        //             Some(token_index) => {
+        //                 // let x = proc_macro2::Ident::new("Some", Span::call_site()).into();
+        //                 // predict_function_arms.extend(x);
+        //                 predict_function_arms.push_str("Some(");
+        //                 predict_function_arms.push_str(&format!("_MX_{}::", color));
+        //                 predict_function_arms.push_str(&token_to_ident(&self.directory_tokens.get_token(*token_index)));
+        //                 // predict_function_arms.push(Token![)]);
+        //             },
+        //             None => {
+        //                 predict_function_arms.push_str("None");
+        //             }
+        //         }
+        //         predict_function_arms.push(Token![,]());
+        //     }
+        //     predict_function_arms.push_str(")=>(");
+        //     for (color, token_index) in actual_file.iter().enumerate() {
+        //         match token_index {
+        //             Some(token_index) => {
+        //                 predict_function_arms.push_str("Some(");
+        //                 predict_function_arms.push_str(&format!("_MX_{}::", color));
+        //                 predict_function_arms.push_str(&token_to_ident(&self.directory_tokens.get_token(*token_index)));
+        //                 // predict_function_arms.push(')');
+        //             },
+        //             None => {
+        //                 predict_function_arms.push_str("None");
+        //             }
+        //         }
+        //         predict_function_arms.push(Token![,]);
+        //     }
+        //     predict_function_arms.push_str("),");
+        // }
         let mut predict_function_arms = Vec::new();
-        for (possible_file, actual_file) in &possible_actual_files {
-            // let mut poss = Vec::new();
-            for (color, token_index) in possible_file.iter().enumerate() {
-                match token_index {
-                    Some(token_index) => {
-                        // let x = proc_macro2::Ident::new("Some", Span::call_site()).into();
-                        // predict_function_arms.extend(x);
-                        predict_function_arms.push_str("Some(");
-                        predict_function_arms.push_str(&format!("_MX_{}::", color));
-                        predict_function_arms.push_str(&token_to_ident(&self.directory_tokens.get_token(*token_index)));
-                        // predict_function_arms.push(Token![)]);
-                    },
-                    None => {
-                        predict_function_arms.push_str("None");
-                    }
-                }
-                predict_function_arms.push(Token![,]());
+        for (possible, actual) in &possible_actual_files {
+            let mut pat_elems = Punctuated::new();
+            for (i, token_index) in possible.iter().enumerate() {
+                pat_elems.push(match token_index {
+                    Some(token_index) => syn::Pat::TupleStruct(syn::PatTupleStruct {
+                        attrs: vec![],
+                        qself: None,
+                        path: syn::Path {
+                            leading_colon: None,
+                            segments: {
+                                let mut segments = Punctuated::new();
+                                segments.push(syn::PathSegment {
+                                    ident: syn::Ident::new("Some", Span::call_site()),
+                                    arguments: syn::PathArguments::None,
+                                });
+                                segments
+                            },
+                        },
+                        paren_token: Default::default(),
+                        elems: {
+                            let mut elems = Punctuated::new();
+                            elems.push(syn::Pat::Path(syn::PatPath {
+                                attrs: vec![],
+                                qself: None,
+                                path: syn::Path {
+                                    leading_colon: None,
+                                    segments: {
+                                        let mut segments = Punctuated::new();
+                                        segments.push(syn::PathSegment {
+                                            ident: syn::Ident::new(
+                                                &format!("_MX_{}", i),
+                                                Span::call_site(),
+                                            ),
+                                            arguments: syn::PathArguments::None,
+                                        });
+                                        segments.push(syn::PathSegment {
+                                            ident: syn::Ident::new(
+                                                &format!(
+                                                    "_{}",
+                                                    self.directory_tokens
+                                                        .get_token(*token_index)
+                                                        .0
+                                                        .chars()
+                                                        .map(|c| {
+                                                            if c.is_alphanumeric() {
+                                                                c
+                                                            } else {
+                                                                '_'
+                                                            }
+                                                        })
+                                                        .collect::<String>()
+                                                ),
+                                                Span::call_site(),
+                                            ),
+                                            arguments: syn::PathArguments::None,
+                                        });
+                                        segments
+                                    },
+                                },
+                            }));
+                            elems
+                        },
+                    }),
+                    None => syn::Pat::Path(syn::PatPath {
+                        attrs: vec![],
+                        qself: None,
+                        path: syn::Path {
+                            leading_colon: None,
+                            segments: {
+                                let mut segments = Punctuated::new();
+                                segments.push(syn::PathSegment {
+                                    ident: syn::Ident::new("None", Span::call_site()),
+                                    arguments: syn::PathArguments::None,
+                                });
+                                segments
+                            },
+                        },
+                    }),
+                });
             }
-            predict_function_arms.push_str(")=>(");
-            for (color, token_index) in actual_file.iter().enumerate() {
-                match token_index {
-                    Some(token_index) => {
-                        predict_function_arms.push_str("Some(");
-                        predict_function_arms.push_str(&format!("_MX_{}::", color));
-                        predict_function_arms.push_str(&token_to_ident(&self.directory_tokens.get_token(*token_index)));
-                        // predict_function_arms.push(')');
-                    },
-                    None => {
-                        predict_function_arms.push_str("None");
-                    }
-                }
-                predict_function_arms.push(Token![,]);
+            let mut elems = Punctuated::new();
+            for (i, token_index) in possible.iter().enumerate() {
+                elems.push(match token_index {
+                    Some(token_index) => syn::Expr::Call(syn::ExprCall {
+                        attrs: vec![],
+                        func: Box::new(syn::Expr::Path(syn::ExprPath {
+                            attrs: vec![],
+                            qself: None,
+                            path: syn::Path {
+                                leading_colon: None,
+                                segments: {
+                                    let mut segments = Punctuated::new();
+                                    segments.push(syn::PathSegment {
+                                        ident: syn::Ident::new("Some", Span::call_site()),
+                                        arguments: syn::PathArguments::None,
+                                    });
+                                    segments
+                                },
+                            },
+                        })),
+                        paren_token: Default::default(),
+                        args: {
+                            let mut args = Punctuated::new();
+                            args.push(syn::Expr::Path(syn::ExprPath {
+                                attrs: vec![],
+                                qself: None,
+                                path: syn::Path {
+                                    leading_colon: None,
+                                    segments: {
+                                        let mut segments = Punctuated::new();
+                                        segments.push(syn::PathSegment {
+                                            ident: syn::Ident::new(
+                                                &format!("_MX_{}", i),
+                                                Span::call_site(),
+                                            ),
+                                            arguments: syn::PathArguments::None,
+                                        });
+                                        segments.push(syn::PathSegment {
+                                            ident: syn::Ident::new(
+                                                &format!(
+                                                    "_{}",
+                                                    self.directory_tokens
+                                                        .get_token(*token_index)
+                                                        .0
+                                                        .chars()
+                                                        .map(|c| {
+                                                            if c.is_alphanumeric() {
+                                                                c
+                                                            } else {
+                                                                '_'
+                                                            }
+                                                        })
+                                                        .collect::<String>()
+                                                ),
+                                                Span::call_site(),
+                                            ),
+                                            arguments: syn::PathArguments::None,
+                                        });
+                                        segments
+                                    },
+                                },
+                            }));
+                            args
+                        },
+                    }),
+                    None => syn::Expr::Path(syn::ExprPath {
+                        attrs: vec![],
+                        qself: None,
+                        path: syn::Path {
+                            leading_colon: None,
+                            segments: {
+                                let mut segments = Punctuated::new();
+                                segments.push(syn::PathSegment {
+                                    ident: syn::Ident::new("None", Span::call_site()),
+                                    arguments: syn::PathArguments::None,
+                                });
+                                segments
+                            },
+                        },
+                    }),
+                });
             }
-            predict_function_arms.push_str("),");
+            // let possible_variants = syn::Expr::Tuple(syn::ExprTuple {
+            //     attrs: vec![],
+            //     paren_token: Default::default(),
+            //     elems: ,
+            // });
+            // predict_function_arms.push(syn::Expr::Match(syn::ExprMatch {
+            //     attrs: vec![],
+            //     match_token: Default::default(),
+            //     expr: syn::Expr,
+            //     brace_token: Default::default(),
+            //     arms: todo!(),
+            // }));
+            predict_function_arms.push(syn::Arm {
+                attrs: vec![],
+                pat: syn::Pat::Tuple(syn::PatTuple {
+                    attrs: vec![],
+                    paren_token: Default::default(),
+                    elems: pat_elems,
+                }),
+                guard: None,
+                fat_arrow_token: Default::default(),
+                body: Box::new(syn::Expr::Tuple(syn::ExprTuple {
+                    attrs: vec![],
+                    paren_token: Default::default(),
+                    elems,
+                })),
+                comma: Some(Default::default()),
+            });
         }
+        let predict_function_match = syn::Expr::Match(syn::ExprMatch {
+            attrs: vec![],
+            match_token: Default::default(),
+            expr: Box::new(syn::Expr::Path(syn::ExprPath {
+                attrs: vec![],
+                qself: None,
+                path: syn::Path {
+                    leading_colon: None,
+                    segments: {
+                        let mut segments = Punctuated::new();
+                        segments.push(syn::PathSegment {
+                            ident: syn::Ident::new("possible_file", Span::call_site()),
+                            arguments: syn::PathArguments::None,
+                        });
+                        segments
+                    },
+                },
+            })),
+            brace_token: Default::default(),
+            arms: predict_function_arms,
+        });
+        // let x = quote! {#predict_function_match};
         flame::end("streaming");
-        flame::start("big parse");
+        // flame::start("big parse");
         // dbg!(&predict_function_arms);
         // let predict_function_arms = syn::parse_str::<syn::Expr>(&predict_function_arms)?;
         // let predict_function_arms = proc_macro2::TokenStream::from_str(&predict_function_arms).expect("bad token stream from_str");
-        flame::end("big parse");
+        // flame::end("big parse");
         flame::end("predict_function_arms");
         flame::start("pft");
         let predict_function_input_type = function_input_type.clone();
         let predict_function = quote::quote! {
             pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> (#(#function_input_type,)*) {
-                match possible_file {
-                    #predict_function_arms
-                }
+                #predict_function_match
             }
         };
         flame::end("pft");
@@ -813,9 +1037,9 @@ impl DirectoryRepresentationIntermediary {
         let mut submodules = Vec::new();
         for sub_dir in &self.dir_paths {
             submodules
-            .push(DirectoryRepresentationIntermediary::from_path(sub_dir)?.to_token_stream()?);
+                .push(DirectoryRepresentationIntermediary::from_path(sub_dir)?.to_token_stream()?);
         }
-    
+
         let dir_ident = &self.dir_ident;
         let path = &self.path;
         flame::end("sub");
