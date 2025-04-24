@@ -489,7 +489,7 @@ impl DirectoryRepresentationIntermediary {
             let i = Index::from(color);
             let bound_lit = TokenTree::Literal(Literal::usize_unsuffixed(self.directory_tokens.possible_files_bounds[color]));
             calculate_terms.push(quote! {
-                + match possible_file.#i { Some(x) => x + 1, None => 0 } * #bound_lit
+                + match possible_file.#i { Some(x) => x as usize + 1, None => 0 } * #bound_lit
             });
         }
         let calculate_function = quote! {
@@ -498,7 +498,6 @@ impl DirectoryRepresentationIntermediary {
                 0 #(#calculate_terms)*
             }
         };
-        flame::start("sub");
         let mut submodules = Vec::new();
         for sub_dir in &self.dir_paths {
             submodules
