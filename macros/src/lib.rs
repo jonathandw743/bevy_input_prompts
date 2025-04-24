@@ -5,6 +5,7 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 // use proc_macro2::{Span, extra::DelimSpan};
 use quote::quote;
+use syn::{Index, LitInt};
 // use syn::{
 //     Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
 //     spanned::Spanned,
@@ -291,6 +292,15 @@ impl DirectoryTokens {
             }
             index
         })
+    }
+    fn file_index(&self, token_indices: Vec<Option<usize>>) -> usize {
+        let mut result = 0;
+        for (color, token_index) in token_indices.iter().enumerate() {
+            if let Some(token_index) = token_index {
+                result += self.possible_files_bounds[color] * (token_index + 1);
+            }
+        }
+        result
     }
 }
 
@@ -693,11 +703,16 @@ impl DirectoryRepresentationIntermediary {
             .map(|color| {
                 let token_indices = self.directory_tokens.token_indices_of_color(color);
                 let enum_name = quote::format_ident!("_MX_{}", color);
-                let variants = token_indices.map(|token_index| {
-                    token_to_ident(&self.directory_tokens.get_token(token_index))
+                let variants = token_indices.clone().map(|token_index| {
+                    let ident = token_to_ident(&self.directory_tokens.get_token(token_index));
+                    let repr = TokenTree::Literal(Literal::usize_unsuffixed(token_index - token_indices.start));
+                    quote! {
+                        #ident = #repr
+                    }
                 });
                 quote::quote! {
-                    #[derive(Debug)]
+                    // #[derive(Debug)]
+                    #[repr(usize)]
                     pub enum #enum_name {
                         #(#variants,)*
                     }
@@ -708,9 +723,9 @@ impl DirectoryRepresentationIntermediary {
         // create function from possible files to paths
         flame::start("file_function_arms");
         let mut file_function_arms = Vec::new();
-        for (file_tokens, file_path) in self
+        for (file_index, file_path) in self
             .directory_tokens
-            .file_token_indices()
+            .file_token_indices().map(|token_indices| self.directory_tokens.file_index(token_indices))
             .zip(&self.file_paths)
         {
             // let mut variants = vec![quote! { None }; self.color_count];
@@ -720,26 +735,27 @@ impl DirectoryRepresentationIntermediary {
             //     let variant = token_to_ident(&self.tokens[token_index]);
             //     variants[color] = quote! { Some( #enum_name :: #variant ) };
             // }
-            let variants =
-                file_tokens
-                    .iter()
-                    .enumerate()
-                    .map(|(color, file_token)| match file_token {
-                        Some(file_token) => {
-                            let enum_name = quote::format_ident!("_MX_{}", color);
-                            let file_token = self.directory_tokens.get_token(*file_token);
-                            let variant = token_to_ident(file_token);
-                            quote::quote! { Some( #enum_name :: #variant ) }
-                        }
-                        None => quote::quote! { None },
-                    });
+            // let variants =
+            //     file_tokens
+            //         .iter()
+            //         .enumerate()
+            //         .map(|(color, file_token)| match file_token {
+            //             Some(file_token) => {
+            //                 let enum_name = quote::format_ident!("_MX_{}", color);
+            //                 let file_token = self.directory_tokens.get_token(*file_token);
+            //                 let variant = token_to_ident(file_token);
+            //                 quote::quote! { Some( #enum_name :: #variant ) }
+            //             }
+            //             None => quote::quote! { None },
+            //         });
+            let file_index = TokenTree::Literal(Literal::usize_unsuffixed(file_index));
             let file_path = syn::LitStr::new(
                 file_path
                     .to_str()
                     .ok_or(anyhow!("Could not convert file path to str"))?,
                 proc_macro2::Span::call_site(),
             );
-            file_function_arms.push(quote::quote! { (#(#variants,)*) => Some( #file_path ) });
+            file_function_arms.push(quote::quote! { #file_index => Some( #file_path ) });
         }
         flame::end("file_function_arms");
         flame::start("function_input_type");
@@ -753,7 +769,7 @@ impl DirectoryRepresentationIntermediary {
         flame::start("file_function");
         let file_function_input_type = function_input_type.clone();
         let file_function = quote::quote! {
-            pub fn file(possible_file: (#(#file_function_input_type,)*)) -> Option<&'static str> {
+            pub fn file(possible_file: usize) -> Option<&'static str> {
                 match possible_file {
                     #(#file_function_arms,)*
                     _ => None
@@ -764,12 +780,20 @@ impl DirectoryRepresentationIntermediary {
         // create function that maps from possible files to actual files by removing tokens
         flame::start("predict_function_arms");
         flame::start("collection");
-        let mut possible_actual_files = Vec::new();
-        for (possible, actual) in &self.predictions {
-            let possible_file = self.directory_tokens.possible_file(*possible);
-            let actual_file = self.directory_tokens.possible_file(*actual);
-            possible_actual_files.push((possible_file, actual_file));
+        let mut possible_actual_files = self.predictions.clone();
+        // dbg!(&possible_actual_files);
+        possible_actual_files.sort_by_key(|x| x.0);
+        possible_actual_files.dedup_by_key(|x| x.0);
+        if possible_actual_files.len() != 0 {
+            assert_eq!(possible_actual_files.len(), self.directory_tokens.total_possible_files);
         }
+        // let mut possible_actual_files = Vec::new();
+        
+        // for (possible, actual) in &self.predictions {
+        //     let possible_file = self.directory_tokens.possible_file(*possible);
+        //     let actual_file = self.directory_tokens.possible_file(*actual);
+        //     possible_actual_files.push((possible_file, actual_file));
+        // }
         flame::end("collection");
         // slow section
         // let mut predict_function_arms = Vec::new();
@@ -810,154 +834,126 @@ impl DirectoryRepresentationIntermediary {
         // }
         // let mut predict_function_arms = Vec::new();
         flame::start("tt vec");
-        let predict_function_match = TokenStream::from_iter([
-            TokenTree::Ident(Ident::new("match", Span::call_site())),
-            TokenTree::Ident(Ident::new("possible_file", Span::call_site())),
-            TokenTree::Group(Group::new(
-                Delimiter::Brace,
-                TokenStream::from_iter(
-                    possible_actual_files
-                        .iter()
-                        .flat_map(|(possible, actual)| {
-                            [
-                                TokenTree::Group(Group::new(
-                                    Delimiter::Parenthesis,
-                                    TokenStream::from_iter(
-                                        possible
-                                            .iter()
-                                            .enumerate()
-                                            .flat_map(|(color, token_index)| match token_index {
-                                                Some(token_index) => vec![
-                                                    TokenTree::Ident(Ident::new(
-                                                        "Some",
-                                                        Span::call_site(),
-                                                    )),
-                                                    TokenTree::Group(Group::new(
-                                                        Delimiter::Parenthesis,
-                                                        TokenStream::from_iter([
-                                                            TokenTree::Ident(Ident::new(
-                                                                &format!("_MX_{}", color),
-                                                                Span::call_site(),
-                                                            )),
-                                                            TokenTree::Punct(Punct::new(
-                                                                ':',
-                                                                Spacing::Joint,
-                                                            )),
-                                                            TokenTree::Punct(Punct::new(
-                                                                ':',
-                                                                Spacing::Alone,
-                                                            )),
-                                                            TokenTree::Ident(Ident::new(
-                                                                &format!(
-                                                                    "_{}",
-                                                                    self.directory_tokens
-                                                                        .get_token(*token_index)
-                                                                        .0
-                                                                        .chars()
-                                                                        .map(|c| {
-                                                                            if c.is_alphanumeric() {
-                                                                                c
-                                                                            } else {
-                                                                                '_'
-                                                                            }
-                                                                        })
-                                                                        .collect::<String>(),
-                                                                ),
-                                                                Span::call_site(),
-                                                            )),
-                                                        ]),
-                                                    )),
-                                                    TokenTree::Punct(Punct::new(
-                                                        ',',
-                                                        Spacing::Alone,
-                                                    )),
-                                                ],
-                                                None => vec![
-                                                    TokenTree::Ident(Ident::new(
-                                                        "None",
-                                                        Span::call_site(),
-                                                    )),
-                                                    TokenTree::Punct(Punct::new(
-                                                        ',',
-                                                        Spacing::Alone,
-                                                    )),
-                                                ],
-                                            }),
-                                    ),
-                                )),
-                                TokenTree::Punct(Punct::new('=', Spacing::Joint)),
-                                TokenTree::Punct(Punct::new('>', Spacing::Alone)),
-                                TokenTree::Group(Group::new(
-                                    Delimiter::Parenthesis,
-                                    TokenStream::from_iter(
-                                        actual
-                                            .iter()
-                                            .enumerate()
-                                            .flat_map(|(color, token_index)| match token_index {
-                                                Some(token_index) => vec![
-                                                    TokenTree::Ident(Ident::new(
-                                                        "Some",
-                                                        Span::call_site(),
-                                                    )),
-                                                    TokenTree::Group(Group::new(
-                                                        Delimiter::Parenthesis,
-                                                        TokenStream::from_iter([
-                                                            TokenTree::Ident(Ident::new(
-                                                                &format!("_MX_{}", color),
-                                                                Span::call_site(),
-                                                            )),
-                                                            TokenTree::Punct(Punct::new(
-                                                                ':',
-                                                                Spacing::Joint,
-                                                            )),
-                                                            TokenTree::Punct(Punct::new(
-                                                                ':',
-                                                                Spacing::Alone,
-                                                            )),
-                                                            TokenTree::Ident(Ident::new(
-                                                                &format!(
-                                                                    "_{}",
-                                                                    self.directory_tokens
-                                                                        .get_token(*token_index)
-                                                                        .0
-                                                                        .chars()
-                                                                        .map(|c| {
-                                                                            if c.is_alphanumeric() {
-                                                                                c
-                                                                            } else {
-                                                                                '_'
-                                                                            }
-                                                                        })
-                                                                        .collect::<String>(),
-                                                                ),
-                                                                Span::call_site(),
-                                                            )),
-                                                        ]),
-                                                    )),
-                                                    TokenTree::Punct(Punct::new(
-                                                        ',',
-                                                        Spacing::Alone,
-                                                    )),
-                                                ],
-                                                None => vec![
-                                                    TokenTree::Ident(Ident::new(
-                                                        "None",
-                                                        Span::call_site(),
-                                                    )),
-                                                    TokenTree::Punct(Punct::new(
-                                                        ',',
-                                                        Spacing::Alone,
-                                                    )),
-                                                ],
-                                            }),
-                                    ),
-                                )),
-                                TokenTree::Punct(Punct::new(',', Spacing::Alone)),
-                            ]
-                        }),
-                ),
-            )),
-        ]);
+        let predict_function_match =
+            TokenStream::from_iter(possible_actual_files.iter().flat_map(|(possible, actual)| {
+                [TokenTree::Literal(Literal::usize_unsuffixed(*actual)), TokenTree::Punct(Punct::new(',', Spacing::Alone))]
+            }));
+        // let predict_function_match = TokenStream::from_iter([
+        //     TokenTree::Ident(Ident::new("match", Span::call_site())),
+        //     TokenTree::Ident(Ident::new("possible_file", Span::call_site())),
+        //     TokenTree::Group(Group::new(
+        //         Delimiter::Brace,
+        //         TokenStream::from_iter(possible_actual_files.iter().flat_map(
+        //             |(possible, actual)| {
+        //                 [
+        //                     TokenTree::Group(Group::new(
+        //                         Delimiter::Parenthesis,
+        //                         TokenStream::from_iter(possible.iter().enumerate().flat_map(
+        //                             |(color, token_index)| match token_index {
+        //                                 Some(token_index) => vec![
+        //                                     TokenTree::Ident(Ident::new("Some", Span::call_site())),
+        //                                     TokenTree::Group(Group::new(
+        //                                         Delimiter::Parenthesis,
+        //                                         TokenStream::from_iter([
+        //                                             TokenTree::Ident(Ident::new(
+        //                                                 &format!("_MX_{}", color),
+        //                                                 Span::call_site(),
+        //                                             )),
+        //                                             TokenTree::Punct(Punct::new(
+        //                                                 ':',
+        //                                                 Spacing::Joint,
+        //                                             )),
+        //                                             TokenTree::Punct(Punct::new(
+        //                                                 ':',
+        //                                                 Spacing::Alone,
+        //                                             )),
+        //                                             TokenTree::Ident(Ident::new(
+        //                                                 &format!(
+        //                                                             "_{}",
+        //                                                             self.directory_tokens
+        //                                                                 .get_token(*token_index)
+        //                                                                 .0
+        //                                                                 .chars()
+        //                                                                 .map(|c| {
+        //                                                                     if c.is_alphanumeric() {
+        //                                                                         c
+        //                                                                     } else {
+        //                                                                         '_'
+        //                                                                     }
+        //                                                                 })
+        //                                                                 .collect::<String>(),
+        //                                                         ),
+        //                                                 Span::call_site(),
+        //                                             )),
+        //                                         ]),
+        //                                     )),
+        //                                     TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+        //                                 ],
+        //                                 None => vec![
+        //                                     TokenTree::Ident(Ident::new("None", Span::call_site())),
+        //                                     TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+        //                                 ],
+        //                             },
+        //                         )),
+        //                     )),
+        //                     TokenTree::Punct(Punct::new('=', Spacing::Joint)),
+        //                     TokenTree::Punct(Punct::new('>', Spacing::Alone)),
+        //                     TokenTree::Group(Group::new(
+        //                         Delimiter::Parenthesis,
+        //                         TokenStream::from_iter(actual.iter().enumerate().flat_map(
+        //                             |(color, token_index)| match token_index {
+        //                                 Some(token_index) => vec![
+        //                                     TokenTree::Ident(Ident::new("Some", Span::call_site())),
+        //                                     TokenTree::Group(Group::new(
+        //                                         Delimiter::Parenthesis,
+        //                                         TokenStream::from_iter([
+        //                                             TokenTree::Ident(Ident::new(
+        //                                                 &format!("_MX_{}", color),
+        //                                                 Span::call_site(),
+        //                                             )),
+        //                                             TokenTree::Punct(Punct::new(
+        //                                                 ':',
+        //                                                 Spacing::Joint,
+        //                                             )),
+        //                                             TokenTree::Punct(Punct::new(
+        //                                                 ':',
+        //                                                 Spacing::Alone,
+        //                                             )),
+        //                                             TokenTree::Ident(Ident::new(
+        //                                                 &format!(
+        //                                                             "_{}",
+        //                                                             self.directory_tokens
+        //                                                                 .get_token(*token_index)
+        //                                                                 .0
+        //                                                                 .chars()
+        //                                                                 .map(|c| {
+        //                                                                     if c.is_alphanumeric() {
+        //                                                                         c
+        //                                                                     } else {
+        //                                                                         '_'
+        //                                                                     }
+        //                                                                 })
+        //                                                                 .collect::<String>(),
+        //                                                         ),
+        //                                                 Span::call_site(),
+        //                                             )),
+        //                                         ]),
+        //                                     )),
+        //                                     TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+        //                                 ],
+        //                                 None => vec![
+        //                                     TokenTree::Ident(Ident::new("None", Span::call_site())),
+        //                                     TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+        //                                 ],
+        //                             },
+        //                         )),
+        //                     )),
+        //                     TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+        //                 ]
+        //             },
+        //         )),
+        //     )),
+        // ]);
         // let mut arms = Vec::new();
         //     ,
         //         let mut variants = Vec::new();
@@ -1051,14 +1047,38 @@ impl DirectoryRepresentationIntermediary {
         // let predict_function_arms = proc_macro2::TokenStream::from_str(&predict_function_arms).expect("bad token stream from_str");
         // flame::end("big parse");
 
+        let dummy_return = vec![quote!{None}; self.directory_tokens.color_count];
+
         flame::end("predict_function_arms");
         flame::start("pft");
         let predict_function_input_type = function_input_type.clone();
+        let predict_function_input_type2 = function_input_type.clone();
+        let num_predictions = TokenTree::Literal(Literal::usize_unsuffixed(possible_actual_files.len()));
         let predict_function = quote::quote! {
-            pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> (#(#function_input_type,)*) {
-                #predict_function_match
+            pub const PREDICTIONS: [usize; #num_predictions] = [#predict_function_match];
+            // pub fn predict(possible_file: (#(#predict_function_input_type,)*)) -> (#(#predict_function_input_type2,)*) {
+            //     let x = [#predict_function_match];
+            //     (#(#dummy_return,)*)
+            // }
+        };
+
+
+        let calculate_input_type = function_input_type.clone();
+        let mut calculate_terms = Vec::new();
+        for color in 0..self.directory_tokens.color_count {
+            let i = Index::from(color);
+            let bound_lit = TokenTree::Literal(Literal::usize_unsuffixed(self.directory_tokens.possible_files_bounds[color]));
+            calculate_terms.push(quote! {
+                + match possible_file.#i { Some(x) => x + 1, None => 0 } * #bound_lit
+            });
+        }
+        let calculate_function = quote! {
+            #[inline]
+            pub fn calculate(possible_file: (#(#calculate_input_type,)*)) -> usize {
+                0 #(#calculate_terms)*
             }
         };
+
         flame::end("pft");
         // process sub directories
         flame::start("sub");
@@ -1080,6 +1100,7 @@ impl DirectoryRepresentationIntermediary {
                 #(#mx_enums)*
                 #file_function
                 #predict_function
+                #calculate_function
                 #(#submodules)*
             }
         })
