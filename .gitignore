@@ -1,7 +1,7 @@
 /target
 /input_prompts
 known_gamepads.txt
-macro_expansion_temp
+macro_expansion_temp.rs
 flame-graph.html
 flame.json
 flamegraph.svg

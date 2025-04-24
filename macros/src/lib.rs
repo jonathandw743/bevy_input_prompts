@@ -33,12 +33,10 @@ mod iter_graphs;
 pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input as syn::LitStr).value();
     let dir_path = Path::new(&input);
-    let x = DirectoryRepresentationIntermediary::from_path(
-        dir_path,
-    )
-    .expect("Could not create directory representation module")
-    .to_token_stream()
-    .expect("Could not create directory representation module");
+    let x = DirectoryRepresentationIntermediary::from_path(dir_path)
+        .expect("Could not create directory representation module")
+        .to_token_stream()
+        .expect("Could not create directory representation module");
     let x = x.into();
     flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
     flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
@@ -245,7 +243,8 @@ impl DirectoryTokens {
         let mut result = 0;
         for (color, token_index) in token_indices.iter().enumerate() {
             if let Some(token_index) = token_index {
-                result += self.possible_files_bounds[color] * (token_index + 1);
+                result += self.possible_files_bounds[color]
+                    * (token_index - self.color_bounds[color] + 1);
             }
         }
         result
@@ -425,7 +424,9 @@ impl DirectoryRepresentationIntermediary {
                 let enum_name = quote::format_ident!("_MX_{}", color);
                 let variants = token_indices.clone().map(|token_index| {
                     let ident = token_to_ident(&self.directory_tokens.get_token(token_index));
-                    let repr = TokenTree::Literal(Literal::usize_unsuffixed(token_index - token_indices.start + 1));
+                    let repr = TokenTree::Literal(Literal::usize_unsuffixed(
+                        token_index - token_indices.start + 1,
+                    ));
                     quote! {
                         #ident = #repr
                     }
@@ -442,7 +443,11 @@ impl DirectoryRepresentationIntermediary {
         let mut file_function_arms = Vec::new();
         for (file_index, file_path) in self
             .directory_tokens
-            .file_token_indices().map(|token_indices| self.directory_tokens.file_index(token_indices))
+            .file_token_indices()
+            .map(|token_indices| {
+                // dbg!(&token_indices);
+                self.directory_tokens.file_index(token_indices)
+            })
             .zip(&self.file_paths)
         {
             let file_index = TokenTree::Literal(Literal::usize_unsuffixed(file_index));
@@ -466,26 +471,33 @@ impl DirectoryRepresentationIntermediary {
         possible_actual_files.sort_by_key(|x| x.0);
         possible_actual_files.dedup_by_key(|x| x.0);
         if possible_actual_files.len() != 0 {
-            assert_eq!(possible_actual_files.len(), self.directory_tokens.total_possible_files);
+            assert_eq!(
+                possible_actual_files.len(),
+                self.directory_tokens.total_possible_files
+            );
         }
         // dbg!(&possible_actual_files);
         let predict_function_match =
-        TokenStream::from_iter(possible_actual_files.iter().flat_map(|(possible, actual)| {
-            [TokenTree::Literal(Literal::usize_unsuffixed(*actual)), TokenTree::Punct(Punct::new(',', Spacing::Alone))]
-        }));
-        let num_predictions = TokenTree::Literal(Literal::usize_unsuffixed(possible_actual_files.len()));
+            TokenStream::from_iter(possible_actual_files.iter().flat_map(|(possible, actual)| {
+                [
+                    TokenTree::Literal(Literal::usize_unsuffixed(*actual)),
+                    TokenTree::Punct(Punct::new(',', Spacing::Alone)),
+                ]
+            }));
+        let num_predictions =
+            TokenTree::Literal(Literal::usize_unsuffixed(possible_actual_files.len()));
         let predict_function = quote::quote! {
             pub const PREDICTIONS: [usize; #num_predictions] = [#predict_function_match];
         };
-        
-        
-        let calculate_input_type = (0..self.directory_tokens.color_count).map(|i| {
-            quote::format_ident!("_MX_{}", i)
-        });
+
+        let calculate_input_type =
+            (0..self.directory_tokens.color_count).map(|i| quote::format_ident!("_MX_{}", i));
         let mut calculate_terms = Vec::new();
         for color in 0..self.directory_tokens.color_count {
             let i = Index::from(color);
-            let bound_lit = TokenTree::Literal(Literal::usize_unsuffixed(self.directory_tokens.possible_files_bounds[color]));
+            let bound_lit = TokenTree::Literal(Literal::usize_unsuffixed(
+                self.directory_tokens.possible_files_bounds[color],
+            ));
             calculate_terms.push(quote! {
                 + possible_file.#i as usize * #bound_lit
             });

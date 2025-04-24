@@ -46,8 +46,62 @@ use petgraph::{Graph, algo::toposort};
 //     }
 // }
 
+fn open(file: &str) {
+    dbg!(file);
+    let _ = std::process::Command::new("xdg-open")
+        .arg(file)
+        .status()
+        .unwrap();
+}
+
 fn main() {
-    use bevy_input_prompts::directory_representation::_Default::*;
+    // use bevy_input_prompts::directory_representation::_Default::*;
+    {
+        use bevy_input_prompts::directory_representation::_bevy_input_prompts::_xelu::_Xelu_Free_Controller_Key_Prompts::_Xbox_Series as p;
+        dbg!(p::PATH);
+        open(
+            p::file(
+                p::PREDICTIONS[p::calculate((
+                    p::_MX_0::None,
+                    p::_MX_1::None,
+                    p::_MX_2::None,
+                    p::_MX_3::_LT,
+                ))],
+            )
+            .unwrap(),
+        );
+    }
+
+    {
+        use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Xbox_Series::_Double as p;
+        open(
+            p::file(
+                p::PREDICTIONS[p::calculate((
+                    p::_MX_0::None,
+                    p::_MX_1::_outline,
+                    p::_MX_2::_xboxseries,
+                    p::_MX_3::_color,
+                    p::_MX_4::_b
+                ))],
+            )
+            .unwrap(),
+        );
+        open(
+            p::file(
+                p::PREDICTIONS[p::calculate((
+                    p::_MX_0::None,
+                    p::_MX_1::None,
+                    p::_MX_2::_xboxone,
+                    p::_MX_3::None,
+                    p::_MX_4::_controller,
+                ))],
+            )
+            .unwrap(),
+        );
+    }
+
+    // PRED
+
     // dbg!(predict((Some(_MX_0::_down), Some(_MX_1::_arrow), None, Some(_MX_3::_outline), None)));
     // {
     //     use bevy_input_prompts::directory_representation::_bevy_input_prompts::_kenney::_kenney_input_prompts::_Keyboard___Mouse::_Double::*;
