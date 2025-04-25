@@ -171,16 +171,8 @@ impl DirectoryTokens {
             grouped_tokens,
         })
     }
-    fn get_token(&self, token_index: usize) -> &(String, usize) {
-        &self.tokens[self.tokens_sort[token_index]]
-    }
     fn token_indices_of_color(&self, color: usize) -> Range<usize> {
         self.color_bounds[color]..self.color_bounds[color + 1]
-    }
-    fn file_tokens(&self) -> impl Iterator<Item = impl Iterator<Item = &(String, usize)>> {
-        self.file_token_indices_original
-            .iter()
-            .map(|file_token_indices| file_token_indices.iter().map(|&x| &self.tokens[x]))
     }
     fn file_token_indices(&self) -> impl Iterator<Item = Vec<Option<usize>>> {
         self.file_token_indices_original
@@ -206,24 +198,6 @@ impl DirectoryTokens {
                 }
                 v
             })
-    }
-    fn token_index_of_color(&self, color: usize, offset: usize) -> usize {
-        self.color_bounds[color] + offset
-    }
-    fn possible_file(&self, index: usize) -> Vec<Option<usize>> {
-        let mut possible_file = vec![None; self.color_count];
-        for (color, (&possible_files_bound, &num_of_color)) in self
-            .possible_files_bounds
-            .iter()
-            .zip(&self.num_of_colors)
-            .enumerate()
-        {
-            let offset = (index / possible_files_bound) % (num_of_color + 1);
-            if offset != 0 {
-                possible_file[color] = Some(self.token_index_of_color(color, offset - 1));
-            }
-        }
-        possible_file
     }
     fn possible_file_edges(&self, index: usize) -> impl Iterator<Item = usize> {
         (0..self.color_count).filter_map(move |color| {
