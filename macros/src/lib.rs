@@ -4,7 +4,7 @@ use hashbrown::HashMap;
 use indexmap::IndexSet;
 use itertools::Itertools;
 // use proc_macro2::{Span, extra::DelimSpan};
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{Index, LitInt};
 // use syn::{
 //     Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
@@ -54,6 +54,7 @@ struct DirectoryTokens {
     possible_files_bounds: Vec<usize>,
     num_of_colors: Vec<usize>,
     total_possible_files: usize,
+    grouped_tokens: Vec<Vec<usize>>,
 }
 
 impl DirectoryTokens {
@@ -151,6 +152,12 @@ impl DirectoryTokens {
             possible_files_bounds.push(bound);
         }
         let total_possible_files = bound;
+        let mut grouped_tokens = vec![Vec::new(); color_count];
+        for color in 0..color_count {
+            for token_index in color_bounds[color]..color_bounds[color + 1] {
+                grouped_tokens[color].push(tokens_sort[token_index]);
+            }
+        }
         Ok(Self {
             tokens,
             tokens_sort,
@@ -161,6 +168,7 @@ impl DirectoryTokens {
             possible_files_bounds,
             num_of_colors,
             total_possible_files,
+            grouped_tokens,
         })
     }
     fn get_token(&self, token_index: usize) -> &(String, usize) {
@@ -418,28 +426,23 @@ impl DirectoryRepresentationIntermediary {
     }
 
     fn to_token_stream(&self) -> Result<proc_macro2::TokenStream> {
-        let mx_enums = (0..self.directory_tokens.color_count)
-            .map(|color| {
-                let token_indices = self.directory_tokens.token_indices_of_color(color);
-                let enum_name = quote::format_ident!("_MX_{}", color);
-                let variants = token_indices.clone().map(|token_index| {
-                    let ident = token_to_ident(&self.directory_tokens.get_token(token_index));
-                    let repr = TokenTree::Literal(Literal::usize_unsuffixed(
-                        token_index - token_indices.start + 1,
-                    ));
-                    quote! {
-                        #ident = #repr
-                    }
+        let mx_enums = self.directory_tokens.grouped_tokens.iter().enumerate().map(
+            |(color, token_indices)| {
+                let enum_name = format_ident!("_MX_{}", color);
+                let variants = token_indices.iter().enumerate().map(|(i, &token_index)| {
+                    let ident = token_to_ident(&self.directory_tokens.tokens[token_index]);
+                    let repr = TokenTree::Literal(Literal::usize_unsuffixed(i + 1));
+                    quote! { #ident = #repr }
                 });
-                quote::quote! {
+                quote! {
                     #[repr(usize)]
                     pub enum #enum_name {
                         None = 0,
                         #(#variants,)*
                     }
                 }
-            })
-            .collect::<Vec<_>>();
+            },
+        );
         let mut file_function_arms = Vec::new();
         for (file_index, file_path) in self
             .directory_tokens
