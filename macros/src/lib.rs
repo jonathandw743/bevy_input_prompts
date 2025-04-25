@@ -47,12 +47,10 @@ pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::T
 struct DirectoryTokens {
     file_token_indices_original: Vec<Vec<usize>>,
     tokens: Vec<(String, usize)>,
-    tokens_sort: Vec<usize>,
     inverse_tokens_sort: Vec<usize>,
     color_bounds: Vec<usize>,
     color_count: usize,
     possible_files_bounds: Vec<usize>,
-    num_of_colors: Vec<usize>,
     total_possible_files: usize,
     grouped_tokens: Vec<Vec<usize>>,
 }
@@ -160,13 +158,11 @@ impl DirectoryTokens {
         }
         Ok(Self {
             tokens,
-            tokens_sort,
             inverse_tokens_sort,
             color_bounds,
             file_token_indices_original,
             color_count,
             possible_files_bounds,
-            num_of_colors,
             total_possible_files,
             grouped_tokens,
         })
