@@ -5,7 +5,7 @@ use indexmap::IndexSet;
 use itertools::Itertools;
 // use proc_macro2::{Span, extra::DelimSpan};
 use quote::{format_ident, quote};
-use syn::{Index, LitInt};
+use syn::{parse::{Parse, ParseStream}, Index, LitInt, LitStr, Token};
 // use syn::{
 //     Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
 //     spanned::Spanned,
@@ -29,11 +29,28 @@ use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenS
 mod fbs_graphs;
 mod iter_graphs;
 
+struct TwoStrings {
+    first: LitStr,
+    _comma: Token![,],
+    second: LitStr,
+}
+
+impl Parse for TwoStrings {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(TwoStrings {
+            first: input.parse()?,
+            _comma: input.parse()?,
+            second: input.parse()?,
+        })
+    }
+}
+
 #[proc_macro]
 pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = syn::parse_macro_input!(input as syn::LitStr).value();
+    let input = syn::parse_macro_input!(input as TwoStrings);
+    let (input, ignore) = (input.first.value(), input.second.value());
     let dir_path = Path::new(&input);
-    let x = DirectoryRepresentationIntermediary::from_path(dir_path)
+    let x = DirectoryRepresentationIntermediary::from_path(dir_path, &ignore)
         .expect("Could not create directory representation module")
         .to_token_stream()
         .expect("Could not create directory representation module");
@@ -284,19 +301,22 @@ fn directory_tokens_test() -> Result<()> {
     Ok(())
 }
 
-struct DirectoryRepresentationIntermediary {
+struct DirectoryRepresentationIntermediary<'a> {
     dir_ident: proc_macro2::Ident,
     path: syn::LitStr,
     file_paths: Vec<PathBuf>,
+
     dir_paths: Vec<PathBuf>,
 
     directory_tokens: DirectoryTokens,
 
     predictions: Vec<(usize, usize)>,
+
+    ignore: &'a str,
 }
 
-impl DirectoryRepresentationIntermediary {
-    fn from_path<P: AsRef<Path>>(dir: P) -> Result<Self> {
+impl<'a> DirectoryRepresentationIntermediary<'a> {
+    fn from_path<P: AsRef<Path>>(dir: P, ignore: &'a str) -> Result<Self> {
         // it's fine if non-utf8 characters get replaced
         let dir_ident = dir_to_ident(
             &dir.as_ref()
@@ -317,7 +337,7 @@ impl DirectoryRepresentationIntermediary {
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                file_paths.push(path);
+                file_paths.push(path.strip_prefix(ignore).expect("path does not have prefix ignore").to_owned());
             } else if path.is_dir() {
                 dir_paths.push(path);
             }
@@ -392,6 +412,7 @@ impl DirectoryRepresentationIntermediary {
             dir_paths,
             directory_tokens,
             predictions,
+            ignore
         })
     }
 
@@ -484,7 +505,7 @@ impl DirectoryRepresentationIntermediary {
         let mut submodules = Vec::new();
         for sub_dir in &self.dir_paths {
             submodules
-                .push(DirectoryRepresentationIntermediary::from_path(sub_dir)?.to_token_stream()?);
+                .push(DirectoryRepresentationIntermediary::from_path(sub_dir, self.ignore)?.to_token_stream()?);
         }
 
         let dir_ident = &self.dir_ident;
