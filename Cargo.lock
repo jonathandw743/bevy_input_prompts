@@ -785,6 +785,7 @@ dependencies = [
  "bevy_input",
  "bevy_input_prompts_macros",
  "bimap",
+ "fixedbitset 0.5.7",
  "fs_extra",
  "itertools 0.14.0",
  "petgraph 0.8.1",

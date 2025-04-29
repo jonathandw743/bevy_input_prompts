@@ -17,6 +17,7 @@ walkdir = "2.5.0"
 petgraph = "0.8.1"
 itertools = "0.14.0"
 bimap = "0.6.3"
+fixedbitset = "0.5.7"
 
 [dev-dependencies]
 bevy = "0.15"

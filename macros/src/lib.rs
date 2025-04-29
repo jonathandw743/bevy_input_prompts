@@ -3,15 +3,7 @@ use fixedbitset::FixedBitSet;
 use hashbrown::HashMap;
 use indexmap::IndexSet;
 use itertools::Itertools;
-// use proc_macro2::{Span, extra::DelimSpan};
 use quote::{format_ident, quote};
-use syn::{parse::{Parse, ParseStream}, Index, LitInt, LitStr, Token};
-// use syn::{
-//     Expr, ExprCall, ExprTuple, Ident, Token, parenthesized, punctuated::Punctuated,
-//     spanned::Spanned,
-// };
-// use proc_macro2::Span;
-// use quote::{format_ident, quote};
 use std::{
     borrow::Cow,
     collections::{BTreeSet, HashSet, VecDeque, vec_deque},
@@ -21,6 +13,10 @@ use std::{
     path::{Path, PathBuf},
     rc::Rc,
 };
+use syn::{
+    Index, LitInt, LitStr, Token,
+    parse::{Parse, ParseStream},
+};
 // use proc_macro2::{TokenStream, TokenTree, Group, Delimiter, Span};
 use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 // use std::str::FromStr;
@@ -29,35 +25,159 @@ use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenS
 mod fbs_graphs;
 mod iter_graphs;
 
-struct TwoStrings {
-    first: LitStr,
-    _comma: Token![,],
-    second: LitStr,
+#[proc_macro]
+pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = syn::parse_macro_input!(input as LitStr).value();
+    let dir_path = Path::new(&input);
+    directory_representation_inner(dir_path).unwrap().into()
+    // flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
+    // flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
 }
 
-impl Parse for TwoStrings {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        Ok(TwoStrings {
-            first: input.parse()?,
-            _comma: input.parse()?,
-            second: input.parse()?,
+struct File {
+    path: PathBuf,
+    word_counts: HashMap<String, usize>,
+    word_count: usize,
+}
+
+impl File {
+    fn from_path(path: PathBuf) -> Result<Self> {
+        let mut word_counts = HashMap::new();
+        let mut word_count = 0usize;
+        for token in path
+            .file_stem()
+            .ok_or(anyhow!("Could not get file stem"))?
+            .to_str()
+            .ok_or(anyhow!("Could not convert file stem to str"))?
+            .split("_")
+        {
+            *word_counts.entry(token.to_owned()).or_insert(0usize) += 1;
+            word_count += 1;
+        }
+        Ok(Self {
+            path,
+            word_counts,
+            word_count,
         })
+    }
+    fn path_lit_str(&self) -> Result<LitStr> {
+        let value = self
+            .path
+            .to_str()
+            .ok_or(anyhow!("file path to_str failed"))?;
+        Ok(LitStr::new(value, Span::call_site()))
     }
 }
 
-#[proc_macro]
-pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = syn::parse_macro_input!(input as TwoStrings);
-    let (input, ignore) = (input.first.value(), input.second.value());
-    let dir_path = Path::new(&input);
-    let x = DirectoryRepresentationIntermediary::from_path(dir_path, &ignore)
-        .expect("Could not create directory representation module")
-        .to_token_stream()
-        .expect("Could not create directory representation module");
-    let x = x.into();
-    flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
-    flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
-    x
+fn directory_representation_inner<P: AsRef<Path>>(dir_path: P) -> Result<proc_macro2::TokenStream> {
+    let mut files = Vec::new();
+    for dir_entry in std::fs::read_dir(dir_path.as_ref())? {
+        let path = dir_entry?.path();
+        if path.is_file() {
+            files.push(File::from_path(path.to_owned())?);
+        }
+    }
+    files.sort_by(|a, b| a.path.cmp(&b.path));
+    files.sort_by_key(|file| file.word_count);
+
+    let file_paths_len = TokenTree::Literal(Literal::usize_unsuffixed(files.len()));
+    let mut file_paths_elements = Vec::new();
+    for file in &files {
+        file_paths_elements.push(file.path_lit_str()?);
+    }
+
+    let mut max_word_counts = HashMap::new();
+    for file in &files {
+        for (word, &count) in &file.word_counts {
+            max_word_counts
+                .entry(word.clone())
+                .and_modify(|v| {
+                    if count > *v {
+                        *v = count;
+                    }
+                })
+                .or_insert(count);
+        }
+    }
+    let mut max_word_counts = max_word_counts.into_iter().collect::<Vec<_>>();
+    max_word_counts.sort();
+
+    let mut tokens = Vec::new();
+    for (word, max_count) in &max_word_counts {
+        if *max_count == 1 {
+            tokens.push((word, None));
+        } else {
+            for i in 0..*max_count {
+                tokens.push((word, Some(i)));
+            }
+        }
+    }
+
+    let mut tokens_associated_files = Vec::new();
+    for (word, max_count) in &max_word_counts {
+        let mut current_tokens_associated_files = vec![Vec::new(); *max_count];
+        for (file_index, file) in files.iter().enumerate() {
+            let Some(count) = file.word_counts.get(word) else {
+                continue;
+            };
+            for i in 0..*count {
+                current_tokens_associated_files[i].push(file_index);
+            }
+        }
+        tokens_associated_files.extend_from_slice(&current_tokens_associated_files);
+    }
+
+    #[cfg(debug_assertions)]
+    dbg!(
+        tokens_associated_files
+            .iter()
+            .enumerate()
+            .map(|(token_index, x)| format!("{:?}: {:?}", &tokens[token_index], x))
+            .collect::<Vec<_>>()
+    );
+
+    let mut constants = Vec::new();
+    for (token, token_assocated_files) in tokens.iter().zip(&tokens_associated_files) {
+        
+        #[cfg(debug_assertions)]
+        assert!(token_assocated_files.is_sorted());
+
+        let constant_name = match token.1 {
+            None => format_ident!(
+                "_{}",
+                token
+                    .0
+                    .chars()
+                    .map(|c| if c.is_alphanumeric() { c } else { '_' })
+                    .collect::<String>()
+            ),
+            Some(i) => format_ident!(
+                "_{}_{}",
+                token
+                    .0
+                    .chars()
+                    .map(|c| if c.is_alphanumeric() { c } else { '_' })
+                    .collect::<String>(),
+                i
+            ),
+        };
+        let array_length =
+            TokenTree::Literal(Literal::usize_unsuffixed(token_assocated_files.len()));
+        let array_elements = token_assocated_files
+            .iter()
+            .map(|file_index| TokenTree::Literal(Literal::usize_unsuffixed(*file_index)));
+
+        constants.push(quote! {
+            pub const #constant_name: &[usize] = &[#(#array_elements,)*];
+        });
+    }
+
+    Ok(quote! {
+        pub const FILE_PATHS: [&'static str; #file_paths_len] = [
+            #(#file_paths_elements,)*
+        ];
+        #(#constants)*
+    })
 }
 
 #[derive(Debug)]
@@ -337,7 +457,11 @@ impl<'a> DirectoryRepresentationIntermediary<'a> {
         for dir_entry in std::fs::read_dir(&dir)? {
             let path = dir_entry?.path();
             if path.is_file() {
-                file_paths.push(path.strip_prefix(ignore).expect("path does not have prefix ignore").to_owned());
+                file_paths.push(
+                    path.strip_prefix(ignore)
+                        .expect("path does not have prefix ignore")
+                        .to_owned(),
+                );
             } else if path.is_dir() {
                 dir_paths.push(path);
             }
@@ -412,7 +536,7 @@ impl<'a> DirectoryRepresentationIntermediary<'a> {
             dir_paths,
             directory_tokens,
             predictions,
-            ignore
+            ignore,
         })
     }
 
@@ -504,8 +628,10 @@ impl<'a> DirectoryRepresentationIntermediary<'a> {
         };
         let mut submodules = Vec::new();
         for sub_dir in &self.dir_paths {
-            submodules
-                .push(DirectoryRepresentationIntermediary::from_path(sub_dir, self.ignore)?.to_token_stream()?);
+            submodules.push(
+                DirectoryRepresentationIntermediary::from_path(sub_dir, self.ignore)?
+                    .to_token_stream()?,
+            );
         }
 
         let dir_ident = &self.dir_ident;
