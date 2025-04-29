@@ -69,7 +69,7 @@ pub mod directory_representation {
 
 /// Assumes each slice is sorted
 /// slower for debug builds
-pub fn file_index_safe(tokens_associated_files: &[&[usize]]) -> usize {
+pub fn file_index(tokens_associated_files: &[&[usize]]) -> usize {
     let mut i = 0;
     while i < tokens_associated_files.len() && tokens_associated_files[i].is_empty() {
         i += 1;
@@ -100,43 +100,222 @@ pub fn file_index_safe(tokens_associated_files: &[&[usize]]) -> usize {
     possible_files[0]
 }
 
-pub fn file_index(tokens_associated_files: &[&[usize]]) -> usize {
+fn intersect(a: &[usize], b: &[usize]) -> Vec<usize> {
+    let mut new_possible_files = Vec::with_capacity(a.len());
     let mut i = 0;
-    while i < tokens_associated_files.len()
-        && unsafe { *tokens_associated_files.as_ptr().add(i) }.is_empty()
-    {
-        i += 1;
-    }
-    if i >= tokens_associated_files.len() {
-        return 0;
-    }
-    let mut possible_files = Vec::from(unsafe { *tokens_associated_files.as_ptr().add(i) });
-    for k in 1..tokens_associated_files.len() {
-        let mut new_possible_files = Vec::with_capacity(possible_files.len());
-        let mut i = 0;
-        let mut j = 0;
-        while i < possible_files.len()
-            && j < unsafe { *tokens_associated_files.as_ptr().add(k) }.len()
-        {
-            if unsafe { *possible_files.as_ptr().add(i) }
-                == unsafe { *(*tokens_associated_files.as_ptr().add(k)).as_ptr().add(j) }
-            {
-                new_possible_files.push(unsafe { *possible_files.as_ptr().add(i) });
-                i += 1;
-                j += 1;
-            } else if unsafe { *possible_files.as_ptr().add(i) }
-                < unsafe { *(*tokens_associated_files.as_ptr().add(k)).as_ptr().add(j) }
-            {
-                i += 1;
-            } else if unsafe { *possible_files.as_ptr().add(i) }
-                > unsafe { *(*tokens_associated_files.as_ptr().add(k)).as_ptr().add(j) }
-            {
-                j += 1;
-            }
-        }
-        if !new_possible_files.is_empty() {
-            possible_files = new_possible_files;
+    let mut j = 0;
+    while i < a.len() && j < b.len() {
+        if a[i] == b[j] {
+            new_possible_files.push(a[i]);
+            i += 1;
+            j += 1;
+        } else if a[i] < b[j] {
+            i += 1;
+        } else if a[i] > b[j] {
+            j += 1;
         }
     }
-    possible_files[0]
+    new_possible_files
+}
+
+use bevy_input::keyboard::KeyCode;
+use directory_representation::*;
+pub fn from_key_code<'a>(key_code: KeyCode) -> Option<&'a [usize]> {
+    match key_code {
+        KeyCode::Unidentified(native_key_code) => Some(_0),
+        KeyCode::Backquote => Some(_tilde),
+        KeyCode::Backslash => Some(_slash),
+        KeyCode::BracketLeft => Some(&intersect(_bracket, _open)),
+        KeyCode::BracketRight => Some(&intersect(_bracket, _close)),
+        KeyCode::Comma => Some(_comma),
+        KeyCode::Digit0 => Some(_0),
+        KeyCode::Digit1 => Some(_1),
+        KeyCode::Digit2 => Some(_2),
+        KeyCode::Digit3 => Some(_3),
+        KeyCode::Digit4 => Some(_4),
+        KeyCode::Digit5 => Some(_5),
+        KeyCode::Digit6 => Some(_6),
+        KeyCode::Digit7 => Some(_7),
+        KeyCode::Digit8 => Some(_8),
+        KeyCode::Digit9 => Some(_9),
+        KeyCode::Equal => Some(_equals),
+        KeyCode::IntlBackslash => Some(_slash),
+        KeyCode::IntlRo => Some(_slash),
+        KeyCode::IntlYen => Some(_slash),
+        KeyCode::KeyA => Some(_a),
+        KeyCode::KeyB => Some(_b),
+        KeyCode::KeyC => Some(_c),
+        KeyCode::KeyD => Some(_d),
+        KeyCode::KeyE => Some(_e),
+        KeyCode::KeyF => Some(_f),
+        KeyCode::KeyG => Some(_g),
+        KeyCode::KeyH => Some(_h),
+        KeyCode::KeyI => Some(_i),
+        KeyCode::KeyJ => Some(_j),
+        KeyCode::KeyK => Some(_k),
+        KeyCode::KeyL => Some(_l),
+        KeyCode::KeyM => Some(_m),
+        KeyCode::KeyN => Some(_n),
+        KeyCode::KeyO => Some(_o),
+        KeyCode::KeyP => Some(_p),
+        KeyCode::KeyQ => Some(_q),
+        KeyCode::KeyR => Some(_r),
+        KeyCode::KeyS => Some(_s),
+        KeyCode::KeyT => Some(_t),
+        KeyCode::KeyU => Some(_u),
+        KeyCode::KeyV => Some(_v),
+        KeyCode::KeyW => Some(_w),
+        KeyCode::KeyX => Some(_x),
+        KeyCode::KeyY => Some(_y),
+        KeyCode::KeyZ => Some(_z),
+        KeyCode::Minus => Some(_minus),
+        KeyCode::Period => Some(_period),
+        KeyCode::Quote => Some(_quote),
+        KeyCode::Semicolon => Some(_semicolon),
+        KeyCode::Slash => Some(_slash),
+        KeyCode::AltLeft => Some(_alt),
+        KeyCode::AltRight => Some(_alt),
+        KeyCode::Backspace => Some(_backspace),
+        KeyCode::CapsLock => Some(_capslock),
+        KeyCode::ContextMenu => None,
+        KeyCode::ControlLeft => Some(_ctrl),
+        KeyCode::ControlRight => Some(_ctrl),
+        KeyCode::Enter => Some(_enter),
+        KeyCode::SuperLeft => Some(_win),
+        KeyCode::SuperRight => Some(_win),
+        KeyCode::ShiftLeft => Some(_shift),
+        KeyCode::ShiftRight => Some(_shift),
+        KeyCode::Space => Some(_space),
+        KeyCode::Tab => Some(_tab),
+        KeyCode::Convert => None,
+        KeyCode::KanaMode => None,
+        KeyCode::Lang1 => None,
+        KeyCode::Lang2 => None,
+        KeyCode::Lang3 => None,
+        KeyCode::Lang4 => None,
+        KeyCode::Lang5 => None,
+        KeyCode::NonConvert => None,
+        KeyCode::Delete => Some(_delete),
+        KeyCode::End => Some(_end),
+        KeyCode::Help => None,
+        KeyCode::Home => Some(_home),
+        KeyCode::Insert => Some(_insert),
+        KeyCode::PageDown => Some(&intersect(_page, _down)),
+        KeyCode::PageUp => Some(&intersect(_page, _up)),
+        KeyCode::ArrowDown => Some(&intersect(_arrow, _down)),
+        KeyCode::ArrowLeft => Some(&intersect(_arrow, _left)),
+        KeyCode::ArrowRight => Some(&intersect(_arrow, _left)),
+        KeyCode::ArrowUp => Some(&intersect(_arrow, _up)),
+        KeyCode::NumLock => Some(_numlock),
+        KeyCode::Numpad0 => Some(_0),
+        KeyCode::Numpad1 => Some(_1),
+        KeyCode::Numpad2 => Some(_2),
+        KeyCode::Numpad3 => Some(_3),
+        KeyCode::Numpad4 => Some(_4),
+        KeyCode::Numpad5 => Some(_5),
+        KeyCode::Numpad6 => Some(_6),
+        KeyCode::Numpad7 => Some(_7),
+        KeyCode::Numpad8 => Some(_8),
+        KeyCode::Numpad9 => Some(_9),
+        KeyCode::NumpadAdd => Some(&intersect(_numpad, _plus)),
+        KeyCode::NumpadBackspace => Some(_backspace),
+        KeyCode::NumpadClear => None,
+        KeyCode::NumpadClearEntry => None,
+        KeyCode::NumpadComma => Some(_comma),
+        KeyCode::NumpadDecimal => Some(_period),
+        KeyCode::NumpadDivide => Some(_slash),
+        KeyCode::NumpadEnter => Some(&intersect(_numpad, _enter)),
+        KeyCode::NumpadEqual => Some(_equals),
+        KeyCode::NumpadHash => Some(_tilde),
+        KeyCode::NumpadMemoryAdd => None,
+        KeyCode::NumpadMemoryClear => None,
+        KeyCode::NumpadMemoryRecall => None,
+        KeyCode::NumpadMemoryStore => None,
+        KeyCode::NumpadMemorySubtract => None,
+        KeyCode::NumpadMultiply => None,
+        KeyCode::NumpadParenLeft => None,
+        KeyCode::NumpadParenRight => None,
+        KeyCode::NumpadStar => Some(_asterisk),
+        KeyCode::NumpadSubtract => Some(_minus),
+        KeyCode::Escape => Some(_escape),
+        KeyCode::Fn => Some(_function),
+        KeyCode::FnLock => None,
+        KeyCode::PrintScreen => Some(_printscreen),
+        KeyCode::ScrollLock => None,
+        KeyCode::Pause => None,
+        KeyCode::BrowserBack => None,
+        KeyCode::BrowserFavorites => None,
+        KeyCode::BrowserForward => None,
+        KeyCode::BrowserHome => None,
+        KeyCode::BrowserRefresh => None,
+        KeyCode::BrowserSearch => None,
+        KeyCode::BrowserStop => None,
+        KeyCode::Eject => None,
+        KeyCode::LaunchApp1 => None,
+        KeyCode::LaunchApp2 => None,
+        KeyCode::LaunchMail => None,
+        KeyCode::MediaPlayPause => None,
+        KeyCode::MediaSelect => None,
+        KeyCode::MediaStop => None,
+        KeyCode::MediaTrackNext => None,
+        KeyCode::MediaTrackPrevious => None,
+        KeyCode::Power => None,
+        KeyCode::Sleep => None,
+        KeyCode::AudioVolumeDown => None,
+        KeyCode::AudioVolumeMute => None,
+        KeyCode::AudioVolumeUp => None,
+        KeyCode::WakeUp => None,
+        KeyCode::Meta => Some(_win),
+        KeyCode::Hyper => None,
+        KeyCode::Turbo => None,
+        KeyCode::Abort => None,
+        KeyCode::Resume => None,
+        KeyCode::Suspend => None,
+        KeyCode::Again => None,
+        KeyCode::Copy => None,
+        KeyCode::Cut => None,
+        KeyCode::Find => None,
+        KeyCode::Open => None,
+        KeyCode::Paste => None,
+        KeyCode::Props => None,
+        KeyCode::Select => None,
+        KeyCode::Undo => None,
+        KeyCode::Hiragana => None,
+        KeyCode::Katakana => None,
+        KeyCode::F1 => Some(_f1),
+        KeyCode::F2 => Some(_f2),
+        KeyCode::F3 => Some(_f3),
+        KeyCode::F4 => Some(_f4),
+        KeyCode::F5 => Some(_f5),
+        KeyCode::F6 => Some(_f6),
+        KeyCode::F7 => Some(_f7),
+        KeyCode::F8 => Some(_f8),
+        KeyCode::F9 => Some(_f9),
+        KeyCode::F10 => Some(_f10),
+        KeyCode::F11 => Some(_f11),
+        KeyCode::F12 => Some(_f12),
+        KeyCode::F13 => None,
+        KeyCode::F14 => None,
+        KeyCode::F15 => None,
+        KeyCode::F16 => None,
+        KeyCode::F17 => None,
+        KeyCode::F18 => None,
+        KeyCode::F19 => None,
+        KeyCode::F20 => None,
+        KeyCode::F21 => None,
+        KeyCode::F22 => None,
+        KeyCode::F23 => None,
+        KeyCode::F24 => None,
+        KeyCode::F25 => None,
+        KeyCode::F26 => None,
+        KeyCode::F27 => None,
+        KeyCode::F28 => None,
+        KeyCode::F29 => None,
+        KeyCode::F30 => None,
+        KeyCode::F31 => None,
+        KeyCode::F32 => None,
+        KeyCode::F33 => None,
+        KeyCode::F34 => None,
+        KeyCode::F35 => None,
+    }
 }
