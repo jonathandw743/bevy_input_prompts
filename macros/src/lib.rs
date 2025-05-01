@@ -17,6 +17,7 @@ use syn::{
     Index, LitInt, LitStr, Token,
     parse::{Parse, ParseStream},
 };
+use walkdir::WalkDir;
 // use proc_macro2::{TokenStream, TokenTree, Group, Delimiter, Span};
 use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree};
 // use std::str::FromStr;
@@ -29,7 +30,7 @@ use proc_macro2::{Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenS
 pub fn directory_representation(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(input as LitStr).value();
     let dir_path = Path::new(&input);
-    directory_representation_inner(dir_path).unwrap().into()
+    directory_representation_inner(dir_path).expect("").into()
     // flame::dump_html(&mut std::fs::File::create("flame-graph.html").unwrap()).unwrap();
     // flame::dump_json(&mut std::fs::File::create("flame.json").unwrap()).unwrap();
 }
@@ -38,11 +39,8 @@ struct File {
     path: PathBuf,
 
     dir_counts: HashMap<String, usize>,
-    dir_count: usize,
     stem_word_counts: HashMap<String, usize>,
-    stem_word_count: usize,
     ext_counts: HashMap<String, usize>,
-    ext_count: usize,
 
     dir_tokens: Vec<(String, usize)>,
     stem_word_tokens: Vec<(String, usize)>,
@@ -65,26 +63,33 @@ impl File {
                 dir_count += 1;
             }
         }
-        let (stem, exts) = path
+        let mut stem = path
             .file_name()
             .ok_or(anyhow!(""))?
             .to_str()
-            .ok_or(anyhow!(""))?
-            .split_once(".")
             .ok_or(anyhow!(""))?;
+        let mut ext_counts = HashMap::new();
+        let mut ext_count = 0usize;
+        if let Some((new_stem, exts)) = stem.split_once(".") {
+            stem = new_stem;
+            for etx in exts.split(".") {
+                *ext_counts.entry(etx.to_owned()).or_insert(0usize) += 1;
+                ext_count += 1;
+            }
+        }
         let mut stem_word_counts = HashMap::new();
         let mut stem_word_count = 0usize;
         for word in stem.split("_") {
             *stem_word_counts.entry(word.to_owned()).or_insert(0usize) += 1;
             stem_word_count += 1;
         }
-        let mut ext_counts = HashMap::new();
-        let mut ext_count = 0usize;
-        for etx in exts.split(".") {
-            *ext_counts.entry(etx.to_owned()).or_insert(0usize) += 1;
-            ext_count += 1;
-        }
 
+        let mut dir_tokens = Vec::with_capacity(dir_count);
+        for (word, &count) in &dir_counts {
+            for version in 0..count {
+                dir_tokens.push((word.to_owned(), version));
+            }
+        }
         let mut stem_word_tokens = Vec::with_capacity(stem_word_count);
         for (word, &count) in &stem_word_counts {
             for version in 0..count {
@@ -97,22 +102,13 @@ impl File {
                 ext_tokens.push((word.to_owned(), version));
             }
         }
-        let mut dir_tokens = Vec::with_capacity(ext_count);
-        for (word, &count) in &dir_counts {
-            for version in 0..count {
-                dir_tokens.push((word.to_owned(), version));
-            }
-        }
 
         Ok(Self {
             path,
 
             dir_counts,
-            dir_count,
             stem_word_counts,
-            stem_word_count,
             ext_counts,
-            ext_count,
 
             dir_tokens,
             stem_word_tokens,
@@ -145,6 +141,7 @@ impl File {
         for token in &self.ext_tokens {
             self.entropy *= ext_token_counts[token] as f64 / file_count as f64;
         }
+        // dbg!(self.entropy);
     }
 }
 
@@ -237,8 +234,12 @@ fn directory_representation_inner<P: AsRef<Path>>(dir_path: P) -> Result<proc_ma
     let mut dir_token_counts = HashMap::new();
     let mut stem_token_counts = HashMap::new();
     let mut ext_token_counts = HashMap::new();
-    for dir_entry in std::fs::read_dir(dir_path.as_ref())? {
-        let path = dir_entry?.path();
+    for dir_entry in WalkDir::new(dir_path)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        let path = dir_entry.path();
         if path.is_file() {
             let file = File::from_path(path.to_owned())?;
             for token in &file.dir_tokens {
@@ -294,9 +295,18 @@ fn directory_representation_inner<P: AsRef<Path>>(dir_path: P) -> Result<proc_ma
     let all_stem_word_tokens = all_tokens(&stem_word_max_counts);
     let all_ext_tokens = all_tokens(&ext_max_counts);
 
-    let dir_tokens_associated_files = tokens_associated_files(&dir_max_counts, &files, |file, word| file.dir_counts.get(word).copied());
-    let stem_word_tokens_associated_files = tokens_associated_files(&stem_word_max_counts, &files, |file, word| file.stem_word_counts.get(word).copied());
-    let ext_tokens_associated_files = tokens_associated_files(&ext_max_counts, &files, |file, word| file.ext_counts.get(word).copied());
+    let dir_tokens_associated_files =
+        tokens_associated_files(&dir_max_counts, &files, |file, word| {
+            file.dir_counts.get(word).copied()
+        });
+    let stem_word_tokens_associated_files =
+        tokens_associated_files(&stem_word_max_counts, &files, |file, word| {
+            file.stem_word_counts.get(word).copied()
+        });
+    let ext_tokens_associated_files =
+        tokens_associated_files(&ext_max_counts, &files, |file, word| {
+            file.ext_counts.get(word).copied()
+        });
 
     let dir_constants = all_dir_tokens
         .iter()
