@@ -23,7 +23,7 @@ pub enum GamepadBrand {
     XboxSeries,
 }
 
-pub fn gamepad_button_file_path(pack: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand, extras: &[&[usize]]) -> Option<&'static str> {
+pub fn gamepad_button_file_path(pack: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand, extras: &[&[usize]]) -> Option<String> {
     first_file_path(pack, [gamepad_button_file_indices(pack, gamepad_button, gamepad_brand)?, extras])
 }
 

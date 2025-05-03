@@ -15,11 +15,11 @@ pub enum Pack {
     Kenney,
 }
 
-pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<&'static str> {
+pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<String> {
     let file_index = *files.file_indices().get(0)?;
     Some(match pack {
         #[cfg(feature = "use_kenney_input_prompts")]
-        Pack::Kenney => kenney_input_prompts::tokenize_dir::FILE_PATHS[file_index],
+        Pack::Kenney => format!("bevy_input_prompts/{}", kenney_input_prompts::tokenize_dir::FILE_PATHS.get(file_index)?),
     })
 }
 

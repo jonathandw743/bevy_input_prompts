@@ -4,7 +4,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 
 use crate::{Pack, first_file_path};
 
-pub fn key_code_file_path(pack: Pack, key_code: KeyCode, extras: &[&[usize]]) -> Option<&'static str> {
+pub fn key_code_file_path(pack: Pack, key_code: KeyCode, extras: &[&[usize]]) -> Option<String> {
     first_file_path(pack, [key_code_file_indices(pack, key_code)?, extras])
 }
 
