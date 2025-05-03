@@ -3,8 +3,8 @@ use fs_extra::error::Error;
 pub mod product_ids;
 pub mod vendor_ids;
 
-pub mod key_code;
 pub mod gamepad_button;
+pub mod key_code;
 
 #[cfg(feature = "use_kenney_input_prompts")]
 pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_tokenize;
@@ -12,6 +12,14 @@ pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_
 pub enum Pack {
     #[cfg(feature = "use_kenney_input_prompts")]
     Kenney,
+}
+
+pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> &'static str {
+    let file_index = files.file_indices()[0];
+    match pack {
+        #[cfg(feature = "use_kenney_input_prompts")]
+        Pack::Kenney => kenney_input_prompts::tokenize_dir::FILE_PATHS[file_index],
+    }
 }
 
 pub fn copy_assets() -> Result<(), Error> {

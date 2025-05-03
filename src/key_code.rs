@@ -5,8 +5,8 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 
 use crate::Pack;
 
-pub fn from_key_code<'a, 'b>(version: Pack, key_code: KeyCode) -> Option<&'a [&'b [usize]]> {
-    match version {
+pub fn from_key_code<'a, 'b>(pack: Pack, key_code: KeyCode) -> Option<&'a [&'b [usize]]> {
+    match pack {
         #[cfg(feature = "use_kenney_input_prompts")]
         Pack::Kenney => match key_code {
             KeyCode::Backquote => Some(&[k_kbm::stem_words::_tilde]),
