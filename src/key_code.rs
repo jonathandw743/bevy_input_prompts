@@ -12,9 +12,7 @@ pub fn from_key_code<'a, 'b>(version: Pack, key_code: KeyCode) -> Option<&'a [&'
             KeyCode::Backquote => Some(&[k_kbm::stem_words::_tilde]),
             KeyCode::Backslash => Some(&[k_kbm::stem_words::_slash]),
             KeyCode::BracketLeft => Some(&[k_kbm::stem_words::_bracket, k::stem_words::_open]),
-            KeyCode::BracketRight => {
-                Some(&[k_kbm::stem_words::_bracket, k_kbm::stem_words::_close])
-            }
+            KeyCode::BracketRight => Some(&[k_kbm::stem_words::_bracket, k_kbm::stem_words::_close]),
             KeyCode::Comma => Some(&[k_kbm::stem_words::_comma]),
             KeyCode::Digit0 => Some(&[k::stem_words::_0]),
             KeyCode::Digit1 => Some(&[k::stem_words::_1]),
