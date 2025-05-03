@@ -5,3 +5,6 @@ known_gamepads.txt
 flame-graph.html
 flame.json
 flamegraph.svg
+/assets
+perf.data
+perf.data.old

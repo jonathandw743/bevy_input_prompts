@@ -9,17 +9,18 @@ pub mod key_code;
 #[cfg(feature = "use_kenney_input_prompts")]
 pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_tokenize;
 
+#[derive(Clone, Copy)]
 pub enum Pack {
     #[cfg(feature = "use_kenney_input_prompts")]
     Kenney,
 }
 
-pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> &'static str {
-    let file_index = files.file_indices()[0];
-    match pack {
+pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<&'static str> {
+    let file_index = *files.file_indices().get(0)?;
+    Some(match pack {
         #[cfg(feature = "use_kenney_input_prompts")]
         Pack::Kenney => kenney_input_prompts::tokenize_dir::FILE_PATHS[file_index],
-    }
+    })
 }
 
 pub fn copy_assets() -> Result<(), Error> {

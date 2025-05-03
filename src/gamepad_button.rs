@@ -6,7 +6,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
     _PlayStation_Series as ps, _Playdate as playdate, _Steam_Controller as steam, _Steam_Deck as steamdeck, _Xbox_Series as xbox,
 };
 
-use crate::Pack;
+use crate::{Pack, first_file_path};
 
 #[derive(Clone, Copy)]
 pub enum GamepadBrand {
@@ -23,25 +23,11 @@ pub enum GamepadBrand {
     XboxSeries,
 }
 
-// impl GamepadBrand {
-//     pub fn to_const(&self) -> &'static [usize] {
-//         match self {
-//             Self::Generic => generic::DIR,
-//             Self::NintendoGamecube => gamecube::DIR,
-//             Self::NintendoSwitch => switch::DIR,
-//             Self::NintendoSwitch2 => switch2::DIR,
-//             Self::NintendoWii => wii::DIR,
-//             Self::NintendoWiiU => wiiu::DIR,
-//             Self::PlayStationSeries => ps::DIR,
-//             Self::Playdate => playdate::DIR,
-//             Self::SteamController => steam::DIR,
-//             Self::SteamDeck => steamdeck::DIR,
-//             Self::XboxSeries => xbox::DIR,
-//         }
-//     }
-// }
+pub fn gamepad_button_file_path(pack: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand, extras: &[&[usize]]) -> Option<&'static str> {
+    first_file_path(pack, [gamepad_button_file_indices(pack, gamepad_button, gamepad_brand)?, extras])
+}
 
-pub fn from_gamepad_button<'a, 'b>(version: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand) -> Option<&'a [&'b [usize]]> {
+pub fn gamepad_button_file_indices<'a, 'b>(version: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand) -> Option<&'a [&'b [usize]]> {
     match version {
         #[cfg(feature = "use_kenney_input_prompts")]
         Pack::Kenney => match (gamepad_brand, gamepad_button) {
