@@ -1,4 +1,5 @@
 use bevy::{math::vec3, prelude::*};
+use bevy_input::keyboard::{Key, KeyboardInput};
 use bevy_input_prompts::{
     Pack, copy_assets,
     gamepad_button::{GamepadBrand, gamepad_button_file_path},
@@ -83,6 +84,24 @@ fn update_kenney_keyboard_default(
                 warn!("no prompt found");
             }
         }
+    }
+}
+
+fn update_kenney_keyboard_key(
+    mut kenney_keyboard: Query<&mut Sprite, With<KenneyKeyboardDefault>>,
+    mut keyboard_input: EventReader<KeyboardInput>,
+    asset_server: Res<AssetServer>,
+) {
+    if let Some(ki) = keyboard_input.read().next() {
+        let lk = &ki.logical_key;
+        println!("{:?}", lk);
+        // if let Some(path) = todo!() {
+        // for mut sprite in &mut kenney_keyboard {
+        //     sprite.image = asset_server.load(&path);
+        // }
+        // } else {
+        //     warn!("no prompt found");
+        // }
     }
 }
 

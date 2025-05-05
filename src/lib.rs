@@ -3,7 +3,9 @@ use fs_extra::error::Error;
 pub mod product_ids;
 pub mod vendor_ids;
 
+pub mod char;
 pub mod gamepad_button;
+pub mod key;
 pub mod key_code;
 
 #[cfg(feature = "use_kenney_input_prompts")]
@@ -19,7 +21,10 @@ pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<
     let file_index = *files.file_indices().get(0)?;
     Some(match pack {
         #[cfg(feature = "use_kenney_input_prompts")]
-        Pack::Kenney => format!("bevy_input_prompts/{}", kenney_input_prompts::tokenize_dir::FILE_PATHS.get(file_index)?),
+        Pack::Kenney => format!(
+            "bevy_input_prompts/{}",
+            kenney_input_prompts::tokenize_dir::FILE_PATHS.get(file_index)?
+        ),
     })
 }
 
@@ -27,6 +32,16 @@ pub fn copy_assets() -> Result<(), Error> {
     #[cfg(feature = "use_kenney_input_prompts")]
     kenney_input_prompts::copy_assets("assets/bevy_input_prompts")?;
     Ok(())
+}
+
+pub trait ToFile {
+    type Extra;
+
+    fn file_indices<'a, 'b>(&self, pack: Pack, extra: Self::Extra) -> Option<&'a [&'b [usize]]>;
+    
+    fn file_path(&self, pack: Pack, extra: Self::Extra, extras: &[&[usize]]) -> Option<String> {
+        first_file_path(pack, [self.file_indices(pack, extra)?, extras])
+    }
 }
 
 // impl GamepadBrand {
