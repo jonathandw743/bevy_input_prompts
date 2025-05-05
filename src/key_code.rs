@@ -83,7 +83,7 @@ pub fn key_code_file_indices<'a, 'b>(pack: Pack, key_code: KeyCode) -> Option<&'
             KeyCode::PageUp => Some(&[k_kbm::stem_words::_page, k_kbm::stem_words::_up]),
             KeyCode::ArrowDown => Some(&[k_kbm::stem_words::_arrow, k_kbm::stem_words::_down]),
             KeyCode::ArrowLeft => Some(&[k_kbm::stem_words::_arrow, k_kbm::stem_words::_left]),
-            KeyCode::ArrowRight => Some(&[k_kbm::stem_words::_arrow, k_kbm::stem_words::_left]),
+            KeyCode::ArrowRight => Some(&[k_kbm::stem_words::_arrow, k_kbm::stem_words::_right]),
             KeyCode::ArrowUp => Some(&[k_kbm::stem_words::_arrow, k_kbm::stem_words::_up]),
             KeyCode::NumLock => Some(&[k_kbm::stem_words::_numlock]),
             KeyCode::Numpad0 => Some(&[k_kbm::stem_words::_0]),

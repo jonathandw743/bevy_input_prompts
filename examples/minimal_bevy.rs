@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_input_prompts::xelu::key_code::XeluKeyCode;
+use bevy_input_prompts::{Pack, key_code::key_code_file_path};
 
 fn main() {
     App::new()
@@ -11,10 +11,8 @@ fn main() {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands.spawn(Sprite {
-        image: asset_server.load(XeluKeyCode {
-            key_code: KeyCode::ArrowLeft,
-            settings: default(),
-        }),
+        image: asset_server
+            .load(key_code_file_path(Pack::Kenney, KeyCode::ArrowLeft, &[]).unwrap()),
         ..default()
     });
 }
