@@ -6,7 +6,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
     _PlayStation_Series as ps, _Playdate as playdate, _Steam_Controller as steam, _Steam_Deck as steamdeck, _Xbox_Series as xbox,
 };
 
-use crate::{first_file_path, Pack, ToFile};
+use crate::{Pack, ToFile};
 
 #[derive(Clone, Copy)]
 pub enum GamepadBrand {

@@ -1,8 +1,7 @@
-use bevy_input::keyboard::{Key, KeyCode};
 #[cfg(feature = "use_kenney_input_prompts")]
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse::stem_words as kbm_sw;
 
-use crate::{Pack, ToFile, first_file_path};
+use crate::{Pack, ToFile};
 
 impl ToFile for &str {
     type Options = ();
@@ -48,11 +47,28 @@ impl ToFile for char {
                 'x' | 'X' => Some(&[kbm_sw::_x]),
                 'y' | 'Y' => Some(&[kbm_sw::_y]),
                 'z' | 'Z' => Some(&[kbm_sw::_z]),
+
                 ' ' => Some(&[kbm_sw::_space]),
                 '\n' => Some(&[kbm_sw::_enter]),
                 '\r' => Some(&[kbm_sw::_enter]),
                 '\t' => Some(&[kbm_sw::_tab]),
                 '\u{8}' => Some(&[kbm_sw::_backspace]),
+                '\'' => Some(&[kbm_sw::_apostrophe]),
+                '<' => Some(&[kbm_sw::_less, kbm_sw::_bracket]),
+                '>' => Some(&[kbm_sw::_greater, kbm_sw::_bracket]),
+                '~' => Some(&[kbm_sw::_tilde]),
+                '/' => Some(&[kbm_sw::_slash]),
+                '?' => Some(&[kbm_sw::_question]),
+                '[' => Some(&[kbm_sw::_open, kbm_sw::_bracket]),
+                ']' => Some(&[kbm_sw::_close, kbm_sw::_bracket]),
+                ',' => Some(&[kbm_sw::_comma]),
+                '.' => Some(&[kbm_sw::_period]),
+                ';' => Some(&[kbm_sw::_semicolon]),
+                ':' => Some(&[kbm_sw::_colon]),
+                '+' => Some(&[kbm_sw::_plus]),
+                '=' => Some(&[kbm_sw::_equals]),
+                '-' => Some(&[kbm_sw::_minus]),
+
                 // not doing 3 = £, 4 = $, 5 = % etc because this depends on locale and
                 // and keyboard_input will check the keycode after this as a fallback
                 // which gives some default maybe US locale

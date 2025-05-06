@@ -1,8 +1,8 @@
-use bevy_input::keyboard::{Key, KeyCode};
+use bevy_input::keyboard::Key;
 #[cfg(feature = "use_kenney_input_prompts")]
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse::stem_words as kbm_sw;
 
-use crate::{Pack, ToFile, first_file_path};
+use crate::{Pack, ToFile};
 
 impl ToFile for Key {
     type Options = ();

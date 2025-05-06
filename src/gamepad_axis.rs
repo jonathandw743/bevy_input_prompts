@@ -1,4 +1,4 @@
-use bevy_input::gamepad::{GamepadAxis, GamepadButton};
+use bevy_input::gamepad::GamepadAxis;
 
 #[cfg(feature = "use_kenney_input_prompts")]
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
@@ -8,7 +8,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
     _Steam_Deck as steamdeck, _Xbox_Series as xbox,
 };
 
-use crate::{Pack, ToFile, first_file_path};
+use crate::{Pack, ToFile};
 
 #[derive(Clone, Copy)]
 pub enum GamepadBrand {
@@ -45,14 +45,13 @@ impl ToFile for GamepadAxis {
                 (GamepadBrand::Generic, GamepadAxis::RightZ) => Some(&[generic::stem_words::_trigger]),
                 (GamepadBrand::Generic, GamepadAxis::Other(_)) => None,
 
-                // TODO:
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickX) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickY) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftZ) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickX) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickY) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightZ) => todo!(),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::Other(_)) => todo!(),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickX) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickY) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftZ) => Some(&[gamecube::stem_words::_l, gamecube::stem_words::_trigger]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickX) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickY) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::RightZ) => Some(&[gamecube::stem_words::_r, gamecube::stem_words::_trigger]),
+                (GamepadBrand::NintendoGamecube, GamepadAxis::Other(_)) => None,
 
                 (GamepadBrand::NintendoSwitch, GamepadAxis::LeftStickX) => todo!(),
                 (GamepadBrand::NintendoSwitch, GamepadAxis::LeftStickY) => todo!(),
@@ -102,13 +101,13 @@ impl ToFile for GamepadAxis {
                 (GamepadBrand::Playdate, GamepadAxis::RightZ) => todo!(),
                 (GamepadBrand::Playdate, GamepadAxis::Other(_)) => todo!(),
 
-                (GamepadBrand::SteamController, GamepadAxis::LeftStickX) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::LeftStickY) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::LeftZ) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::RightStickX) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::RightStickY) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::RightZ) => todo!(),
-                (GamepadBrand::SteamController, GamepadAxis::Other(_)) => todo!(),
+                (GamepadBrand::SteamController, GamepadAxis::LeftStickX) => Some(&[steam::stem_words::_l, steam::stem_words::_stick]),
+                (GamepadBrand::SteamController, GamepadAxis::LeftStickY) => Some(&[steam::stem_words::_l, steam::stem_words::_stick]),
+                (GamepadBrand::SteamController, GamepadAxis::LeftZ) => Some(&[steam::stem_words::_lt]),
+                (GamepadBrand::SteamController, GamepadAxis::RightStickX) => Some(&[steam::stem_words::_l, steam::stem_words::_stick]),
+                (GamepadBrand::SteamController, GamepadAxis::RightStickY) => Some(&[steam::stem_words::_l, steam::stem_words::_stick]),
+                (GamepadBrand::SteamController, GamepadAxis::RightZ) => Some(&[steam::stem_words::_rt]),
+                (GamepadBrand::SteamController, GamepadAxis::Other(_)) => None,
 
                 (GamepadBrand::SteamDeck, GamepadAxis::LeftStickX) => Some(&[steamdeck::stem_words::_l, steamdeck::stem_words::_stick]),
                 (GamepadBrand::SteamDeck, GamepadAxis::LeftStickY) => Some(&[steamdeck::stem_words::_l, steamdeck::stem_words::_stick]),
@@ -129,4 +128,3 @@ impl ToFile for GamepadAxis {
         }
     }
 }
-

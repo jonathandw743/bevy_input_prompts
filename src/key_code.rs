@@ -2,7 +2,7 @@ use bevy_input::keyboard::KeyCode;
 #[cfg(feature = "use_kenney_input_prompts")]
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse as k_kbm;
 
-use crate::{first_file_path, Pack, ToFile};
+use crate::{Pack, ToFile};
 
 impl ToFile for KeyCode {
     type Options = ();
