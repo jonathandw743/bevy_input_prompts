@@ -260,11 +260,3 @@ impl ToFile for GamepadButton {
         }
     }
 }
-
-// pub fn gamepad_button_file_path(pack: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand, extras: &[&[usize]]) -> Option<String> {
-//     first_file_path(pack, [gamepad_button_file_indices(pack, gamepad_button, gamepad_brand)?, extras])
-// }
-
-// pub fn gamepad_button_file_indices<'a, 'b>(version: Pack, gamepad_button: GamepadButton, gamepad_brand: GamepadBrand) -> Option<&'a [&'b [usize]]> {
-    
-// }

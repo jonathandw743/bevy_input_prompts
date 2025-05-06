@@ -52,6 +52,24 @@ impl ToFile for char {
                 '\n' => Some(&[kbm_sw::_enter]),
                 '\r' => Some(&[kbm_sw::_enter]),
                 '\t' => Some(&[kbm_sw::_tab]),
+                '\u{8}' => Some(&[kbm_sw::_backspace]),
+                // not doing 3 = £, 4 = $, 5 = % etc because this depends on locale and
+                // and keyboard_input will check the keycode after this as a fallback
+                // which gives some default maybe US locale
+                '1' => Some(&[kbm_sw::_1]),
+                '!' => Some(&[kbm_sw::_exclamation]),
+                '2' => Some(&[kbm_sw::_2]),
+                '"' => Some(&[kbm_sw::_quote]),
+                '3' => Some(&[kbm_sw::_3]),
+                '4' => Some(&[kbm_sw::_4]),
+                '5' => Some(&[kbm_sw::_5]),
+                '6' => Some(&[kbm_sw::_6]),
+                '^' => Some(&[kbm_sw::_caret]),
+                '7' => Some(&[kbm_sw::_7]),
+                '8' => Some(&[kbm_sw::_8]),
+                '*' => Some(&[kbm_sw::_asterisk]),
+                '9' => Some(&[kbm_sw::_9]),
+                '0' => Some(&[kbm_sw::_0]),
                 _ => None,
             },
         }

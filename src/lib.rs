@@ -8,6 +8,7 @@ pub mod gamepad_button;
 pub mod key;
 pub mod key_code;
 pub mod keyboard_input;
+pub mod gamepad_axis;
 
 #[cfg(feature = "use_kenney_input_prompts")]
 pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_tokenize;
