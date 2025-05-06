@@ -4,7 +4,7 @@ use bevy_input::gamepad::GamepadAxis;
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
     _Generic as generic, _Nintendo_Gamecube as gamecube, _Nintendo_Switch as switch,
     _Nintendo_Switch_2 as switch2, _Nintendo_Wii as wii, _Nintendo_WiiU as wiiu,
-    _PlayStation_Series as ps, _Playdate as playdate, _Steam_Controller as steam,
+    _PlayStation_Series as ps, _Steam_Controller as steam,
     _Steam_Deck as steamdeck, _Xbox_Series as xbox,
 };
 

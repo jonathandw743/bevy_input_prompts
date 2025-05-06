@@ -8,6 +8,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
 
 use crate::{Pack, ToFile};
 
+// TODO: automatically get this from gamepad product and vendor id
 #[derive(Clone, Copy)]
 pub enum GamepadBrand {
     Generic,
@@ -151,7 +152,8 @@ impl ToFile for GamepadButton {
                 (GamepadBrand::NintendoWiiU, GamepadButton::DPadLeft) => Some(&[wiiu::stem_words::_left, wiiu::stem_words::_dpad]),
                 (GamepadBrand::NintendoWiiU, GamepadButton::DPadRight) => Some(&[wiiu::stem_words::_right, wiiu::stem_words::_dpad]),
                 (GamepadBrand::NintendoWiiU, GamepadButton::Other(_)) => None,
-    
+                
+                // TODO: ps elite controller back buttons in Other
                 (GamepadBrand::PlayStationSeries, GamepadButton::South) => Some(&[ps::stem_words::_cross]),
                 (GamepadBrand::PlayStationSeries, GamepadButton::East) => Some(&[ps::stem_words::_circle]),
                 (GamepadBrand::PlayStationSeries, GamepadButton::North) => Some(&[ps::stem_words::_triangle]),
@@ -235,7 +237,8 @@ impl ToFile for GamepadButton {
                 (GamepadBrand::SteamDeck, GamepadButton::DPadLeft) => Some(&[steamdeck::stem_words::_left, steamdeck::stem_words::_dpad]),
                 (GamepadBrand::SteamDeck, GamepadButton::DPadRight) => Some(&[steamdeck::stem_words::_right, steamdeck::stem_words::_dpad]),
                 (GamepadBrand::SteamDeck, GamepadButton::Other(_)) => None,
-    
+
+                // TODO: xbox elite controller back buttons in Other
                 (GamepadBrand::XboxSeries, GamepadButton::South) => Some(&[xbox::stem_words::_a]),
                 (GamepadBrand::XboxSeries, GamepadButton::East) => Some(&[xbox::stem_words::_b]),
                 (GamepadBrand::XboxSeries, GamepadButton::North) => Some(&[xbox::stem_words::_y]),
