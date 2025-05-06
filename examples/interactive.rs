@@ -1,11 +1,7 @@
 use bevy::{math::vec3, prelude::*};
 use bevy_input::keyboard::{Key, KeyboardInput};
 use bevy_input_prompts::{
-    Pack, copy_assets,
-    gamepad_button::{GamepadBrand, gamepad_button_file_path},
-    kenney_tokenize::_Keyboard___Mouse as kbm,
-    kenney_tokenize::_Xbox_Series::stem_words as xboxsw,
-    key_code::key_code_file_path,
+    copy_assets, gamepad_button::GamepadBrand, kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw}, Pack, ToFile, ToFileDefault
 };
 
 fn main() {
@@ -22,6 +18,7 @@ fn main() {
                 update_kenney_keyboard_double_outline,
                 update_kenney_controller,
                 update_kenney_controller_color,
+                update_kenney_keyboard_key,
             ),
         )
         .run();
@@ -76,7 +73,7 @@ fn update_kenney_keyboard_default(
         if let Some(&key_code) = key_code_input.get_just_pressed().next() {
             println!("{:?}", key_code);
             // specify that we want the prompts from the "Default" directory
-            if let Some(path) = key_code_file_path(Pack::Kenney, key_code, &[kbm::_Default::DIR]) {
+            if let Some(path) = key_code.file_path_default(Pack::Kenney, &[kbm::_Default::DIR]) {
                 for mut sprite in &mut kenney_keyboard {
                     sprite.image = asset_server.load(&path);
                 }
@@ -92,17 +89,21 @@ fn update_kenney_keyboard_key(
     mut keyboard_input: EventReader<KeyboardInput>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(ki) = keyboard_input.read().next() {
-        let lk = &ki.logical_key;
-        println!("{:?}", lk);
-        // if let Some(path) = todo!() {
-        // for mut sprite in &mut kenney_keyboard {
-        //     sprite.image = asset_server.load(&path);
-        // }
-        // } else {
-        //     warn!("no prompt found");
-        // }
+    for x in keyboard_input.read() {
+        dbg!(x);
     }
+    // if let Some(ki) = keyboard_input.read().next() {
+    //     dbg!()
+    //     // let lk = &ki.logical_key;
+    //     // println!("{:?}", lk);
+    //     // if let Some(path) = todo!() {
+    //     // for mut sprite in &mut kenney_keyboard {
+    //     //     sprite.image = asset_server.load(&path);
+    //     // }
+    //     // } else {
+    //     //     warn!("no prompt found");
+    //     // }
+    // }
 }
 
 fn update_kenney_keyboard_double_outline(
@@ -115,9 +116,8 @@ fn update_kenney_keyboard_double_outline(
             println!("{:?}", key_code);
             // specify that we want the prompts from the "Double" directory (which contains 2x resolution prompts)
             // and that we want the outline prompt
-            if let Some(path) = key_code_file_path(
+            if let Some(path) = key_code.file_path_default(
                 Pack::Kenney,
-                key_code,
                 &[kbm::_Double::DIR, kbm::stem_words::_outline],
             ) {
                 for mut sprite in &mut kenney_keyboard {
@@ -138,12 +138,9 @@ fn update_kenney_controller(
     if let Some(gamepad) = gamepad {
         if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
             println!("{:?}", gamepad_button);
-            if let Some(path) = gamepad_button_file_path(
-                Pack::Kenney,
-                gamepad_button,
-                GamepadBrand::XboxSeries,
-                &[],
-            ) {
+            if let Some(path) =
+                gamepad_button.file_path(Pack::Kenney, GamepadBrand::XboxSeries, &[])
+            {
                 for mut sprite in &mut kenney_controller {
                     sprite.image = asset_server.load(&path);
                 }
@@ -162,12 +159,9 @@ fn update_kenney_controller_color(
     if let Some(gamepad) = gamepad {
         if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
             println!("{:?}", gamepad_button);
-            if let Some(path) = gamepad_button_file_path(
-                Pack::Kenney,
-                gamepad_button,
-                GamepadBrand::XboxSeries,
-                &[xboxsw::_color],
-            ) {
+            if let Some(path) =
+                gamepad_button.file_path(Pack::Kenney, GamepadBrand::XboxSeries, &[xboxsw::_color])
+            {
                 for mut sprite in &mut kenney_controller {
                     sprite.image = asset_server.load(&path);
                 }

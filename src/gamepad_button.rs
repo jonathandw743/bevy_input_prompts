@@ -24,7 +24,7 @@ pub enum GamepadBrand {
 }
 
 impl ToFile for GamepadButton {
-    type Extra = GamepadBrand;
+    type Options = GamepadBrand;
 
     fn file_indices<'a, 'b>(&self, pack: Pack, gamepad_brand: GamepadBrand) -> Option<&'a [&'b [usize]]> {
         match pack {

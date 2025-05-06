@@ -7,6 +7,7 @@ pub mod char;
 pub mod gamepad_button;
 pub mod key;
 pub mod key_code;
+pub mod keyboard_input;
 
 #[cfg(feature = "use_kenney_input_prompts")]
 pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_tokenize;
@@ -35,12 +36,30 @@ pub fn copy_assets() -> Result<(), Error> {
 }
 
 pub trait ToFile {
-    type Extra;
+    type Options;
 
-    fn file_indices<'a, 'b>(&self, pack: Pack, extra: Self::Extra) -> Option<&'a [&'b [usize]]>;
-    
-    fn file_path(&self, pack: Pack, extra: Self::Extra, extras: &[&[usize]]) -> Option<String> {
-        first_file_path(pack, [self.file_indices(pack, extra)?, extras])
+    fn file_indices<'a, 'b>(&self, pack: Pack, extra: Self::Options) -> Option<&'a [&'b [usize]]>;
+
+    fn file_path(&self, pack: Pack, options: Self::Options, extra_contraints: &[&[usize]]) -> Option<String> {
+        first_file_path(pack, [self.file_indices(pack, options)?, extra_contraints])
+    }
+}
+
+pub trait ToFileDefault {
+    fn file_indices_default<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]>;
+
+    fn file_path_default(&self, pack: Pack, extra_constraints: &[&[usize]]) -> Option<String> {
+        first_file_path(pack, [self.file_indices_default(pack)?, extra_constraints])
+    }
+}
+
+impl<T> ToFileDefault for T
+where
+    T: ToFile,
+    <T as ToFile>::Options: Default,
+{
+    fn file_indices_default<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
+        self.file_indices(pack, Default::default())
     }
 }
 

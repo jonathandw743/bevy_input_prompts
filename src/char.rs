@@ -4,40 +4,54 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 
 use crate::{Pack, ToFile, first_file_path};
 
+impl ToFile for &str {
+    type Options = ();
+
+    fn file_indices<'a, 'b>(&self, pack: Pack, extra: ()) -> Option<&'a [&'b [usize]]> {
+        // TODO: there might be some packs that contain prompts that correspond to many characters
+        // TODO: in that case, this method should have actual behaviour
+        Some(self.chars().next()?.file_indices(pack, extra)?)
+    }
+}
+
 impl ToFile for char {
-    type Extra = ();
+    type Options = ();
 
     fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             Pack::Kenney => match self {
-                'a' => Some(&[kbm_sw::_a]),
-                'b' => Some(&[kbm_sw::_b]),
-                'c' => Some(&[kbm_sw::_c]),
-                'd' => Some(&[kbm_sw::_d]),
-                'e' => Some(&[kbm_sw::_e]),
-                'f' => Some(&[kbm_sw::_f]),
-                'g' => Some(&[kbm_sw::_g]),
-                'h' => Some(&[kbm_sw::_h]),
-                'i' => Some(&[kbm_sw::_i]),
-                'j' => Some(&[kbm_sw::_j]),
-                'k' => Some(&[kbm_sw::_k]),
-                'l' => Some(&[kbm_sw::_l]),
-                'm' => Some(&[kbm_sw::_m]),
-                'n' => Some(&[kbm_sw::_n]),
-                'o' => Some(&[kbm_sw::_o]),
-                'p' => Some(&[kbm_sw::_p]),
-                'q' => Some(&[kbm_sw::_q]),
-                'r' => Some(&[kbm_sw::_r]),
-                's' => Some(&[kbm_sw::_s]),
-                't' => Some(&[kbm_sw::_t]),
-                'u' => Some(&[kbm_sw::_u]),
-                'v' => Some(&[kbm_sw::_v]),
-                'w' => Some(&[kbm_sw::_w]),
-                'x' => Some(&[kbm_sw::_x]),
-                'y' => Some(&[kbm_sw::_y]),
-                'z' => Some(&[kbm_sw::_z]),
-                // TODO:
+                // TODO: more characters
+                'a' | 'A' => Some(&[kbm_sw::_a]),
+                'b' | 'B' => Some(&[kbm_sw::_b]),
+                'c' | 'C' => Some(&[kbm_sw::_c]),
+                'd' | 'D' => Some(&[kbm_sw::_d]),
+                'e' | 'E' => Some(&[kbm_sw::_e]),
+                'f' | 'F' => Some(&[kbm_sw::_f]),
+                'g' | 'G' => Some(&[kbm_sw::_g]),
+                'h' | 'H' => Some(&[kbm_sw::_h]),
+                'i' | 'I' => Some(&[kbm_sw::_i]),
+                'j' | 'J' => Some(&[kbm_sw::_j]),
+                'k' | 'K' => Some(&[kbm_sw::_k]),
+                'l' | 'L' => Some(&[kbm_sw::_l]),
+                'm' | 'M' => Some(&[kbm_sw::_m]),
+                'n' | 'N' => Some(&[kbm_sw::_n]),
+                'o' | 'O' => Some(&[kbm_sw::_o]),
+                'p' | 'P' => Some(&[kbm_sw::_p]),
+                'q' | 'Q' => Some(&[kbm_sw::_q]),
+                'r' | 'R' => Some(&[kbm_sw::_r]),
+                's' | 'S' => Some(&[kbm_sw::_s]),
+                't' | 'T' => Some(&[kbm_sw::_t]),
+                'u' | 'U' => Some(&[kbm_sw::_u]),
+                'v' | 'V' => Some(&[kbm_sw::_v]),
+                'w' | 'W' => Some(&[kbm_sw::_w]),
+                'x' | 'X' => Some(&[kbm_sw::_x]),
+                'y' | 'Y' => Some(&[kbm_sw::_y]),
+                'z' | 'Z' => Some(&[kbm_sw::_z]),
+                ' ' => Some(&[kbm_sw::_space]),
+                '\n' => Some(&[kbm_sw::_enter]),
+                '\r' => Some(&[kbm_sw::_enter]),
+                '\t' => Some(&[kbm_sw::_tab]),
                 _ => None,
             },
         }

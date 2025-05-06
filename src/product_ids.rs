@@ -1,3 +1,4 @@
+// TODO: verify these
 pub const STEAM_CONTROLLER_0476: u16 = 0x0476;
 pub const STEAM_CONTROLLER_1102: u16 = 0x1102;
 pub const STEAM_CONTROLLER_1142: u16 = 0x1142;

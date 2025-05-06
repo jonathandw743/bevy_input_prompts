@@ -5,7 +5,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 use crate::{first_file_path, Pack, ToFile};
 
 impl ToFile for KeyCode {
-    type Extra = ();
+    type Options = ();
     
     fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
         match pack {

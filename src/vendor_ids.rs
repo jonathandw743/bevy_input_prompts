@@ -1,3 +1,4 @@
+// TODO: verify these
 pub const XBOX: u16 = 0x045e;
 pub const XBOX_THIRD_PARTY: u16 = 0x24c6;
 pub const VALVE: u16 = 0x28de;
