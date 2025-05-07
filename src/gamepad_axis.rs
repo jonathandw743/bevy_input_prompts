@@ -8,22 +8,7 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
     _Steam_Deck as steamdeck, _Xbox_Series as xbox,
 };
 
-use crate::{Pack, ToFile};
-
-#[derive(Clone, Copy)]
-pub enum GamepadBrand {
-    Generic,
-    NintendoGamecube,
-    NintendoSwitch,
-    NintendoSwitch2,
-    NintendoWii,
-    NintendoWiiU,
-    PlayStationSeries,
-    Playdate,
-    SteamController,
-    SteamDeck,
-    XboxSeries,
-}
+use crate::{gamepad_brand::GamepadBrand, Pack, ToFile};
 
 impl ToFile for GamepadAxis {
     type Options = GamepadBrand;
@@ -45,55 +30,55 @@ impl ToFile for GamepadAxis {
                 (GamepadBrand::Generic, GamepadAxis::RightZ) => Some(&[generic::stem_words::_trigger]),
                 (GamepadBrand::Generic, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickX) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftStickY) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::LeftZ) => Some(&[gamecube::stem_words::_l, gamecube::stem_words::_trigger]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickX) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightStickY) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::RightZ) => Some(&[gamecube::stem_words::_r, gamecube::stem_words::_trigger]),
-                (GamepadBrand::NintendoGamecube, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::Gamecube, GamepadAxis::LeftStickX) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
+                (GamepadBrand::Gamecube, GamepadAxis::LeftStickY) => Some(&[gamecube::stem_words::_grip, gamecube::stem_words::_stick]),
+                (GamepadBrand::Gamecube, GamepadAxis::LeftZ) => Some(&[gamecube::stem_words::_l, gamecube::stem_words::_trigger]),
+                (GamepadBrand::Gamecube, GamepadAxis::RightStickX) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
+                (GamepadBrand::Gamecube, GamepadAxis::RightStickY) => Some(&[gamecube::stem_words::_c, gamecube::stem_words::_stick]),
+                (GamepadBrand::Gamecube, GamepadAxis::RightZ) => Some(&[gamecube::stem_words::_r, gamecube::stem_words::_trigger]),
+                (GamepadBrand::Gamecube, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::NintendoSwitch, GamepadAxis::LeftStickX) => Some(&[switch::stem_words::_l, switch::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::LeftStickY) => Some(&[switch::stem_words::_l, switch::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::LeftZ) => Some(&[switch::stem_words::_zl]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::RightStickX) => Some(&[switch::stem_words::_r, switch::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::RightStickY) => Some(&[switch::stem_words::_r, switch::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::RightZ) => Some(&[switch::stem_words::_zr]),
-                (GamepadBrand::NintendoSwitch, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::Switch, GamepadAxis::LeftStickX) => Some(&[switch::stem_words::_l, switch::stem_words::_stick]),
+                (GamepadBrand::Switch, GamepadAxis::LeftStickY) => Some(&[switch::stem_words::_l, switch::stem_words::_stick]),
+                (GamepadBrand::Switch, GamepadAxis::LeftZ) => Some(&[switch::stem_words::_zl]),
+                (GamepadBrand::Switch, GamepadAxis::RightStickX) => Some(&[switch::stem_words::_r, switch::stem_words::_stick]),
+                (GamepadBrand::Switch, GamepadAxis::RightStickY) => Some(&[switch::stem_words::_r, switch::stem_words::_stick]),
+                (GamepadBrand::Switch, GamepadAxis::RightZ) => Some(&[switch::stem_words::_zr]),
+                (GamepadBrand::Switch, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::LeftStickX) => Some(&[switch2::stem_words::_l, switch2::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::LeftStickY) => Some(&[switch2::stem_words::_l, switch2::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::LeftZ) => Some(&[switch2::stem_words::_zl]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::RightStickX) => Some(&[switch2::stem_words::_r, switch2::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::RightStickY) => Some(&[switch2::stem_words::_r, switch2::stem_words::_stick]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::RightZ) => Some(&[switch2::stem_words::_zr]),
-                (GamepadBrand::NintendoSwitch2, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::Switch2, GamepadAxis::LeftStickX) => Some(&[switch2::stem_words::_l, switch2::stem_words::_stick]),
+                (GamepadBrand::Switch2, GamepadAxis::LeftStickY) => Some(&[switch2::stem_words::_l, switch2::stem_words::_stick]),
+                (GamepadBrand::Switch2, GamepadAxis::LeftZ) => Some(&[switch2::stem_words::_zl]),
+                (GamepadBrand::Switch2, GamepadAxis::RightStickX) => Some(&[switch2::stem_words::_r, switch2::stem_words::_stick]),
+                (GamepadBrand::Switch2, GamepadAxis::RightStickY) => Some(&[switch2::stem_words::_r, switch2::stem_words::_stick]),
+                (GamepadBrand::Switch2, GamepadAxis::RightZ) => Some(&[switch2::stem_words::_zr]),
+                (GamepadBrand::Switch2, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::NintendoWii, GamepadAxis::LeftStickX) => Some(&[wii::stem_words::_l, wii::stem_words::_stick]),
-                (GamepadBrand::NintendoWii, GamepadAxis::LeftStickY) => Some(&[wii::stem_words::_l, wii::stem_words::_stick]),
-                (GamepadBrand::NintendoWii, GamepadAxis::LeftZ) => Some(&[wii::stem_words::_zl]),
-                (GamepadBrand::NintendoWii, GamepadAxis::RightStickX) => Some(&[wii::stem_words::_r, wii::stem_words::_stick]),
-                (GamepadBrand::NintendoWii, GamepadAxis::RightStickY) => Some(&[wii::stem_words::_r, wii::stem_words::_stick]),
-                (GamepadBrand::NintendoWii, GamepadAxis::RightZ) => Some(&[wii::stem_words::_zr]),
-                (GamepadBrand::NintendoWii, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::Wii, GamepadAxis::LeftStickX) => Some(&[wii::stem_words::_l, wii::stem_words::_stick]),
+                (GamepadBrand::Wii, GamepadAxis::LeftStickY) => Some(&[wii::stem_words::_l, wii::stem_words::_stick]),
+                (GamepadBrand::Wii, GamepadAxis::LeftZ) => Some(&[wii::stem_words::_zl]),
+                (GamepadBrand::Wii, GamepadAxis::RightStickX) => Some(&[wii::stem_words::_r, wii::stem_words::_stick]),
+                (GamepadBrand::Wii, GamepadAxis::RightStickY) => Some(&[wii::stem_words::_r, wii::stem_words::_stick]),
+                (GamepadBrand::Wii, GamepadAxis::RightZ) => Some(&[wii::stem_words::_zr]),
+                (GamepadBrand::Wii, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::NintendoWiiU, GamepadAxis::LeftStickX) => Some(&[wiiu::stem_words::_l, wiiu::stem_words::_stick]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::LeftStickY) => Some(&[wiiu::stem_words::_l, wiiu::stem_words::_stick]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::LeftZ) => Some(&[wiiu::stem_words::_zl]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::RightStickX) => Some(&[wiiu::stem_words::_r, wiiu::stem_words::_stick]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::RightStickY) => Some(&[wiiu::stem_words::_r, wiiu::stem_words::_stick]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::RightZ) => Some(&[wiiu::stem_words::_zr]),
-                (GamepadBrand::NintendoWiiU, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::WiiU, GamepadAxis::LeftStickX) => Some(&[wiiu::stem_words::_l, wiiu::stem_words::_stick]),
+                (GamepadBrand::WiiU, GamepadAxis::LeftStickY) => Some(&[wiiu::stem_words::_l, wiiu::stem_words::_stick]),
+                (GamepadBrand::WiiU, GamepadAxis::LeftZ) => Some(&[wiiu::stem_words::_zl]),
+                (GamepadBrand::WiiU, GamepadAxis::RightStickX) => Some(&[wiiu::stem_words::_r, wiiu::stem_words::_stick]),
+                (GamepadBrand::WiiU, GamepadAxis::RightStickY) => Some(&[wiiu::stem_words::_r, wiiu::stem_words::_stick]),
+                (GamepadBrand::WiiU, GamepadAxis::RightZ) => Some(&[wiiu::stem_words::_zr]),
+                (GamepadBrand::WiiU, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::PlayStationSeries, GamepadAxis::LeftStickX) => Some(&[ps::stem_words::_l, ps::stem_words::_stick]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::LeftStickY) => Some(&[ps::stem_words::_l, ps::stem_words::_stick]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::LeftZ) => Some(&[ps::stem_words::_l2]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::RightStickX) => Some(&[ps::stem_words::_r    , ps::stem_words::_stick]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::RightStickY) => Some(&[ps::stem_words::_r, ps::stem_words::_stick]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::RightZ) => Some(&[ps::stem_words::_r2]),
-                (GamepadBrand::PlayStationSeries, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::LeftStickX) => Some(&[ps::stem_words::_l, ps::stem_words::_stick]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::LeftStickY) => Some(&[ps::stem_words::_l, ps::stem_words::_stick]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::LeftZ) => Some(&[ps::stem_words::_l2]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::RightStickX) => Some(&[ps::stem_words::_r    , ps::stem_words::_stick]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::RightStickY) => Some(&[ps::stem_words::_r, ps::stem_words::_stick]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::RightZ) => Some(&[ps::stem_words::_r2]),
+                (GamepadBrand::PS3 | GamepadBrand::PS4 | GamepadBrand::PS5, GamepadAxis::Other(_)) => None,
                 
-                // TODO:
+                // TODO: the spinny thing on the playdate probably is mapped to some Other
                 (GamepadBrand::Playdate, GamepadAxis::LeftStickX) => None,
                 (GamepadBrand::Playdate, GamepadAxis::LeftStickY) => None,
                 (GamepadBrand::Playdate, GamepadAxis::LeftZ) => None,
@@ -118,14 +103,19 @@ impl ToFile for GamepadAxis {
                 (GamepadBrand::SteamDeck, GamepadAxis::RightZ) => Some(&[steamdeck::stem_words::_r2]),
                 (GamepadBrand::SteamDeck, GamepadAxis::Other(_)) => None,
 
-                (GamepadBrand::XboxSeries, GamepadAxis::LeftStickX) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
-                (GamepadBrand::XboxSeries, GamepadAxis::LeftStickY) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
-                (GamepadBrand::XboxSeries, GamepadAxis::LeftZ) => Some(&[xbox::stem_words::_lt]),
-                (GamepadBrand::XboxSeries, GamepadAxis::RightStickX) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
-                (GamepadBrand::XboxSeries, GamepadAxis::RightStickY) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
-                (GamepadBrand::XboxSeries, GamepadAxis::RightZ) => Some(&[xbox::stem_words::_rt]),
-                (GamepadBrand::XboxSeries, GamepadAxis::Other(_)) => None,
+                (GamepadBrand::Xbox, GamepadAxis::LeftStickX) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
+                (GamepadBrand::Xbox, GamepadAxis::LeftStickY) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
+                (GamepadBrand::Xbox, GamepadAxis::LeftZ) => Some(&[xbox::stem_words::_lt]),
+                (GamepadBrand::Xbox, GamepadAxis::RightStickX) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
+                (GamepadBrand::Xbox, GamepadAxis::RightStickY) => Some(&[xbox::stem_words::_l, xbox::stem_words::_stick]),
+                (GamepadBrand::Xbox, GamepadAxis::RightZ) => Some(&[xbox::stem_words::_rt]),
+                (GamepadBrand::Xbox, GamepadAxis::Other(_)) => None,
             },
+            #[cfg(feature = "use_xelu_free_controller_key_prompts")]
+            #[rustfmt::skip]
+            Pack::Xelu => match (gamepad_brand, self) {
+                _ => todo!(),
+            }
         }
     }
 }

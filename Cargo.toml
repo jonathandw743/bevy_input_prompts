@@ -16,6 +16,9 @@ kenney_input_prompts = { path = "../kenney_input_prompts", features = [
     "use_tokenize_dir",
 ], optional = true }
 tokenize_dir = { path = "../tokenize_dir" }
+xelu_free_controller_key_prompts = { path = "../xelu_free_controller_key_prompts", features = [
+    "use_tokenize_dir",
+], optional = true }
 
 [dev-dependencies]
 bevy = "0.16.0"
@@ -23,3 +26,4 @@ bevy = "0.16.0"
 [features]
 default = ["use_kenney_input_prompts"]
 use_kenney_input_prompts = ["kenney_input_prompts"]
+use_xelu_free_controller_key_prompts = ["xelu_free_controller_key_prompts"]

@@ -733,6 +733,7 @@ dependencies = [
  "fs_extra",
  "kenney_input_prompts",
  "tokenize_dir",
+ "xelu_free_controller_key_prompts",
 ]
 
 [[package]]
@@ -4988,6 +4989,14 @@ name = "x11rb-protocol"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec107c4503ea0b4a98ef47356329af139c0a4f7750e621cf2973cd3385ebcb3d"
+
+[[package]]
+name = "xelu_free_controller_key_prompts"
+version = "1.0.0"
+dependencies = [
+ "fs_extra",
+ "tokenize_dir",
+]
 
 [[package]]
 name = "xkbcommon-dl"

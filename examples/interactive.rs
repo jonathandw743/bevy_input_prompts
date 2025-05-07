@@ -1,7 +1,7 @@
 use bevy::{math::vec3, prelude::*};
 use bevy_input::keyboard::{Key, KeyboardInput};
 use bevy_input_prompts::{
-    copy_assets, gamepad_button::GamepadBrand, kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw}, Pack, ToFile, ToFileDefault
+    copy_assets, gamepad_brand::GamepadBrand, kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw}, Pack, ToFile, ToFileDefault
 };
 
 fn main() {
@@ -139,7 +139,7 @@ fn update_kenney_controller(
         if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
             println!("{:?}", gamepad_button);
             if let Some(path) =
-                gamepad_button.file_path(Pack::Kenney, GamepadBrand::XboxSeries, &[])
+                gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[])
             {
                 for mut sprite in &mut kenney_controller {
                     sprite.image = asset_server.load(&path);
@@ -153,14 +153,17 @@ fn update_kenney_controller(
 
 fn update_kenney_controller_color(
     mut kenney_controller: Query<&mut Sprite, With<KenneyControllerColor>>,
-    gamepad: Option<Single<&Gamepad>>,
+    gamepad: Option<Single<(Entity, &Gamepad)>>,
     asset_server: Res<AssetServer>,
 ) {
     if let Some(gamepad) = gamepad {
-        if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
+        // dbg!(gamepad.1.);
+        dbg!(gamepad.1.vendor_id(),
+        gamepad.1.product_id());
+        if let Some(&gamepad_button) = gamepad.1.get_just_pressed().next() {
             println!("{:?}", gamepad_button);
             if let Some(path) =
-                gamepad_button.file_path(Pack::Kenney, GamepadBrand::XboxSeries, &[xboxsw::_color])
+                gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[xboxsw::_color])
             {
                 for mut sprite in &mut kenney_controller {
                     sprite.image = asset_server.load(&path);
