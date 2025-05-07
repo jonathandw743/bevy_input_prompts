@@ -19,7 +19,7 @@ pub enum GamepadBrand {
 
 impl GamepadBrand {
     pub fn from_gamepad(gamepad: &Gamepad) -> Option<Self> {
-        // TODO: test these??? idk
+        // TODO: test these??? idk i got these from processing https://github.com/mdqinc/SDL_GameControllerDB
         match (gamepad.vendor_id(), gamepad.product_id()) {
             (Some(0x2dc8), Some(0x286a)) => Some(Self::Gamecube),
             (Some(0x2dc8), Some(0x2101)) => Some(Self::Xbox),

@@ -1,3 +1,7 @@
+#![no_std]
+extern crate alloc;
+use alloc::{format, string::String};
+
 use fs_extra::error::Error;
 
 pub mod gamepad_brand;
@@ -24,13 +28,17 @@ pub enum Pack {
 
 pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<String> {
     let file_index = *files.file_indices().get(0)?;
-    Some(format!("bevy_input_prompts/{}", match pack {
-        #[cfg(feature = "use_kenney_input_prompts")]
-        Pack::Kenney => kenney_input_prompts::tokenize_dir::FILE_PATHS.get(file_index)?,
+    Some(format!(
+        "bevy_input_prompts/{}",
+        match pack {
+            #[cfg(feature = "use_kenney_input_prompts")]
+            Pack::Kenney => kenney_input_prompts::tokenize_dir::FILE_PATHS.get(file_index)?,
 
-        #[cfg(feature = "use_xelu_free_controller_key_prompts")]
-        Pack::Xelu => xelu_free_controller_key_prompts::tokenize_dir::FILE_PATHS.get(file_index)?,
-    }))
+            #[cfg(feature = "use_xelu_free_controller_key_prompts")]
+            Pack::Xelu =>
+                xelu_free_controller_key_prompts::tokenize_dir::FILE_PATHS.get(file_index)?,
+        }
+    ))
 }
 
 pub fn copy_assets() -> Result<(), Error> {
