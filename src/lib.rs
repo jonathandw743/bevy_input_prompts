@@ -1,7 +1,5 @@
 use fs_extra::error::Error;
 
-pub mod product_ids;
-pub mod vendor_ids;
 pub mod gamepad_brand;
 
 pub mod char;
@@ -59,19 +57,9 @@ pub trait ToFile {
 }
 
 pub trait ToFileDefault {
-    fn file_indices_default<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]>;
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]>;
 
-    fn file_path_default(&self, pack: Pack, extra_constraints: &[&[usize]]) -> Option<String> {
-        first_file_path(pack, [self.file_indices_default(pack)?, extra_constraints])
-    }
-}
-
-impl<T> ToFileDefault for T
-where
-    T: ToFile,
-    <T as ToFile>::Options: Default,
-{
-    fn file_indices_default<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
-        self.file_indices(pack, Default::default())
+    fn file_path(&self, pack: Pack, extra_constraints: &[&[usize]]) -> Option<String> {
+        first_file_path(pack, [self.file_indices(pack)?, extra_constraints])
     }
 }

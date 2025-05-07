@@ -1,19 +1,17 @@
-use crate::{Pack, ToFile};
+use crate::{Pack, ToFileDefault};
 use bevy_input::keyboard::KeyboardInput;
 
-impl ToFile for KeyboardInput {
-    type Options = ();
-
-    fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
+impl ToFileDefault for KeyboardInput {
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         // TODO: consider which of these should have priority
-        if let Some(file_indices) = self.logical_key.file_indices(pack, ()) {
+        if let Some(file_indices) = self.logical_key.file_indices(pack) {
             return Some(file_indices);
         }
-        if let Some(file_indices) = self.key_code.file_indices(pack, ()) {
+        if let Some(file_indices) = self.key_code.file_indices(pack) {
             return Some(file_indices);
         }
         if let Some(text) = &self.text {
-            if let Some(file_indices) = text.as_str().file_indices(pack, ()) {
+            if let Some(file_indices) = text.as_str().file_indices(pack) {
                 return Some(file_indices);
             }
         }

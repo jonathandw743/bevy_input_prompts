@@ -3,22 +3,18 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 #[cfg(feature = "use_xelu_free_controller_key_prompts")]
 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::_Keyboard___Mouse::stem_words as xelu;
 
-use crate::{Pack, ToFile};
+use crate::{Pack, ToFileDefault};
 
-impl ToFile for &str {
-    type Options = ();
-
-    fn file_indices<'a, 'b>(&self, pack: Pack, extra: ()) -> Option<&'a [&'b [usize]]> {
+impl ToFileDefault for &str {
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         // TODO: there might be some packs that contain prompts that correspond to many characters
         // TODO: in that case, this method should have actual behaviour
-        Some(self.chars().next()?.file_indices(pack, extra)?)
+        Some(self.chars().next()?.file_indices(pack)?)
     }
 }
 
-impl ToFile for char {
-    type Options = ();
-
-    fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
+impl ToFileDefault for char {
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         // TODO: more characters
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]

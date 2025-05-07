@@ -4,16 +4,14 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 #[cfg(feature = "use_xelu_free_controller_key_prompts")]
 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::_Keyboard___Mouse::stem_words as xelu;
 
-use crate::{Pack, ToFile};
+use crate::{Pack, ToFileDefault};
 
-impl ToFile for Key {
-    type Options = ();
-
-    fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
+impl ToFileDefault for Key {
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             Pack::Kenney => match self {
-                Key::Character(smol_str) => smol_str.as_str().file_indices(pack, ()),
+                Key::Character(smol_str) => smol_str.as_str().file_indices(pack),
                 Key::Unidentified(_native_key) => None,
                 Key::Dead(_) => None,
                 // TODO: implement this
@@ -328,7 +326,7 @@ impl ToFile for Key {
 
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
             Pack::Xelu => match self {
-                Key::Character(smol_str) => smol_str.as_str().file_indices(pack, ()),
+                Key::Character(smol_str) => smol_str.as_str().file_indices(pack),
                 Key::Unidentified(_native_key) => None,
                 Key::Dead(_) => None,
                 // TODO: implement this

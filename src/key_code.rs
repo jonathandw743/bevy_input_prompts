@@ -4,12 +4,10 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 #[cfg(feature = "use_xelu_free_controller_key_prompts")]
 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::_Keyboard___Mouse::stem_words as xelu;
 
-use crate::{Pack, ToFile};
+use crate::{Pack, ToFileDefault};
 
-impl ToFile for KeyCode {
-    type Options = ();
-
-    fn file_indices<'a, 'b>(&self, pack: Pack, _: ()) -> Option<&'a [&'b [usize]]> {
+impl ToFileDefault for KeyCode {
+    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             #[rustfmt::skip]

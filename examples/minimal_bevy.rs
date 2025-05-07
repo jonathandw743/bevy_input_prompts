@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_input_prompts::{Pack, key_code::key_code_file_path};
+use bevy_input_prompts::{Pack, ToFileDefault};
 
 fn main() {
     App::new()
@@ -12,7 +12,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands.spawn(Sprite {
         image: asset_server
-            .load(key_code_file_path(Pack::Kenney, KeyCode::ArrowLeft, &[]).unwrap()),
+            .load(KeyCode::ArrowLeft.file_path(Pack::Kenney, &[]).unwrap()),
         ..default()
     });
 }

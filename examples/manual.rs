@@ -1,20 +1,17 @@
 use bevy_input::keyboard::KeyCode;
-use bevy_input_prompts::first_file_path;
+use bevy_input_prompts::{first_file_path, Pack, ToFileDefault};
 use bevy_input_prompts::kenney_tokenize::_Keyboard___Mouse::stem_words;
-use bevy_input_prompts::key_code::key_code_file_indices;
-use bevy_input_prompts::{Pack, key_code::key_code_file_path};
 use kenney_input_prompts::tokenize_dir::FILE_PATHS;
 use tokenize_dir::{ToIter, file_indices};
 
 fn main() {
     // the main way you should use this crate
     // no extra constraints
-    dbg!(key_code_file_path(Pack::Kenney, KeyCode::Tab, &[],).unwrap());
+    dbg!(KeyCode::Tab.file_path(Pack::Kenney, &[]).unwrap());
     // extra constraints
     dbg!(
-        key_code_file_path(
+        KeyCode::Tab.file_path(
             Pack::Kenney,
-            KeyCode::Tab,
             &[
                 stem_words::_outline,
                 stem_words::_alternative,
@@ -29,7 +26,7 @@ fn main() {
     dbg!(
         first_file_path(
             Pack::Kenney,
-            key_code_file_indices(Pack::Kenney, KeyCode::Tab).unwrap()
+            KeyCode::Tab.file_indices(Pack::Kenney).unwrap()
         )
         .unwrap()
     );
@@ -39,7 +36,7 @@ fn main() {
             Pack::Kenney,
             [
                 // this is nothing special, its just a collection of constrains (see below)
-                key_code_file_indices(Pack::Kenney, KeyCode::Tab).unwrap(),
+                KeyCode::Tab.file_indices(Pack::Kenney).unwrap(),
                 &[
                     stem_words::_outline,
                     stem_words::_alternative,
@@ -63,7 +60,7 @@ fn main() {
                     stem_words::_icon,
                 ],
                 // this is nothing special, its just a collection of constrains (see below)
-                key_code_file_indices(Pack::Kenney, KeyCode::Tab).unwrap()
+                KeyCode::Tab.file_indices(Pack::Kenney).unwrap()
             ]
         )
         .unwrap()
