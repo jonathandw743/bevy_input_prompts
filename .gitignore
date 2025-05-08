@@ -8,3 +8,4 @@ flamegraph.svg
 /assets
 perf.data
 perf.data.old
+/asset_gen
