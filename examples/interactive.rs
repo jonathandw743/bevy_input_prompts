@@ -1,6 +1,6 @@
 use bevy::{math::vec3, prelude::*};
 use bevy_input_prompts::{
-    CopyAssetsError, Pack, ToFile, ToFileDefault, copy_assets,
+    CopyAssetsError, Pack, FileIndices, ToFileDefault, copy_assets,
     gamepad_brand::GamepadBrand,
     kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw},
 };

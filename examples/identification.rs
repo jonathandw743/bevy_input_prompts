@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_input_prompts::{
-    CopyAssetsError, Pack, ToFile, copy_assets,
+    CopyAssetsError, Pack, FileIndices, copy_assets,
     gamepad_brand::GamepadBrand,
     kenney_tokenize::_Xbox_Series::{_Double, stem_words::_color},
 };

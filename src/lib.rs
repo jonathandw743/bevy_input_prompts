@@ -49,25 +49,15 @@ pub fn copy_assets() -> Result<(), CopyAssetsError> {
     Ok(())
 }
 
-pub trait ToFile {
-    type Options;
+pub trait FileIndices {
+    type Constraints<'c>: tokenize_dir::ToIter;
+    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>>;
 
-    fn file_indices<'a, 'b>(&self, pack: Pack, extra: Self::Options) -> Option<&'a [&'b [usize]]>;
-
-    fn file_path(
+    fn file_path<'c>(
         &self,
         pack: Pack,
-        options: Self::Options,
-        extra_contraints: &[&[usize]],
+        extra_contraints: Self::Constraints<'c>,
     ) -> Option<String> {
-        first_file_path(pack, [self.file_indices(pack, options)?, extra_contraints])
-    }
-}
-
-pub trait ToFileDefault {
-    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]>;
-
-    fn file_path(&self, pack: Pack, extra_constraints: &[&[usize]]) -> Option<String> {
-        first_file_path(pack, [self.file_indices(pack)?, extra_constraints])
+        first_file_path(pack, [self.file_indices(pack)?, extra_contraints])
     }
 }

@@ -1,11 +1,9 @@
-#[cfg(feature = "use_kenney_input_prompts")]
-use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse::stem_words as kenney;
 #[cfg(feature = "use_xelu_free_controller_key_prompts")]
 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::_Keyboard___Mouse::stem_words as xelu;
 
-use crate::{Pack, ToFileDefault};
+use crate::{Pack, FileIndices};
 
-impl ToFileDefault for &str {
+impl FileIndices for &str {
     fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         // TODO: there might be some packs that contain prompts that correspond to many characters
         // TODO: in that case, this method should have actual behaviour
@@ -13,79 +11,79 @@ impl ToFileDefault for &str {
     }
 }
 
-impl ToFileDefault for char {
+impl FileIndices for char {
     fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
         // TODO: more characters
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
-            Pack::Kenney => match self {
-                'a' | 'A' => Some(&[kenney::_a]),
-                'b' | 'B' => Some(&[kenney::_b]),
-                'c' | 'C' => Some(&[kenney::_c]),
-                'd' | 'D' => Some(&[kenney::_d]),
-                'e' | 'E' => Some(&[kenney::_e]),
-                'f' | 'F' => Some(&[kenney::_f]),
-                'g' | 'G' => Some(&[kenney::_g]),
-                'h' | 'H' => Some(&[kenney::_h]),
-                'i' | 'I' => Some(&[kenney::_i]),
-                'j' | 'J' => Some(&[kenney::_j]),
-                'k' | 'K' => Some(&[kenney::_k]),
-                'l' | 'L' => Some(&[kenney::_l]),
-                'm' | 'M' => Some(&[kenney::_m]),
-                'n' | 'N' => Some(&[kenney::_n]),
-                'o' | 'O' => Some(&[kenney::_o]),
-                'p' | 'P' => Some(&[kenney::_p]),
-                'q' | 'Q' => Some(&[kenney::_q]),
-                'r' | 'R' => Some(&[kenney::_r]),
-                's' | 'S' => Some(&[kenney::_s]),
-                't' | 'T' => Some(&[kenney::_t]),
-                'u' | 'U' => Some(&[kenney::_u]),
-                'v' | 'V' => Some(&[kenney::_v]),
-                'w' | 'W' => Some(&[kenney::_w]),
-                'x' | 'X' => Some(&[kenney::_x]),
-                'y' | 'Y' => Some(&[kenney::_y]),
-                'z' | 'Z' => Some(&[kenney::_z]),
-
-                ' ' => Some(&[kenney::_space]),
-                '\n' | '\r' => Some(&[kenney::_enter]),
-                '\t' => Some(&[kenney::_tab]),
-                '\u{8}' => Some(&[kenney::_backspace]),
-                '\'' => Some(&[kenney::_apostrophe]),
-                '<' => Some(&[kenney::_less, kenney::_bracket]),
-                '>' => Some(&[kenney::_greater, kenney::_bracket]),
-                '~' => Some(&[kenney::_tilde]),
-                '/' => Some(&[kenney::_slash]),
-                '?' => Some(&[kenney::_question]),
-                '[' => Some(&[kenney::_open, kenney::_bracket]),
-                ']' => Some(&[kenney::_close, kenney::_bracket]),
-                ',' => Some(&[kenney::_comma]),
-                '.' => Some(&[kenney::_period]),
-                ';' => Some(&[kenney::_semicolon]),
-                ':' => Some(&[kenney::_colon]),
-                '+' => Some(&[kenney::_plus]),
-                '=' => Some(&[kenney::_equals]),
-                '-' => Some(&[kenney::_minus]),
-
-                // not doing 3 = £, 4 = $, 5 = % etc because this depends on locale and
-                // and keyboard_input will check the keycode after this as a fallback
-                // which gives some default maybe US locale
-                '1' => Some(&[kenney::_1]),
-                '!' => Some(&[kenney::_exclamation]),
-                '2' => Some(&[kenney::_2]),
-                '"' => Some(&[kenney::_quote]),
-                '3' => Some(&[kenney::_3]),
-                '4' => Some(&[kenney::_4]),
-                '5' => Some(&[kenney::_5]),
-                '6' => Some(&[kenney::_6]),
-                '^' => Some(&[kenney::_caret]),
-                '7' => Some(&[kenney::_7]),
-                '8' => Some(&[kenney::_8]),
-                '*' => Some(&[kenney::_asterisk]),
-                '9' => Some(&[kenney::_9]),
-                '0' => Some(&[kenney::_0]),
-                _ => None,
-            },
-
+            Pack::Kenney => {
+                use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse::stem_words::*;
+                match self {
+                    'a' | 'A' => Some(&[_a]),
+                    'b' | 'B' => Some(&[_b]),
+                    'c' | 'C' => Some(&[_c]),
+                    'd' | 'D' => Some(&[_d]),
+                    'e' | 'E' => Some(&[_e]),
+                    'f' | 'F' => Some(&[_f]),
+                    'g' | 'G' => Some(&[_g]),
+                    'h' | 'H' => Some(&[_h]),
+                    'i' | 'I' => Some(&[_i]),
+                    'j' | 'J' => Some(&[_j]),
+                    'k' | 'K' => Some(&[_k]),
+                    'l' | 'L' => Some(&[_l]),
+                    'm' | 'M' => Some(&[_m]),
+                    'n' | 'N' => Some(&[_n]),
+                    'o' | 'O' => Some(&[_o]),
+                    'p' | 'P' => Some(&[_p]),
+                    'q' | 'Q' => Some(&[_q]),
+                    'r' | 'R' => Some(&[_r]),
+                    's' | 'S' => Some(&[_s]),
+                    't' | 'T' => Some(&[_t]),
+                    'u' | 'U' => Some(&[_u]),
+                    'v' | 'V' => Some(&[_v]),
+                    'w' | 'W' => Some(&[_w]),
+                    'x' | 'X' => Some(&[_x]),
+                    'y' | 'Y' => Some(&[_y]),
+                    'z' | 'Z' => Some(&[_z]),
+                    ' ' => Some(&[_space]),
+                    '\n' | '\r' => Some(&[_enter]),
+                    '\t' => Some(&[_tab]),
+                    '\u{8}' => Some(&[_backspace]),
+                    '\'' => Some(&[_apostrophe]),
+                    '<' => Some(&[_less, _bracket]),
+                    '>' => Some(&[_greater, _bracket]),
+                    '~' => Some(&[_tilde]),
+                    '/' => Some(&[_slash]),
+                    '?' => Some(&[_question]),
+                    '[' => Some(&[_open, _bracket]),
+                    ']' => Some(&[_close, _bracket]),
+                    ',' => Some(&[_comma]),
+                    '.' => Some(&[_period]),
+                    ';' => Some(&[_semicolon]),
+                    ':' => Some(&[_colon]),
+                    '+' => Some(&[_plus]),
+                    '=' => Some(&[_equals]),
+                    '-' => Some(&[_minus]),
+                    // not doing 3 = £, 4 = $, 5 = % etc because this depends on locale and
+                    // and keyboard_input will check the keycode after this as a fallback
+                    // which gives some default maybe US locale
+                    '1' => Some(&[_1]),
+                    '!' => Some(&[_exclamation]),
+                    '2' => Some(&[_2]),
+                    '"' => Some(&[_quote]),
+                    '3' => Some(&[_3]),
+                    '4' => Some(&[_4]),
+                    '5' => Some(&[_5]),
+                    '6' => Some(&[_6]),
+                    '^' => Some(&[_caret]),
+                    '7' => Some(&[_7]),
+                    '8' => Some(&[_8]),
+                    '*' => Some(&[_asterisk]),
+                    '9' => Some(&[_9]),
+                    '0' => Some(&[_0]),
+                    _ => None,
+                }
+            }
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
             Pack::Xelu => match self {
                 'a' | 'A' => Some(&[xelu::_A]),
@@ -114,7 +112,6 @@ impl ToFileDefault for char {
                 'x' | 'X' => Some(&[xelu::_X]),
                 'y' | 'Y' => Some(&[xelu::_Y]),
                 'z' | 'Z' => Some(&[xelu::_Z]),
-
                 ' ' => Some(&[xelu::_Space]),
                 '\n' | '\r' => Some(&[xelu::_Enter]),
                 '\t' => Some(&[xelu::_Tab]),
@@ -134,7 +131,6 @@ impl ToFileDefault for char {
                 '+' => Some(&[xelu::_Plus]),
                 '=' => None,
                 '-' => Some(&[xelu::_Minus]),
-
                 '1' => Some(&[xelu::_1]),
                 '2' => Some(&[xelu::_2]),
                 '"' => Some(&[xelu::_Quote]),

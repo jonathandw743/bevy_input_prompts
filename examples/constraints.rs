@@ -1,12 +1,12 @@
 use bevy_input::keyboard::KeyCode;
 use bevy_input_prompts::kenney_tokenize::_Keyboard___Mouse::stem_words;
-use bevy_input_prompts::{Pack, ToFileDefault};
+use bevy_input_prompts::{FilePath, Pack, ToFileDefault};
 
 fn main() {
     let no_extra_contraints = KeyCode::Tab.file_path(Pack::Kenney, &[]).unwrap();
     dbg!(no_extra_contraints);
 
-    let with_extra_contraints = KeyCode::Tab
+    let with_extra_contraints = (KeyCode::Tab,)
         .file_path(
             Pack::Kenney,
             &[
