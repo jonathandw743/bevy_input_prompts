@@ -88,7 +88,6 @@ impl ToFileDefault for char {
 
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
             Pack::Xelu => match self {
-                // TODO: more characters
                 'a' | 'A' => Some(&[xelu::_A]),
                 'b' | 'B' => Some(&[xelu::_B]),
                 'c' | 'C' => Some(&[xelu::_C]),
