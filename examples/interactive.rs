@@ -1,13 +1,13 @@
 use bevy::{math::vec3, prelude::*};
 use bevy_input_prompts::{
-    Pack, ToFile, ToFileDefault, copy_assets,
+    CopyAssetsError, Pack, ToFile, ToFileDefault, copy_assets,
     gamepad_brand::GamepadBrand,
     kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw},
 };
 
-fn main() {
+fn main() -> Result<(), CopyAssetsError> {
     // DO NOT DO THIS, PUT THIS IS build.rs, THIS IS FOR THE EXAMPLE ONLY
-    let _ = copy_assets();
+    copy_assets()?;
 
     App::new()
         .add_plugins(DefaultPlugins)
@@ -23,6 +23,8 @@ fn main() {
             ),
         )
         .run();
+
+    Ok(())
 }
 
 #[derive(Component)]

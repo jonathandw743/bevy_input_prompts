@@ -2,7 +2,7 @@
 extern crate alloc;
 use alloc::{format, string::String};
 
-use fs_extra::error::Error;
+pub use fs_extra::error::Error as CopyAssetsError;
 
 pub mod gamepad_brand;
 
@@ -41,7 +41,7 @@ pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<
     ))
 }
 
-pub fn copy_assets() -> Result<(), Error> {
+pub fn copy_assets() -> Result<(), CopyAssetsError> {
     #[cfg(feature = "use_kenney_input_prompts")]
     kenney_input_prompts::copy_assets("assets/bevy_input_prompts")?;
     #[cfg(feature = "use_xelu_free_controller_key_prompts")]
