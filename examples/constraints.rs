@@ -4,7 +4,7 @@ use bevy_input_prompts::{Pack, ToFileDefault};
 
 fn main() {
     let no_extra_contraints = KeyCode::Tab.file_path(Pack::Kenney, &[]).unwrap();
-    println!("{}", no_extra_contraints);
+    dbg!(no_extra_contraints);
 
     let with_extra_contraints = KeyCode::Tab
         .file_path(
@@ -16,7 +16,7 @@ fn main() {
             ],
         )
         .unwrap();
-    println!("{}", with_extra_contraints);
+    dbg!(with_extra_contraints);
 
     // if extra constraints are applied, they will only be applied if they can be fulfilled
     // for example if there are no "A" prompts with "alternative"
@@ -31,5 +31,5 @@ fn main() {
             &[stem_words::_alternative, stem_words::_outline],
         )
         .unwrap();
-    println!("{}", a);
+    dbg!(a);
 }

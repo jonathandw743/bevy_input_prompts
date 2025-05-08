@@ -72,64 +72,46 @@ fn update_kenney_keyboard_default(
     key_code_input: Option<Res<ButtonInput<KeyCode>>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(key_code_input) = key_code_input {
-        if let Some(&key_code) = key_code_input.get_just_pressed().next() {
-            println!("{:?}", key_code);
-            // specify that we want the prompts from the "Default" directory
-            if let Some(path) = key_code.file_path(Pack::Kenney, &[kbm::_Default::DIR]) {
-                for mut sprite in &mut kenney_keyboard {
-                    sprite.image = asset_server.load(&path);
-                }
-            } else {
-                warn!("no prompt found");
-            }
-        }
+    let Some(key_code_input) = key_code_input else {
+        return;
+    };
+    let Some(&key_code) = key_code_input.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", key_code);
+    // specify that we want the prompts from the "Default" directory
+    let Some(path) = key_code.file_path(Pack::Kenney, &[kbm::_Default::DIR]) else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_keyboard {
+        sprite.image = asset_server.load(&path);
     }
 }
-
-// fn update_kenney_keyboard_key(
-//     mut kenney_keyboard: Query<&mut Sprite, With<KenneyKeyboardDefault>>,
-//     mut keyboard_input: EventReader<KeyboardInput>,
-//     asset_server: Res<AssetServer>,
-// ) {
-//     for x in keyboard_input.read() {
-//         dbg!(x);
-//     }
-//     // if let Some(ki) = keyboard_input.read().next() {
-//     //     dbg!()
-//     //     // let lk = &ki.logical_key;
-//     //     // println!("{:?}", lk);
-//     //     // if let Some(path) = todo!() {
-//     //     // for mut sprite in &mut kenney_keyboard {
-//     //     //     sprite.image = asset_server.load(&path);
-//     //     // }
-//     //     // } else {
-//     //     //     warn!("no prompt found");
-//     //     // }
-//     // }
-// }
 
 fn update_kenney_keyboard_double_outline(
     mut kenney_keyboard: Query<&mut Sprite, With<KenneyKeyboardDoubleOutline>>,
     key_code_input: Option<Res<ButtonInput<KeyCode>>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(key_code_input) = key_code_input {
-        if let Some(&key_code) = key_code_input.get_just_pressed().next() {
-            println!("{:?}", key_code);
-            // specify that we want the prompts from the "Double" directory (which contains 2x resolution prompts)
-            // and that we want the outline prompt
-            if let Some(path) = key_code.file_path(
-                Pack::Kenney,
-                &[kbm::_Double::DIR, kbm::stem_words::_outline],
-            ) {
-                for mut sprite in &mut kenney_keyboard {
-                    sprite.image = asset_server.load(&path);
-                }
-            } else {
-                warn!("no prompt found");
-            }
-        }
+    let Some(key_code_input) = key_code_input else {
+        return;
+    };
+    let Some(&key_code) = key_code_input.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", key_code);
+    // specify that we want the prompts from the "Double" directory (which contains 2x resolution prompts)
+    // and that we want the outline prompt
+    let Some(path) = key_code.file_path(
+        Pack::Kenney,
+        &[kbm::_Double::DIR, kbm::stem_words::_outline],
+    ) else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_keyboard {
+        sprite.image = asset_server.load(&path);
     }
 }
 
@@ -138,17 +120,19 @@ fn update_kenney_controller(
     gamepad: Option<Single<&Gamepad>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(gamepad) = gamepad {
-        if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
-            println!("{:?}", gamepad_button);
-            if let Some(path) = gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[]) {
-                for mut sprite in &mut kenney_controller {
-                    sprite.image = asset_server.load(&path);
-                }
-            } else {
-                warn!("no prompt found");
-            }
-        }
+    let Some(gamepad) = gamepad else {
+        return;
+    };
+    let Some(&gamepad_button) = gamepad.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", gamepad_button);
+    let Some(path) = gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[]) else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_controller {
+        sprite.image = asset_server.load(&path);
     }
 }
 
@@ -157,20 +141,20 @@ fn update_kenney_controller_color(
     gamepad: Option<Single<(Entity, &Gamepad)>>,
     asset_server: Res<AssetServer>,
 ) {
-    if let Some(gamepad) = gamepad {
-        // dbg!(gamepad.1.);
-        dbg!(gamepad.1.vendor_id(), gamepad.1.product_id());
-        if let Some(&gamepad_button) = gamepad.1.get_just_pressed().next() {
-            println!("{:?}", gamepad_button);
-            if let Some(path) =
-                gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[xboxsw::_color])
-            {
-                for mut sprite in &mut kenney_controller {
-                    sprite.image = asset_server.load(&path);
-                }
-            } else {
-                warn!("no prompt found");
-            }
-        }
+    let Some(gamepad) = gamepad else {
+        return;
+    };
+    dbg!(gamepad.1.vendor_id(), gamepad.1.product_id());
+    let Some(&gamepad_button) = gamepad.1.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", gamepad_button);
+    let Some(path) = gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[xboxsw::_color])
+    else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_controller {
+        sprite.image = asset_server.load(&path);
     }
 }
