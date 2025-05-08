@@ -2,7 +2,8 @@ use crate::{Pack, FileIndices};
 use bevy_input::keyboard::KeyboardInput;
 
 impl FileIndices for KeyboardInput {
-    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
+    type Constraints<'c> = &'c [&'c [usize]];
+    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
         // TODO: consider which of these should have priority
         if let Some(file_indices) = self.logical_key.file_indices(pack) {
             return Some(file_indices);

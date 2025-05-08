@@ -6,7 +6,8 @@ use crate::{
 };
 
 impl FileIndices for (GamepadBrand, GamepadButton) {
-    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
+    type Constraints<'c> = &'c [&'c [usize]];
+    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             Pack::Kenney => {

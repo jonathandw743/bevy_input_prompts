@@ -4,7 +4,8 @@ use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Pr
 use crate::{Pack, FileIndices};
 
 impl FileIndices for &str {
-    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
+    type Constraints<'c> = <char as FileIndices>::Constraints<'c>;
+    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
         // TODO: there might be some packs that contain prompts that correspond to many characters
         // TODO: in that case, this method should have actual behaviour
         Some(self.chars().next()?.file_indices(pack)?)
@@ -12,7 +13,8 @@ impl FileIndices for &str {
 }
 
 impl FileIndices for char {
-    fn file_indices<'a, 'b>(&self, pack: Pack) -> Option<&'a [&'b [usize]]> {
+    type Constraints<'c> = &'c [&'c [usize]];
+    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
         // TODO: more characters
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
