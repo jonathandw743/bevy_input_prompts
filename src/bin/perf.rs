@@ -6,8 +6,6 @@ use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___M
 fn main() {
     use bevy_input_prompts::*;
 
-    let _ = Some([5, 6, 7]).unwrap_or_default();
-
     let d = Instant::now();
     let n = 10_000;
     for _ in 0..n {
@@ -21,5 +19,5 @@ fn main() {
         );
         let _x = KeyCode::Tab.file_path(Pack::Kenney);
     }
-    println!("time per file_index_safe call: {:?}", d.elapsed() / n);
+    println!("time per iteration call: {:?}", d.elapsed() / n);
 }
