@@ -1,10 +1,7 @@
 use Direction::*;
 use bevy_input::gamepad::GamepadAxis::{self, *};
 
-use crate::{
-    FileConstraints, Pack,
-    gamepad_brand::{GamepadBrand, XeluGamepadBrand},
-};
+use crate::{FileConstraints, Pack, gamepad_brand::GamepadBrand};
 
 #[derive(Clone, Copy)]
 pub enum Direction {
@@ -132,7 +129,7 @@ impl FileConstraints for (&GamepadAxis, GamepadBrand) {
             // TODO:
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
             Pack::Xelu => {
-                use crate::gamepad_brand::XeluGamepadBrand::*;
+                use crate::gamepad_brand::XeluGamepadBrand::{self, *};
                 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::{stem_words::*, *};
 
                 let gamepad_brand = XeluGamepadBrand::from(self.1);

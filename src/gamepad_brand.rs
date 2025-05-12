@@ -1,7 +1,6 @@
 use GamepadBrand::*;
 use bevy_input::gamepad::Gamepad;
 
-#[cfg(feature = "use_kenney_input_prompts")]
 /// One variant for each gamepad brand recognised by the kenney pack
 pub enum KenneyGamepadBrand {
     Generic,
@@ -54,7 +53,6 @@ impl From<GamepadBrand> for KenneyGamepadBrand {
     }
 }
 
-#[cfg(feature = "use_xelu_free_controller_key_prompts")]
 /// One variant for each gamepad brand recognised by the xelu pack
 pub enum XeluGamepadBrand {
     Switch,
