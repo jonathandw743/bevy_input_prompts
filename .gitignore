@@ -1,7 +1,11 @@
 /target
 /input_prompts
 known_gamepads.txt
-/assets
+/macro_expansion_temp
 flame-graph.html
 flame.json
 flamegraph.svg
+/assets
+perf.data
+perf.data.old
+/asset_gen

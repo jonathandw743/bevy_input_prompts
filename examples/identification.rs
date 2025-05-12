@@ -1,155 +1,88 @@
-use bevy::{math::vec3, prelude::*};
-use bevy_input::gamepad::GamepadInput;
+use bevy::prelude::*;
 use bevy_input_prompts::{
-    kenney::{self, Format, KenneyGamepadSettings, gamepad_button::KenneyGamepadButton},
-    xelu::{
-        self, XeluGamepadSettings, gamepad_axis::XeluGamepadAxis, gamepad_button::XeluGamepadButton,
-    },
+    CopyAssetsError, FileConstraints, Pack, copy_assets,
+    gamepad_brand::GamepadBrand,
+    kenney_tokenize::_Xbox_Series::{_Double, stem_words::_color},
 };
 
-/// will display pressed inputs as prompts if a gamepad brand is detected
-/// will not use a default if the gamepad brand is not detected
-/// if you are using a gamepad brand that does not get detected, it should still work in the interactive example
+fn main() -> Result<(), CopyAssetsError> {
+    // DO NOT DO THIS, PUT THIS IS build.rs, THIS IS FOR THE EXAMPLE ONLY
+    copy_assets()?;
 
-fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (update_xelu_gp, update_kenney_gp))
+        .add_systems(Update, update_kenney_controller)
         .run();
+
+    Ok(())
 }
 
 #[derive(Component)]
-struct XeluGamepadPrompt(XeluGamepadSettings);
+struct KenneyController;
 
 #[derive(Component)]
-struct KenneyGamepadPrompt(KenneyGamepadSettings);
+struct XeluController;
 
 fn setup(mut commands: Commands) {
-    commands.spawn((
-        Camera2d,
-        Transform::default().with_translation(vec3(300.0, 0.0, 0.0)),
-    ));
+    commands.spawn((Camera2d, Transform::default()));
 
     commands.spawn((
-        XeluGamepadPrompt(XeluGamepadSettings {
-            gamepad_brand: default(),
-        }),
-        Transform::default().with_translation(vec3(0.0, -300.0, 0.0)),
-        Sprite::default(),
+        KenneyController,
+        Sprite {
+            custom_size: Some(vec2(100.0, 100.0)),
+            ..default()
+        },
+        Transform::default().with_translation(vec3(-100.0, 0.0, 0.0)),
     ));
-
-    let mut i = 0;
-    for round_if_possible in [false, true] {
-        for outline_if_possible in [false, true] {
-            for format in [Format::Default, Format::Double] {
-                for color_if_possible in [false, true] {
-                    commands.spawn((
-                        KenneyGamepadPrompt(KenneyGamepadSettings {
-                            round_if_possible,
-                            outline_if_possible,
-                            format,
-                            color_if_possible,
-                            gamepad_brand: default(),
-                        }),
-                        Transform::default().with_translation(vec3(
-                            (i / 6) as f32 * 100.0 + 300.0,
-                            (i % 6) as f32 * 100.0 - 300.0,
-                            0.0,
-                        )),
-                        Sprite::default(),
-                    ));
-                    i += 1;
-                }
-            }
-        }
-    }
+    commands.spawn((
+        XeluController,
+        Sprite {
+            custom_size: Some(vec2(100.0, 100.0)),
+            ..default()
+        },
+        Transform::default().with_translation(vec3(100.0, 0.0, 0.0)),
+    ));
 }
 
-fn update_xelu_gp(
-    mut xelu_gp: Query<(&mut Sprite, &XeluGamepadPrompt)>,
+fn update_kenney_controller(
+    mut kenney_controller: Query<&mut Sprite, (With<KenneyController>, Without<XeluController>)>,
+    mut xelu_controller: Query<&mut Sprite, (With<XeluController>, Without<KenneyController>)>,
+    gamepad: Option<Single<&Gamepad>>,
     asset_server: Res<AssetServer>,
-    gamepad: Option<Single<(Entity, &Gamepad)>>,
 ) {
-    if let Some(gamepad) = gamepad {
-        let (entity, gamepad) = *gamepad;
-        let Some(gamepad_brand) = xelu::GamepadBrand::from_gamepad(gamepad) else {
-            return;
-        };
-        if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
-            dbg!(entity);
-            dbg!(gamepad);
-            dbg!(gamepad_button);
-            for (mut sprite, settings) in &mut xelu_gp {
-                sprite.image = asset_server.load(XeluGamepadButton {
-                    gamepad_button,
-                    settings: settings.0,
-                });
-            }
-        }
-        for &gamepad_input in gamepad.get_analog_axes() {
-            if let Some(value) = gamepad.get(gamepad_input) {
-                if value > 0.5 || value < -0.5 {
-                    match gamepad_input {
-                        GamepadInput::Axis(gamepad_axis) => {
-                            dbg!(entity);
-                            dbg!(gamepad_axis);
-                            dbg!(value);
-                            for (mut sprite, settings) in &mut xelu_gp {
-                                sprite.image = asset_server.load(XeluGamepadAxis {
-                                    gamepad_axis,
-                                    settings: XeluGamepadSettings {
-                                        gamepad_brand,
-                                        ..settings.0
-                                    },
-                                });
-                            }
-                        }
-                        GamepadInput::Button(_gamepad_button) => {
-                            // handled by the `gamepad.get_just_pressed()` part of this example
+    let Some(gamepad) = gamepad else {
+        return;
+    };
+    let Some(gamepad_button) = gamepad.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", gamepad_button);
 
-                            // dbg!(entity);
-                            // dbg!(x);
-                            // dbg!(v);
-                            // commands.entity(*xelu).insert(Sprite {
-                            //     image: asset_server.load(XeluGamepadButton {
-                            //         gamepad_button,
-                            //         gamepad_brand: GamepadBrand::XboxSeries,
-                            //     }),
-                            //     custom_size: Some(vec2(100.0, 100.0)),
-                            //     ..default()
-                            // });
-                        }
-                    }
-                }
-            }
-        }
+    let Some(path) = (
+        gamepad_button,
+        // this is the point of this example, normally you should `unwrap_or`
+        GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
+    )
+        .file_path_extra(Pack::Kenney, &[_color, _Double::DIR])
+    else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_controller {
+        sprite.image = asset_server.load(&path);
     }
-}
 
-fn update_kenney_gp(
-    mut kenney_gp: Query<(&mut Sprite, &KenneyGamepadPrompt)>,
-    asset_server: Res<AssetServer>,
-    gamepad: Option<Single<(Entity, &Gamepad)>>,
-) {
-    if let Some(gamepad) = gamepad {
-        let (entity, gamepad) = *gamepad;
-        let Some(gamepad_brand) = kenney::GamepadBrand::from_gamepad(gamepad) else {
-            return;
-        };
-        if let Some(&gamepad_button) = gamepad.get_just_pressed().next() {
-            dbg!(entity);
-            dbg!(gamepad);
-            dbg!(gamepad_button);
-            for (mut sprite, settings) in &mut kenney_gp {
-                sprite.image = asset_server.load(KenneyGamepadButton {
-                    gamepad_button,
-                    settings: KenneyGamepadSettings {
-                        gamepad_brand,
-                        ..settings.0
-                    },
-                });
-            }
-        }
+    let Some(path) = (
+        gamepad_button,
+        GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
+    )
+        .file_path(Pack::Xelu)
+    else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut xelu_controller {
+        sprite.image = asset_server.load(&path);
     }
 }

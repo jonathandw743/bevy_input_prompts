@@ -2,19 +2,28 @@
 name = "bevy_input_prompts"
 version = "0.1.0"
 edition = "2024"
-include = ["src/**/*", "assets/bevy_input_prompts/**/*", "Cargo.toml"]
 license = "MIT"
 description = "Mappings from bevy input types to popular input prompt asset paths"
 homepage = "https://github.com/jonathandw743/bevy_input_prompts"
 repository = "https://github.com/jonathandw743/bevy_input_prompts"
 
 [dependencies]
-bevy_asset = "0.15"
-bevy_input = "0.15"
+bevy_asset = "0.16.0"
+bevy_input = "0.16.0"
 fs_extra = "1.3.0"
+kenney_input_prompts = { path = "../kenney_input_prompts", features = [
+    "use_tokenize_dir",
+], optional = true }
+tokenize_dir = { path = "../tokenize_dir" }
+xelu_free_controller_key_prompts = { path = "../xelu_free_controller_key_prompts", features = [
+    "use_tokenize_dir",
+], optional = true }
 
 [dev-dependencies]
-bevy = "0.15"
+bevy = "0.16.0"
 
-[workspace]
-members = ["asset_gen", "coverage"]
+[features]
+default = []
+all = ["use_kenney_input_prompts", "use_xelu_free_controller_key_prompts"]
+use_kenney_input_prompts = ["kenney_input_prompts"]
+use_xelu_free_controller_key_prompts = ["xelu_free_controller_key_prompts"]
