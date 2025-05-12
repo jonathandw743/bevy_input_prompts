@@ -204,6 +204,7 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     ) => &[_A],
                     (Switch | Wii | WiiU, South) => &[_B],
                     (PS3 | PS4 | PS5 | PSMove | PSVita, South) => &[_Cross],
+                    (Vive, South) => &[&[]],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
@@ -212,6 +213,7 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     ) => &[_B],
                     (Switch | Wii | WiiU, East) => &[_A],
                     (PS3 | PS4 | PS5 | PSMove | PSVita, East) => &[_Circle],
+                    (Vive, East) => &[&[]],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
@@ -220,6 +222,7 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     ) => &[_Y],
                     (Switch | Wii | WiiU, North) => &[_X],
                     (PS3 | PS4 | PS5 | PSMove | PSVita, North) => &[_Triangle],
+                    (Vive, North) => &[&[]],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
@@ -228,30 +231,34 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     ) => &[_X],
                     (Switch | Wii | WiiU, West) => &[_Y],
                     (PS3 | PS4 | PS5 | PSMove | PSVita, West) => &[_Square],
+                    (Vive, West) => &[&[]],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
                         | Oculus | Xbox360 | XboxOne | Switch,
                         LeftTrigger,
                     ) => &[_LB],
-                    (Wii | WiiU, LeftTrigger) => &[], //todo:
-                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger) => &[_L2],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger) => &[_L1],
+                    (WiiU, LeftTrigger) => &[_L],
+                    (Wii | Vive, LeftTrigger) => &[&[]],
+                    
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne | Switch | Vive,
+                        LeftTrigger2,
+                    ) => &[_LT],
+                    (WiiU, LeftTrigger2) => &[_ZL],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger2) => &[_L2],
+                    (Wii, LeftTrigger2) => &[_Z],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
                         | Oculus | Xbox360 | XboxOne | Switch,
                         RightTrigger,
                     ) => &[_RB],
-                    (Wii | WiiU, RightTrigger) => &[], //todo:
                     (PS3 | PS4 | PS5 | PSMove | PSVita, RightTrigger) => &[_R1],
-
-                    (
-                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
-                        | Oculus | Xbox360 | XboxOne | Switch,
-                        LeftTrigger2,
-                    ) => &[_LT],
-                    (Wii | WiiU, LeftTrigger2) => &[_ZL],
-                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger2) => &[_L2],
+                    (WiiU, RightTrigger) => &[_R],
+                    (Wii| Vive, RightTrigger) => &[&[]],
 
                     (
                         XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
@@ -260,19 +267,101 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     ) => &[_RT],
                     (WiiU, RightTrigger2) => &[_ZR],
                     (PS3 | PS4 | PS5 | PSMove | PSVita, RightTrigger2) => &[_R2],
+                    (Wii | Vive, RightTrigger2) => &[&[]],
 
-                    C => &[],
-                    Z => &[],
-                    Select => &[],
-                    Start => &[],
-                    Mode => &[],
-                    LeftThumb => &[],
-                    RightThumb => &[],
-                    DPadUp => &[],
-                    DPadDown => &[],
-                    DPadLeft => &[],
-                    DPadRight => &[],
-                    Other(_) => &[],
+                    (
+                        Xbox360 | XboxOne | XboxSeries | SteamController | SteamDeck | AmazonLuna
+                        | GoogleStadia | Ouya | Oculus | Vive | Switch | Wii | WiiU | PS3 | PS4
+                        | PS5 | PSMove | PSVita,
+                        C,
+                    ) => &[&[]],
+
+                    (
+                        Xbox360 | XboxOne | XboxSeries | SteamController | SteamDeck | AmazonLuna
+                        | GoogleStadia | Ouya | Oculus | Vive | Switch | Wii | WiiU | PS3 | PS4
+                        | PS5 | PSMove | PSVita,
+                        Z,
+                    ) => &[&[]],
+
+                    (XboxSeries, Select) => &[_View],
+                    (PS4 | PS5, Select) => &[_Share],
+                    (SteamDeck, Select) => &[_Inventory],
+                    (AmazonLuna, Select) => &[_Microphone],
+                    (GoogleStadia, Select) => &[_Dots],
+                    (Ouya, Select) => &[_Touch],
+                    (PS3 | PSMove | PSVita, Select) => &[_Select],
+                    (SteamController | Xbox360, Select) => &[_Back],
+                    (Wii | WiiU | Switch | Oculus, Select) => &[_Minus],
+                    (Vive, Select) => &[_System],
+                    (XboxOne, Select) => &[_Windows],
+
+                    (Wii | WiiU | Switch | Oculus, Start) => &[_Plus],
+                    (
+                        XboxSeries | XboxOne | SteamDeck | AmazonLuna | GoogleStadia | Ouya,
+                        Start,
+                    ) => &[_Menu],
+                    (PS4 | PS5, Start) => &[_Options],
+                    (PS3 | PSMove | PSVita | SteamController | Xbox360, Start) => &[_Start],
+                    (Vive, Start) => &[_Menu],
+
+                    (XboxSeries | AmazonLuna | XboxOne, Mode) => &[_Diagram],
+                    (PSVita | PS4 | PS5, Mode) => &[_Touch, _Pad],
+                    (GoogleStadia, Mode) => &[_Assistant],
+                    (SteamDeck | Vive, Mode) => &[_System],
+                    (Switch | Wii | WiiU | PS3 | SteamController | Xbox360 | Ouya | PSMove | Oculus, Mode) => &[&[]],
+
+                    (
+                        XboxSeries | Switch | SteamDeck | PS5 | AmazonLuna | PS3 | PS4 | Xbox360
+                        | XboxOne,
+                        LeftThumb,
+                    ) => &[_Left_0, _Stick, _Click],
+                    (GoogleStadia | Ouya | PSMove | PSVita | Oculus | WiiU, LeftThumb) => {
+                        &[_Left_0, _Stick]
+                    }
+                    (SteamController, LeftThumb) => &[_Stick],
+                    (Vive | Wii, LeftThumb) => &[&[]],
+
+                    (
+                        XboxSeries | Switch | SteamDeck | PS5 | AmazonLuna | PS3 | PS4 | Xbox360
+                        | XboxOne,
+                        RightThumb,
+                    ) => &[_Right_0, _Stick, _Click],
+                    (GoogleStadia | Ouya | PSMove | PSVita | Oculus | WiiU, RightThumb) => {
+                        &[_Right_0, _Stick]
+                    }
+                    (SteamController, RightThumb) => &[_Track, _Right_0, _Center],
+                    (Vive | Wii, RightThumb) => &[&[]],
+
+                    (
+                        Xbox360 | XboxOne | XboxSeries | PS3 | PS4 | PS5 | PSMove | PSVita
+                        | SteamDeck | SteamController | AmazonLuna | GoogleStadia | Ouya | Oculus
+                        | Vive | Wii | WiiU | Switch,
+                        DPadUp,
+                    ) => &[_Up, _Dpad],
+                    (
+                        Xbox360 | XboxOne | XboxSeries | PS3 | PS4 | PS5 | PSMove | PSVita
+                        | SteamDeck | SteamController | AmazonLuna | GoogleStadia | Ouya | Oculus
+                        | Vive | Wii | WiiU | Switch,
+                        DPadDown,
+                    ) => &[_Down, _Dpad],
+                    (
+                        Xbox360 | XboxOne | XboxSeries | PS3 | PS4 | PS5 | PSMove | PSVita
+                        | SteamDeck | SteamController | AmazonLuna | GoogleStadia | Ouya | Oculus
+                        | Vive | Wii | WiiU | Switch,
+                        DPadLeft,
+                    ) => &[_Left_0, _Dpad],
+                    (
+                        Xbox360 | XboxOne | XboxSeries | PS3 | PS4 | PS5 | PSMove | PSVita
+                        | SteamDeck | SteamController | AmazonLuna | GoogleStadia | Ouya | Oculus
+                        | Vive | Wii | WiiU | Switch,
+                        DPadRight,
+                    ) => &[_Right_0, _Dpad],
+                    (
+                        Xbox360 | XboxOne | XboxSeries | PS3 | PS4 | PS5 | PSMove | PSVita
+                        | SteamDeck | SteamController | AmazonLuna | GoogleStadia | Ouya | Oculus
+                        | Vive | Wii | WiiU | Switch,
+                        Other(_),
+                    ) => &[],
                 };
                 (
                     input,
