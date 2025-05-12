@@ -127,7 +127,7 @@ fn update_kenney_controller(
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = (GamepadBrand::Xbox, gamepad_button).file_path(Pack::Kenney, &[]) else {
+    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path(Pack::Kenney, &[]) else {
         warn!("no prompt found");
         return;
     };
@@ -149,7 +149,7 @@ fn update_kenney_controller_color(
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = (GamepadBrand::Xbox, gamepad_button).file_path(Pack::Kenney, &[xboxsw::_color])
+    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path(Pack::Kenney, &[xboxsw::_color])
     else {
         warn!("no prompt found");
         return;

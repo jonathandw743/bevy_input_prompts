@@ -55,8 +55,8 @@ pub trait FileConstraints: Sized {
     fn file_path<'c>(
         self,
         pack: Pack,
-        extra_contraints: Self::Constraints<'c>,
+        extra_contraints: &[&[usize]],
     ) -> Option<String> {
-        first_file_path(pack, [self.file_constriants(pack), extra_contraints])
+        first_file_path(pack, (self.file_constriants(pack), extra_contraints))
     }
 }
