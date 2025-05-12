@@ -6,7 +6,9 @@ Mappings from bevy input types to popular input prompt asset paths along with al
 | -----------: | -------------: |
 |         0.16 |            0.2 |
 
-# --- example here ---
+```rust
+(GamepadButton::South, GamepadBrand::XboxSeries).file_path_extra(Pack::Kenney, &[_color, _outline])
+```
 
 ## features
 
@@ -24,7 +26,7 @@ fn main() {
 }
 ```
 
-And (for example) use `cargo add bevy_input_prompts --build --features "kenney_input_prompts"`.
+And (for example) use `cargo add bevy_input_prompts --build --features kenney_input_prompts`.
 
 This copies input prompt assets into your `assets` directory if they don't exist (don't worry, nothing will get overwritten).
 
@@ -40,9 +42,4 @@ These are some specific things that I can't do myself:
 
 - Testing different gamepad brand detection
 - Testing mappings for different controllers
-  - Switch
-  - Switch 2
-  - PlayStation
-  - Playdate
-  - and more
 - Testing different keyboard locales (for `Key` and `KeyboardInput` not `KeyCode`).

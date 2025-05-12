@@ -104,8 +104,8 @@ impl FileConstraints for (&GamepadButton, GamepadBrand) {
                     Select => match gamepad_brand {
                         WiiU => &[wiiu::_minus],
                         PS3 | PS4 | PS5 => &[ps::_select],
-                        SteamController => &[steam::_back],
-                        XboxSeries | Xbox360 | XboxOne => &[xbox::_menu],
+                        Xbox360 | SteamController => &[_back],
+                        XboxSeries | XboxOne => &[xbox::_view],
                         SteamDeck => &[steamdeck::_view],
                         Playdate => &[playdate::_menu],
                         Generic | Gamecube | Switch | Switch2 | Wii => &[&[]],
@@ -114,7 +114,8 @@ impl FileConstraints for (&GamepadButton, GamepadBrand) {
                         WiiU => &[wiiu::_plus],
                         Playdate => &[],
                         SteamDeck => &[steamdeck::_options],
-                        Gamecube | Xbox360 | XboxOne | XboxSeries | SteamController | PS3 | PS4 | PS5 => &[_start],
+                        Gamecube | Xbox360 | SteamController | PS3 | PS4 | PS5 => &[_start],
+                        XboxOne | XboxSeries => &[_menu],
                         Generic | Switch | Switch2 | Wii => &[&[]],
                     },
                     Mode => match gamepad_brand {

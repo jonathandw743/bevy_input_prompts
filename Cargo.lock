@@ -732,7 +732,7 @@ dependencies = [
  "bevy_input",
  "fs_extra",
  "kenney_input_prompts",
- "tokenize_dir",
+ "tokenize_dir 0.1.0",
  "xelu_free_controller_key_prompts",
 ]
 
@@ -2515,10 +2515,12 @@ dependencies = [
 
 [[package]]
 name = "kenney_input_prompts"
-version = "1.4.0"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90872f137cd2de4366b84775631b6f611eaf3ec63df185cbdb2d15b913b35c8b"
 dependencies = [
  "fs_extra",
- "tokenize_dir",
+ "tokenize_dir 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -3956,8 +3958,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokenize_dir"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44d1df26bbf13b02cf113714f57690ed0c83a4ff46cbc3283f9a306879735cef"
+dependencies = [
+ "tokenize_dir_macros",
+]
+
+[[package]]
 name = "tokenize_dir_macros"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "621f4336f61445167241cc71286e7250da1b4dc53ddb1d253dc1aa87907b0367"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -4992,10 +5005,12 @@ checksum = "ec107c4503ea0b4a98ef47356329af139c0a4f7750e621cf2973cd3385ebcb3d"
 
 [[package]]
 name = "xelu_free_controller_key_prompts"
-version = "1.0.0"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8ac38888146220eca80a2668071bae69b07bc6e5257818d90cfbe524016e4e4"
 dependencies = [
  "fs_extra",
- "tokenize_dir",
+ "tokenize_dir 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
