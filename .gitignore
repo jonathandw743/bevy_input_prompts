@@ -1,3 +1,7 @@
 /target
 /input_prompts
 known_gamepads.txt
+/assets
+flame-graph.html
+flame.json
+flamegraph.svg
