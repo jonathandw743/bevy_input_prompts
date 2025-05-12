@@ -52,6 +52,9 @@ pub fn copy_assets() -> Result<(), CopyAssetsError> {
 pub trait FileConstraints: Sized {
     type Constraints<'c>: tokenize_dir::ToConstraints;
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c>;
+    // we also have this so the suer doesn't have to do .file_path_extra::<&[&[usize]]>(pack, &[])
+    // just to leave it without any extra contraints
+    // because the compiler won't apply a relevant type to &[]
     fn file_path(
         self,
         pack: Pack,

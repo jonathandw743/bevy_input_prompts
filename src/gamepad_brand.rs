@@ -145,7 +145,7 @@ pub enum GamepadBrand {
 impl GamepadBrand {
     pub fn from_gamepad(gamepad: &Gamepad) -> Option<Self> {
         // TODO: test these??? idk i got these from processing https://github.com/mdqinc/SDL_GameControllerDB
-        // TODO: map to more different brands
+        // TODO: map to more different brands (currently does not map to Switch 2, Ocuclus, Vive, PSMove, Generic (will never), Playdate)
         match (gamepad.vendor_id(), gamepad.product_id()) {
             (Some(0x2dc8), Some(0x286a)) => Some(Self::Gamecube),
             (Some(0x2dc8), Some(0x2101)) => Some(Self::XboxOne),

@@ -13,13 +13,10 @@ pub enum Direction {
     Bidirectional,
 }
 
-impl FileConstraints for (GamepadBrand, &GamepadAxis, &Option<Direction>) {
+impl FileConstraints for (&GamepadAxis, GamepadBrand, &Option<Direction>) {
     type Constraints<'c> = ((&'c [&'c [usize]], &'c [usize]), &'c [&'c [usize]]);
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
-        (
-            (self.0, self.1).file_constriants(pack),
-            (self.1, self.2).file_constriants(pack),
-        )
+        ((self.0, self.1).file_constriants(pack), (self.0, self.2).file_constriants(pack))
     }
 }
 
@@ -32,23 +29,27 @@ impl FileConstraints for (&GamepadAxis, &Option<Direction>) {
                 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::stem_words::*;
                 // this just gives the directionality constraints
                 // because the brand is required for the axis constraints
-                match self {
-                    // no direction given means unconstrained
-                    (LeftStickX | RightStickX, None) => &[],
-                    (LeftStickX | RightStickX, Some(Positive)) => &[_right],
-                    (LeftStickX | RightStickX, Some(Negative)) => &[_left],
-                    (LeftStickX | RightStickX, Some(Bidirectional)) => &[_horizontal],
+                match self.0 {
+                    LeftStickX | RightStickX => match self.1 {
+                        // no direction given means unconstrained
+                        None => &[],
+                        Some(Positive) => &[_right],
+                        Some(Negative) => &[_left],
+                        Some(Bidirectional) => &[_horizontal],
+                    },
+                    LeftStickY | RightStickY => match self.1 {
+                        // no direction given means unconstrained
+                        None => &[],
+                        Some(Positive) => &[_up],
+                        Some(Negative) => &[_down],
+                        Some(Bidirectional) => &[_vertical],
+                    },
                     // for axes where directionality does not apply, directions have no meaning so unconstrained
-                    (LeftZ, _) => &[],
-                    // no direction given means unconstrained
-                    (LeftStickY | RightStickY, None) => &[],
-                    (LeftStickY | RightStickY, Some(Positive)) => &[_up],
-                    (LeftStickY | RightStickY, Some(Negative)) => &[_down],
-                    (LeftStickY | RightStickY, Some(Bidirectional)) => &[_vertical],
+                    LeftZ => &[],
                     // for axes where directionality does not apply, directions have no meaning so unconstrained
-                    (RightZ, _) => &[],
+                    RightZ => &[],
                     // for axes where directionality does not apply, directions have no meaning so unconstrained
-                    (Other(_), _) => &[],
+                    Other(_) => &[],
                 }
             }
             // TODO:
@@ -63,72 +64,57 @@ impl FileConstraints for (&GamepadAxis, &Option<Direction>) {
     }
 }
 
-impl FileConstraints for (GamepadBrand, &GamepadAxis) {
+impl FileConstraints for (&GamepadAxis, GamepadBrand) {
     type Constraints<'c> = (&'c [&'c [usize]], &'c [usize]);
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             Pack::Kenney => {
                 use crate::gamepad_brand::KenneyGamepadBrand::{self, *};
-                use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
-                    _Generic::stem_words as generic, _Nintendo_Gamecube::stem_words as gamecube,
-                    stem_words::*, *,
-                };
-                let gamepad_brand = KenneyGamepadBrand::from(self.0);
-                let input: &[&[usize]] = match (&gamepad_brand, self.1) {
-                    (Generic, LeftStickX | LeftStickY | RightStickX | RightStickY) => {
-                        &[generic::_stick]
-                    }
-                    (Generic, LeftZ | RightZ) => &[generic::_trigger],
-                    (Generic, Other(_)) => &[&[]],
+                use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{_Generic::stem_words as generic, _Nintendo_Gamecube::stem_words as gamecube, stem_words::*, *};
 
-                    (Gamecube, LeftStickX | LeftStickY) => &[gamecube::_grip, gamecube::_stick],
-                    (Gamecube, LeftZ) => &[gamecube::_l, gamecube::_trigger],
-                    (Gamecube, RightStickX | RightStickY) => &[gamecube::_c, gamecube::_stick],
-                    (Gamecube, RightZ) => &[gamecube::_r, gamecube::_trigger],
-                    (Gamecube, Other(_)) => &[&[]],
-
-                    (Switch | Switch2 | WiiU, LeftZ) => &[_zl],
-                    (Switch | Switch2 | WiiU, RightZ) => &[_zr],
-                    (Wii, LeftZ) => &[_z],
-                    (Wii, RightZ) => &[&[]],
-
-
-                    (
-                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii
-                        | WiiU | SteamController | SteamDeck,
-                        LeftStickX | LeftStickY,
-                    ) => &[_l, _stick],
-                    (
-                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii
-                        | WiiU | SteamController | SteamDeck,
-                        RightStickX | RightStickY,
-                    ) => &[_r, _stick],
-
-                    (
-                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii
-                        | WiiU | SteamController | SteamDeck,
-                        Other(_),
-                    ) => &[&[]],
-
-                    (PS3 | PS4 | PS5 | SteamDeck, LeftZ) => &[_l2],
-                    (PS3 | PS4 | PS5 | SteamDeck, RightZ) => &[_r2],
-
-                    // TODO: the spinny thing on the playdate probably is mapped to some Other
-                    (Playdate, LeftStickX) => &[&[]],
-                    (Playdate, LeftStickY) => &[&[]],
-                    (Playdate, LeftZ) => &[&[]],
-                    (Playdate, RightStickX) => &[&[]],
-                    (Playdate, RightStickY) => &[&[]],
-                    (Playdate, RightZ) => &[&[]],
-                    (Playdate, Other(_)) => &[&[]],
-
-                    (SteamController | Xbox360 | XboxOne | XboxSeries, LeftZ) => &[_lt],
-                    (SteamController | Xbox360 | XboxOne | XboxSeries, RightZ) => &[_rt],
+                let gamepad_brand = KenneyGamepadBrand::from(self.1);
+                let input: &[&[usize]] = match self.0 {
+                    LeftStickX | LeftStickY => match gamepad_brand {
+                        Generic => &[generic::_stick],
+                        Gamecube => &[gamecube::_grip, gamecube::_stick],
+                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii | WiiU | SteamController | SteamDeck => &[_l, _stick],
+                        Playdate => &[&[]],
+                    },
+                    RightStickX | RightStickY => match gamepad_brand {
+                        Generic => &[generic::_stick],
+                        Gamecube => &[gamecube::_c, gamecube::_stick],
+                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii | WiiU | SteamController | SteamDeck => &[_r, _stick],
+                        Playdate => &[&[]],
+                    },
+                    LeftZ => match gamepad_brand {
+                        Generic => &[generic::_trigger],
+                        Gamecube => &[gamecube::_l, gamecube::_trigger],
+                        Switch | Switch2 | WiiU => &[_zl],
+                        Wii => &[_z],
+                        PS3 | PS4 | PS5 | SteamDeck => &[_l2],
+                        SteamController | Xbox360 | XboxOne | XboxSeries => &[_lt],
+                        Playdate => &[&[]],
+                    },
+                    RightZ => match gamepad_brand {
+                        Generic => &[generic::_trigger],
+                        Gamecube => &[gamecube::_r, gamecube::_trigger],
+                        Switch | Switch2 | WiiU => &[_zr],
+                        Wii => &[&[]],
+                        PS3 | PS4 | PS5 | SteamDeck => &[_r2],
+                        SteamController | Xbox360 | XboxOne | XboxSeries => &[_rt],
+                        Playdate => &[&[]],
+                    },
+                    Other(_) => match gamepad_brand {
+                        Generic => &[&[]],
+                        Gamecube => &[&[]],
+                        Switch | Switch2 | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries | Wii | WiiU | SteamController | SteamDeck => &[&[]],
+                        Playdate => &[&[]],
+                    },
                 };
                 (
                     input,
-                    match &gamepad_brand {
+                    match gamepad_brand {
                         Generic => _Generic::DIR,
                         Switch => _Nintendo_Switch::DIR,
                         Wii => _Nintendo_Wii::DIR,
@@ -146,56 +132,37 @@ impl FileConstraints for (GamepadBrand, &GamepadAxis) {
             // TODO:
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
             Pack::Xelu => {
-                use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::{
-                    stem_words::*, *
-                };
                 use crate::gamepad_brand::XeluGamepadBrand::*;
-                let gamepad_brand = XeluGamepadBrand::from(self.0);
-                let input: &[&[usize]] = match (&gamepad_brand, self.1) {
-                    (
-                        AmazonLuna | GoogleStadia | Ouya | Oculus | Switch | WiiU | PS3 | PS4
-                        | PS5 | PSMove | PSVita | SteamDeck | XboxSeries | Xbox360 | XboxOne,
-                        LeftStickX | LeftStickY,
-                    ) => &[_Stick, _Left_0],
-                    (SteamController | Wii, LeftStickX | LeftStickY) => &[_Stick],
-                    (Vive, LeftStickX | LeftStickY) => &[&[]],
+                use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::{stem_words::*, *};
 
-                    (
-                        AmazonLuna | GoogleStadia | Ouya | Oculus | Switch | WiiU | PS3 | PS4
-                        | PS5 | PSVita | SteamDeck | XboxSeries | Xbox360 | XboxOne,
-                        RightStickX | RightStickY,
-                    ) => &[_Stick, _Right_0],
-                    (PSMove | Vive | SteamController | Wii, RightStickX | RightStickY) => &[&[]],
-
-                    (
-                        Xbox360 | XboxOne | XboxSeries | Switch | AmazonLuna | PSMove
-                        | SteamController | Oculus | Vive,
-                        LeftZ,
-                    ) => &[_LT],
-                    (
-                        Xbox360 | XboxOne | XboxSeries | Switch | AmazonLuna | PSMove
-                        | SteamController | Oculus | Vive,
-                        RightZ,
-                    ) => &[_RT],
-
-                    (PS5 | SteamDeck | GoogleStadia | Ouya | PS3 | PS4, LeftZ) => &[_L2],
-                    (PS5 | SteamDeck | GoogleStadia | Ouya | PS3 | PS4, RightZ) => &[_R2],
-
-                    (Wii, LeftZ) => &[_Z],
-                    (Wii, RightZ) => &[&[]],
-
-                    (WiiU, LeftZ) => &[_ZL],
-                    (WiiU, RightZ) => &[_ZR],
-
-                    (PSVita, LeftZ) => &[&[]],
-                    (PSVita, RightZ) => &[&[]],
-
-                    (
-                        AmazonLuna | PSVita | PSMove | PS5 | PS4 | PS3 | WiiU | Wii | Switch | Vive
-                        | Oculus | Ouya | GoogleStadia | SteamController | SteamDeck | XboxOne
-                        | Xbox360 | XboxSeries,
-                        Other(_),
-                    ) => &[&[]],
+                let gamepad_brand = XeluGamepadBrand::from(self.1);
+                let input: &[&[usize]] = match self.0 {
+                    LeftStickX | LeftStickY => match gamepad_brand {
+                        AmazonLuna | GoogleStadia | Ouya | Oculus | Switch | WiiU | PS3 | PS4 | PS5 | PSMove | PSVita | SteamDeck | XboxSeries | Xbox360 | XboxOne => &[_Stick, _Left_0],
+                        SteamController | Wii => &[_Stick],
+                        Vive => &[&[]],
+                    },
+                    RightStickX | RightStickY => match gamepad_brand {
+                        AmazonLuna | GoogleStadia | Ouya | Oculus | Switch | WiiU | PS3 | PS4 | PS5 | PSVita | SteamDeck | XboxSeries | Xbox360 | XboxOne => &[_Stick, _Right_0],
+                        PSMove | Vive | SteamController | Wii => &[&[]],
+                    },
+                    LeftZ => match gamepad_brand {
+                        Xbox360 | XboxOne | XboxSeries | Switch | AmazonLuna | PSMove | SteamController | Oculus | Vive => &[_LT],
+                        PS5 | SteamDeck | GoogleStadia | Ouya | PS3 | PS4 => &[_L2],
+                        WiiU => &[_ZL],
+                        Wii => &[_Z],
+                        PSVita => &[&[]],
+                    },
+                    RightZ => match gamepad_brand {
+                        Xbox360 | XboxOne | XboxSeries | Switch | AmazonLuna | PSMove | SteamController | Oculus | Vive => &[_RT],
+                        PS5 | SteamDeck | GoogleStadia | Ouya | PS3 | PS4 => &[_R2],
+                        WiiU => &[_ZR],
+                        Wii => &[&[]],
+                        PSVita => &[&[]],
+                    },
+                    Other(_) => match gamepad_brand {
+                        AmazonLuna | PSVita | PSMove | PS5 | PS4 | PS3 | WiiU | Wii | Switch | Vive | Oculus | Ouya | GoogleStadia | SteamController | SteamDeck | XboxOne | Xbox360 | XboxSeries => &[&[]],
+                    },
                 };
                 (
                     input,

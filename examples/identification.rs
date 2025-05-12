@@ -60,9 +60,9 @@ fn update_kenney_controller(
     println!("{:?}", gamepad_button);
 
     let Some(path) = (
+        gamepad_button,
         // this is the point of this example, normally you should `unwrap_or`
         GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
-        gamepad_button,
     )
         .file_path_extra(Pack::Kenney, &[_color, _Double::DIR])
     else {
@@ -74,8 +74,8 @@ fn update_kenney_controller(
     }
 
     let Some(path) = (
-        GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
         gamepad_button,
+        GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
     )
         .file_path(Pack::Xelu)
     else {
