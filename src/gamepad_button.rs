@@ -304,7 +304,7 @@ impl FileConstraints for (GamepadBrand, &GamepadButton) {
                     (PS3 | PSMove | PSVita | SteamController | Xbox360, Start) => &[_Start],
                     (Vive, Start) => &[_Menu],
 
-                    (XboxSeries | AmazonLuna | XboxOne, Mode) => &[_Diagram],
+                    (XboxSeries | AmazonLuna | XboxOne, Mode) => &[&[]],
                     (PSVita | PS4 | PS5, Mode) => &[_Touch, _Pad],
                     (GoogleStadia, Mode) => &[_Assistant],
                     (SteamDeck | Vive, Mode) => &[_System],

@@ -7,11 +7,11 @@ use tokenize_dir::ToConstraints;
 fn main() {
     // the main way you should use this crate
     // no extra constraints
-    dbg!(KeyCode::Tab.file_path(Pack::Kenney, &[]).unwrap());
+    dbg!(KeyCode::Tab.file_path(Pack::Kenney).unwrap());
     // extra constraints
     dbg!(
         KeyCode::Tab
-            .file_path(
+            .file_path_extra(
                 Pack::Kenney,
                 &[
                     stem_words::_outline,

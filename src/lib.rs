@@ -52,10 +52,16 @@ pub fn copy_assets() -> Result<(), CopyAssetsError> {
 pub trait FileConstraints: Sized {
     type Constraints<'c>: tokenize_dir::ToConstraints;
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c>;
-    fn file_path<'c>(
+    fn file_path(
         self,
         pack: Pack,
-        extra_contraints: &[&[usize]],
+    ) -> Option<String> {
+        first_file_path(pack, self.file_constriants(pack))
+    }
+    fn file_path_extra<T: tokenize_dir::ToConstraints>(
+        self,
+        pack: Pack,
+        extra_contraints: T,
     ) -> Option<String> {
         first_file_path(pack, (self.file_constriants(pack), extra_contraints))
     }

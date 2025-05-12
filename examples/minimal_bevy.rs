@@ -16,7 +16,7 @@ fn main() -> Result<(), CopyAssetsError> {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
     commands.spawn(Sprite {
-        image: asset_server.load(KeyCode::ArrowLeft.file_path(Pack::Kenney, &[]).unwrap()),
+        image: asset_server.load(KeyCode::ArrowLeft.file_path(Pack::Kenney).unwrap()),
         ..default()
     });
 }

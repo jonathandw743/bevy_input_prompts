@@ -3,11 +3,11 @@ use bevy_input_prompts::kenney_tokenize::_Keyboard___Mouse::stem_words;
 use bevy_input_prompts::{FileConstraints, Pack};
 
 fn main() {
-    let no_extra_contraints = KeyCode::Tab.file_path(Pack::Kenney, &[]).unwrap();
+    let no_extra_contraints = KeyCode::Tab.file_path(Pack::Kenney).unwrap();
     dbg!(no_extra_contraints);
 
     let with_extra_contraints = KeyCode::Tab
-        .file_path(
+        .file_path_extra(
             Pack::Kenney,
             &[
                 stem_words::_outline,
@@ -26,7 +26,7 @@ fn main() {
     // but then there is an "A" prompt with an "outline" so that is applied
     // basically, you can just throw a bunch of words at it and it will make a decent guess
     let a = KeyCode::KeyA
-        .file_path(
+        .file_path_extra(
             Pack::Kenney,
             &[stem_words::_alternative, stem_words::_outline],
         )

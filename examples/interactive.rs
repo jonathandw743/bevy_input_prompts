@@ -80,7 +80,7 @@ fn update_kenney_keyboard_default(
     };
     println!("{:?}", key_code);
     // specify that we want the prompts from the "Default" directory
-    let Some(path) = key_code.file_path(Pack::Kenney, &[kbm::_Default::DIR]) else {
+    let Some(path) = key_code.file_path_extra(Pack::Kenney, &[kbm::_Default::DIR]) else {
         warn!("no prompt found");
         return;
     };
@@ -103,7 +103,7 @@ fn update_kenney_keyboard_double_outline(
     println!("{:?}", key_code);
     // specify that we want the prompts from the "Double" directory (which contains 2x resolution prompts)
     // and that we want the outline prompt
-    let Some(path) = key_code.file_path(
+    let Some(path) = key_code.file_path_extra(
         Pack::Kenney,
         &[kbm::_Double::DIR, kbm::stem_words::_outline],
     ) else {
@@ -127,7 +127,7 @@ fn update_kenney_controller(
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path(Pack::Kenney, &[]) else {
+    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path(Pack::Kenney) else {
         warn!("no prompt found");
         return;
     };
@@ -149,7 +149,7 @@ fn update_kenney_controller_color(
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path(Pack::Kenney, &[xboxsw::_color])
+    let Some(path) = (GamepadBrand::XboxSeries, gamepad_button).file_path_extra(Pack::Kenney, &[xboxsw::_color])
     else {
         warn!("no prompt found");
         return;

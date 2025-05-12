@@ -23,6 +23,7 @@ xelu_free_controller_key_prompts = { path = "../xelu_free_controller_key_prompts
 bevy = "0.16.0"
 
 [features]
-default = ["use_kenney_input_prompts"]
+default = []
+all = ["use_kenney_input_prompts", "use_xelu_free_controller_key_prompts"]
 use_kenney_input_prompts = ["kenney_input_prompts"]
 use_xelu_free_controller_key_prompts = ["xelu_free_controller_key_prompts"]
