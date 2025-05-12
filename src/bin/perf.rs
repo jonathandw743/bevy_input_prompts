@@ -4,7 +4,7 @@ use bevy_input::keyboard::KeyCode;
 
 fn main() {
     use bevy_input_prompts::*;
-    #[cfg(feature = "use_kenney_input_prompts")]
+    #[cfg(feature = "kenney_input_prompts")]
     {
         use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse as k_kbm;
         let d = Instant::now();

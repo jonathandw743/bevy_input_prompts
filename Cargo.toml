@@ -24,6 +24,4 @@ bevy = "0.16.0"
 
 [features]
 default = []
-all = ["use_kenney_input_prompts", "use_xelu_free_controller_key_prompts"]
-use_kenney_input_prompts = ["kenney_input_prompts"]
-use_xelu_free_controller_key_prompts = ["xelu_free_controller_key_prompts"]
+all = ["kenney_input_prompts", "xelu_free_controller_key_prompts"]

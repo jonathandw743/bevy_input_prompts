@@ -21,7 +21,7 @@ impl FileConstraints for (&GamepadAxis, &Option<Direction>) {
     type Constraints<'c> = &'c [&'c [usize]];
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         match pack {
-            #[cfg(feature = "use_kenney_input_prompts")]
+            #[cfg(feature = "kenney_input_prompts")]
             Pack::Kenney => {
                 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::stem_words::*;
                 // this just gives the directionality constraints
@@ -50,7 +50,7 @@ impl FileConstraints for (&GamepadAxis, &Option<Direction>) {
                 }
             }
             // TODO:
-            #[cfg(feature = "use_xelu_free_controller_key_prompts")]
+            #[cfg(feature = "xelu_free_controller_key_prompts")]
             Pack::Xelu => {
                 match self {
                     // there are no directional axis inputs in the xelu pack, so leave this unconstrained
@@ -65,7 +65,7 @@ impl FileConstraints for (&GamepadAxis, GamepadBrand) {
     type Constraints<'c> = (&'c [&'c [usize]], &'c [usize]);
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         match pack {
-            #[cfg(feature = "use_kenney_input_prompts")]
+            #[cfg(feature = "kenney_input_prompts")]
             Pack::Kenney => {
                 use crate::gamepad_brand::KenneyGamepadBrand::{self, *};
                 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{_Generic::stem_words as generic, _Nintendo_Gamecube::stem_words as gamecube, stem_words::*, *};
@@ -127,7 +127,7 @@ impl FileConstraints for (&GamepadAxis, GamepadBrand) {
                 )
             }
             // TODO:
-            #[cfg(feature = "use_xelu_free_controller_key_prompts")]
+            #[cfg(feature = "xelu_free_controller_key_prompts")]
             Pack::Xelu => {
                 use crate::gamepad_brand::XeluGamepadBrand::{self, *};
                 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::{stem_words::*, *};

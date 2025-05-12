@@ -17,7 +17,7 @@ impl FileConstraints for char {
     fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         // TODO: more characters
         match pack {
-            #[cfg(feature = "use_kenney_input_prompts")]
+            #[cfg(feature = "kenney_input_prompts")]
             Pack::Kenney => {
                 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse::stem_words::*;
                 match self {
@@ -86,7 +86,7 @@ impl FileConstraints for char {
                     _ => &[&[]],
                 }
             }
-            #[cfg(feature = "use_xelu_free_controller_key_prompts")]
+            #[cfg(feature = "xelu_free_controller_key_prompts")]
             Pack::Xelu => {
                 use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::_Keyboard___Mouse::stem_words::*;
                 match self {

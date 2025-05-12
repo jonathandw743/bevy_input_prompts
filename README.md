@@ -12,7 +12,7 @@ Mappings from bevy input types to popular input prompt asset paths along with al
 
 ## features
 
-There is one feature flag for each pack. For example, use `cargo add bevy_input_prompts --features "kenney_input_prompts"`.
+There is one feature flag for each pack. For example, use `cargo add bevy_input_prompts --features kenney_input_prompts`.
 
 ## adding assets to your project
 
