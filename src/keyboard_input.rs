@@ -1,21 +1,20 @@
-use crate::{Pack, FileIndices};
+use crate::{FileConstraints, Pack};
 use bevy_input::keyboard::KeyboardInput;
 
-impl FileIndices for KeyboardInput {
-    type Constraints<'c> = &'c [&'c [usize]];
-    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
+impl FileConstraints for &KeyboardInput {
+    type Constraints<'c> = [&'c [&'c [usize]]; 3];
+    fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         // TODO: consider which of these should have priority
-        if let Some(file_indices) = self.logical_key.file_indices(pack) {
-            return Some(file_indices);
-        }
-        if let Some(file_indices) = self.key_code.file_indices(pack) {
-            return Some(file_indices);
-        }
-        if let Some(text) = &self.text {
-            if let Some(file_indices) = text.as_str().file_indices(pack) {
-                return Some(file_indices);
-            }
-        }
-        None
+        [
+            self.logical_key.file_constriants(pack),
+            self.key_code.file_constriants(pack),
+            if let Some(text) = &self.text {
+                text.as_str().file_constriants(pack)
+            } else {
+                // text "is `None` if the current keypress cannot be interpreted as text"
+                // so i guess just unconstrained
+                &[]
+            },
+        ]
     }
 }

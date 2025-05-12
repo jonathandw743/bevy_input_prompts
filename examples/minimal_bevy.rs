@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_input_prompts::{CopyAssetsError, Pack, ToFileDefault, copy_assets};
+use bevy_input_prompts::{copy_assets, CopyAssetsError, FileConstraints, Pack};
 
 fn main() -> Result<(), CopyAssetsError> {
     // DO NOT DO THIS, PUT THIS IS build.rs, THIS IS FOR THE EXAMPLE ONLY

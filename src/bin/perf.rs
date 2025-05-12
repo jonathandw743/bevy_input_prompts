@@ -2,9 +2,8 @@ use std::time::Instant;
 
 use bevy_input::keyboard::KeyCode;
 // use bevy_input_prompts::key_code::key_code_file_path;
-use tokenize_dir::ToIter;
-
 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::_Keyboard___Mouse as k_kbm;
+use tokenize_dir::ToConstraints;
 
 fn main() {
     use bevy_input_prompts::*;
@@ -20,7 +19,7 @@ fn main() {
 
     let y = &[x, x];
 
-    let i = y.to_iter();
+    let i = y.to_constraints();
 
     for x in i {
         for _y in x.as_ref().iter() {

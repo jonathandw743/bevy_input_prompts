@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_input_prompts::{
-    CopyAssetsError, Pack, FileIndices, copy_assets,
+    CopyAssetsError, FileConstraints, Pack, copy_assets,
     gamepad_brand::GamepadBrand,
     kenney_tokenize::_Xbox_Series::{_Double, stem_words::_color},
 };
@@ -39,12 +39,13 @@ fn update_kenney_controller(
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = gamepad_button.file_path(
-        Pack::Kenney,
-        // this is the point of this example, normally you should `unwrap_or`
+    // this is the point of this example, normally you should `unwrap_or`
+    let Some(path) = (
         GamepadBrand::from_gamepad(&gamepad).expect("gamepad cannot be identified"),
-        &[_color, _Double::DIR],
-    ) else {
+        gamepad_button,
+    )
+        .file_path(Pack::Kenney, &[_color, _Double::DIR])
+    else {
         warn!("no prompt found");
         return;
     };

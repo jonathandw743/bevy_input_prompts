@@ -1,269 +1,303 @@
 use bevy_input::gamepad::GamepadButton::{self, *};
 
-use crate::{
-    Pack, FileIndices,
-    gamepad_brand::GamepadBrand::{self, *},
-};
+use crate::{FileConstraints, Pack, gamepad_brand::GamepadBrand};
 
-impl FileIndices for (GamepadBrand, GamepadButton) {
-    type Constraints<'c> = &'c [&'c [usize]];
-    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>> {
+impl FileConstraints for (GamepadBrand, &GamepadButton) {
+    type Constraints<'c> = (&'c [&'c [usize]], &'c [usize]);
+    fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c> {
         match pack {
             #[cfg(feature = "use_kenney_input_prompts")]
             Pack::Kenney => {
+                use crate::gamepad_brand::KenneyGamepadBrand::{self, *};
                 use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4::{
                     _Generic::stem_words as generic, _Nintendo_Gamecube::stem_words as gamecube,
-                    _Nintendo_Switch::stem_words as switch,
-                    _Nintendo_Switch_2::stem_words as switch2, _Nintendo_Wii::stem_words as wii,
                     _Nintendo_WiiU::stem_words as wiiu, _PlayStation_Series::stem_words as ps,
                     _Playdate::stem_words as playdate, _Steam_Controller::stem_words as steam,
                     _Steam_Deck::stem_words as steamdeck, _Xbox_Series::stem_words as xbox,
+                    stem_words::*, *,
                 };
-                match self {
-                    (Generic, South | East | North | West) => {
-                        Some(&[generic::_button, generic::_circle])
-                    }
-                    (Generic, C) => None,
-                    (Generic, Z) => None,
-                    (Generic, LeftTrigger | LeftTrigger2 | RightTrigger | RightTrigger2) => {
-                        Some(&[generic::_trigger])
-                    }
-                    (Generic, Select) => None,
-                    (Generic, Start) => None,
-                    (Generic, Mode) => None,
-                    (Generic, LeftThumb | RightThumb) => Some(&[generic::_press, generic::_stick]),
-                    (Generic, DPadUp) => None,
-                    (Generic, DPadDown) => None,
-                    (Generic, DPadLeft) => None,
-                    (Generic, DPadRight) => None,
-                    (Generic, Other(_)) => None,
+                // TODO: most of playdate, start, select, mode on switch(2), xbox/ps elite controller Other(_) mappings
+                let input: &[&[usize]] = match (KenneyGamepadBrand::from(self.0), self.1) {
+                    (Generic, South) => &[generic::_button, generic::_circle],
+                    (
+                        Gamecube | SteamController | SteamDeck | XboxSeries | Xbox360 | XboxOne,
+                        South,
+                    ) => &[_a],
+                    (Switch | Switch2 | Wii | WiiU, South) => &[_b],
+                    (PS3 | PS4 | PS5, South) => &[ps::_cross],
+                    (Playdate, South) => &[playdate::_a],
 
-                    (Gamecube, South) => Some(&[gamecube::_a]),
-                    (Gamecube, East) => Some(&[gamecube::_b]),
-                    (Gamecube, North) => Some(&[gamecube::_y]),
-                    (Gamecube, West) => Some(&[gamecube::_x]),
-                    (Gamecube, C) => None,
-                    (Gamecube, Z) => None,
-                    (Gamecube, LeftTrigger) => None,
-                    (Gamecube, LeftTrigger2) => None,
-                    (Gamecube, RightTrigger) => None,
-                    (Gamecube, RightTrigger2) => None,
-                    (Gamecube, Select) => None,
-                    (Gamecube, Start) => Some(&[gamecube::_start]),
-                    (Gamecube, Mode) => None,
-                    (Gamecube, LeftThumb) => Some(&[gamecube::_grip, gamecube::_stick]),
-                    (Gamecube, RightThumb) => Some(&[gamecube::_c, gamecube::_stick]),
-                    (Gamecube, DPadUp) => Some(&[gamecube::_up, gamecube::_dpad]),
-                    (Gamecube, DPadDown) => Some(&[gamecube::_down, gamecube::_dpad]),
-                    (Gamecube, DPadLeft) => Some(&[gamecube::_left, gamecube::_dpad]),
-                    (Gamecube, DPadRight) => Some(&[gamecube::_right, gamecube::_dpad]),
-                    (Gamecube, Other(_)) => None,
+                    (Generic, East) => &[generic::_button, generic::_circle],
+                    (
+                        Gamecube | SteamController | SteamDeck | XboxSeries | Xbox360 | XboxOne,
+                        East,
+                    ) => &[_b],
+                    (Switch | Switch2 | Wii | WiiU, East) => &[_a],
+                    (PS3 | PS4 | PS5, East) => &[ps::_circle],
+                    (Playdate, East) => &[playdate::_b],
 
-                    (Switch, South) => Some(&[switch::_b]),
-                    (Switch, East) => Some(&[switch::_a]),
-                    (Switch, North) => Some(&[switch::_x]),
-                    (Switch, West) => Some(&[switch::_y]),
-                    (Switch, C) => None,
-                    (Switch, Z) => None,
-                    (Switch, LeftTrigger) => Some(&[switch::_l]),
-                    (Switch, LeftTrigger2) => Some(&[switch::_zl]),
-                    (Switch, RightTrigger) => Some(&[switch::_r]),
-                    (Switch, RightTrigger2) => Some(&[switch::_zr]),
-                    // TODO:
-                    (Switch, Select) => None,
-                    (Switch, Start) => None,
-                    (Switch, Mode) => None,
-                    (Switch, LeftThumb) => Some(&[switch::_press, switch::_l, switch::_stick]),
-                    (Switch, RightThumb) => Some(&[switch::_press, switch::_r, switch::_stick]),
-                    (Switch, DPadUp) => Some(&[switch::_up, switch::_dpad]),
-                    (Switch, DPadDown) => Some(&[switch::_down, switch::_dpad]),
-                    (Switch, DPadLeft) => Some(&[switch::_left, switch::_dpad]),
-                    (Switch, DPadRight) => Some(&[switch::_right, switch::_dpad]),
-                    (Switch, Other(_)) => None,
+                    (Generic, North) => &[generic::_button, generic::_circle],
+                    (
+                        Gamecube | SteamController | SteamDeck | XboxSeries | Xbox360 | XboxOne,
+                        North,
+                    ) => &[_y],
+                    (Switch | Switch2 | Wii | WiiU, North) => &[_x],
+                    (PS3 | PS4 | PS5, North) => &[ps::_triangle],
+                    (Playdate, North) => &[&[]],
 
-                    (Switch2, South) => Some(&[switch2::_b]),
-                    (Switch2, East) => Some(&[switch2::_a]),
-                    (Switch2, North) => Some(&[switch2::_x]),
-                    (Switch2, West) => Some(&[switch2::_y]),
-                    (Switch2, C) => None,
-                    (Switch2, Z) => None,
-                    (Switch2, LeftTrigger) => Some(&[switch2::_l]),
-                    (Switch2, LeftTrigger2) => Some(&[switch2::_zl]),
-                    (Switch2, RightTrigger) => Some(&[switch2::_r]),
-                    (Switch2, RightTrigger2) => Some(&[switch2::_zr]),
-                    // TODO:
-                    (Switch2, Select) => None,
-                    (Switch2, Start) => None,
-                    (Switch2, Mode) => None,
-                    (Switch2, LeftThumb) => Some(&[switch2::_press, switch2::_l, switch2::_stick]),
-                    (Switch2, RightThumb) => Some(&[switch2::_press, switch2::_r, switch2::_stick]),
-                    (Switch2, DPadUp) => Some(&[switch2::_up, switch2::_dpad]),
-                    (Switch2, DPadDown) => Some(&[switch2::_down, switch2::_dpad]),
-                    (Switch2, DPadLeft) => Some(&[switch2::_left, switch2::_dpad]),
-                    (Switch2, DPadRight) => Some(&[switch2::_right, switch2::_dpad]),
-                    (Switch2, Other(_)) => None,
+                    (Generic, West) => &[generic::_button, generic::_circle],
+                    (
+                        Gamecube | SteamController | SteamDeck | XboxSeries | Xbox360 | XboxOne,
+                        West,
+                    ) => &[_x],
+                    (Switch | Switch2 | Wii | WiiU, West) => &[_y],
+                    (PS3 | PS4 | PS5, West) => &[ps::_square],
+                    (Playdate, West) => &[&[]],
 
-                    (Wii, South) => Some(&[wii::_a]),
-                    (Wii, East) => Some(&[wii::_b]),
-                    (Wii, North) => Some(&[wii::_y]),
-                    (Wii, West) => Some(&[wii::_x]),
-                    (Wii, C) => None,
-                    (Wii, Z) => None,
-                    (Wii, LeftTrigger) => None,
-                    (Wii, LeftTrigger2) => None,
-                    (Wii, RightTrigger) => None,
-                    (Wii, RightTrigger2) => None,
-                    (Wii, Select) => None,
-                    (Wii, Start) => None,
-                    (Wii, Mode) => None,
-                    (Wii, LeftThumb) => None,
-                    (Wii, RightThumb) => None,
-                    (Wii, DPadUp) => Some(&[wii::_up, wii::_dpad]),
-                    (Wii, DPadDown) => Some(&[wii::_down, wii::_dpad]),
-                    (Wii, DPadLeft) => Some(&[wii::_left, wii::_dpad]),
-                    (Wii, DPadRight) => Some(&[wii::_right, wii::_dpad]),
-                    (Wii, Other(_)) => None,
+                    (Generic, LeftTrigger) => &[generic::_trigger],
+                    (Gamecube, LeftTrigger) => &[_trigger, _l],
+                    (Switch | Switch2 | WiiU, LeftTrigger) => &[_l],
+                    (PS3 | PS4 | PS5 | SteamDeck, LeftTrigger) => &[_l1],
+                    (SteamController | XboxSeries | Xbox360 | XboxOne, LeftTrigger) => &[_lb],
+                    (Wii | Playdate, LeftTrigger) => &[&[]],
 
-                    (WiiU, South) => Some(&[wiiu::_a]),
-                    (WiiU, East) => Some(&[wiiu::_b]),
-                    (WiiU, North) => Some(&[wiiu::_y]),
-                    (WiiU, West) => Some(&[wiiu::_x]),
-                    (WiiU, C) => None,
-                    (WiiU, Z) => None,
-                    (WiiU, LeftTrigger) => Some(&[wiiu::_l]),
-                    (WiiU, LeftTrigger2) => Some(&[wiiu::_zl]),
-                    (WiiU, RightTrigger) => Some(&[wiiu::_r]),
-                    (WiiU, RightTrigger2) => Some(&[wiiu::_zr]),
-                    (WiiU, Select) => Some(&[wiiu::_minus]),
-                    (WiiU, Start) => Some(&[wiiu::_plus]),
-                    (WiiU, Mode) => Some(&[wiiu::_home]),
-                    (WiiU, LeftThumb) => None,
-                    (WiiU, RightThumb) => None,
-                    (WiiU, DPadUp) => Some(&[wiiu::_up, wiiu::_dpad]),
-                    (WiiU, DPadDown) => Some(&[wiiu::_down, wiiu::_dpad]),
-                    (WiiU, DPadLeft) => Some(&[wiiu::_left, wiiu::_dpad]),
-                    (WiiU, DPadRight) => Some(&[wiiu::_right, wiiu::_dpad]),
-                    (WiiU, Other(_)) => None,
+                    (Generic, LeftTrigger2) => &[generic::_trigger],
+                    (Switch | Switch2 | WiiU, LeftTrigger2) => &[_zl],
+                    (PS3 | PS4 | PS5 | SteamDeck, LeftTrigger2) => &[_l2],
+                    (SteamController | XboxSeries | Xbox360 | XboxOne, LeftTrigger2) => &[_lt],
+                    (Gamecube | Wii | Playdate, LeftTrigger2) => &[&[]],
 
-                    // TODO: ps elite controller back buttons in Other
-                    (PS3 | PS4 | PS5, South) => Some(&[ps::_cross]),
-                    (PS3 | PS4 | PS5, East) => Some(&[ps::_circle]),
-                    (PS3 | PS4 | PS5, North) => Some(&[ps::_triangle]),
-                    (PS3 | PS4 | PS5, West) => Some(&[ps::_square]),
-                    (PS3 | PS4 | PS5, C) => None,
-                    (PS3 | PS4 | PS5, Z) => None,
-                    (PS3 | PS4 | PS5, LeftTrigger) => Some(&[ps::_l1]),
-                    (PS3 | PS4 | PS5, LeftTrigger2) => Some(&[ps::_l2]),
-                    (PS3 | PS4 | PS5, RightTrigger) => Some(&[ps::_r1]),
-                    (PS3 | PS4 | PS5, RightTrigger2) => Some(&[ps::_r2]),
-                    (PS3 | PS4 | PS5, Select) => Some(&[ps::_select]),
-                    (PS3 | PS4 | PS5, Start) => Some(&[ps::_start]),
-                    (PS3 | PS4 | PS5, Mode) => Some(&[ps::_touchpad]),
-                    (PS3 | PS4 | PS5, LeftThumb) => Some(&[ps::_press, ps::_l, ps::_stick]),
-                    (PS3 | PS4 | PS5, RightThumb) => Some(&[ps::_press, ps::_r, ps::_stick]),
-                    (PS3 | PS4 | PS5, DPadUp) => Some(&[ps::_up, ps::_dpad]),
-                    (PS3 | PS4 | PS5, DPadDown) => Some(&[ps::_down, ps::_dpad]),
-                    (PS3 | PS4 | PS5, DPadLeft) => Some(&[ps::_left, ps::_dpad]),
-                    (PS3 | PS4 | PS5, DPadRight) => Some(&[ps::_right, ps::_dpad]),
-                    (PS3 | PS4 | PS5, Other(_)) => None,
+                    (Generic, RightTrigger) => &[generic::_trigger],
+                    (Gamecube, RightTrigger) => &[_trigger, _r],
+                    (Switch | Switch2 | WiiU, RightTrigger) => &[_r],
+                    (PS3 | PS4 | PS5 | SteamDeck, RightTrigger) => &[_r1],
+                    (SteamController | XboxSeries | Xbox360 | XboxOne, RightTrigger) => &[_rb],
+                    (Wii | Playdate, RightTrigger) => &[&[]],
 
-                    (Playdate, South) => Some(&[playdate::_a]),
-                    (Playdate, East) => Some(&[playdate::_b]),
-                    (Playdate, North) => None,
-                    (Playdate, West) => None,
-                    (Playdate, C) => None,
-                    (Playdate, Z) => None,
-                    (Playdate, LeftTrigger) => None,
-                    (Playdate, LeftTrigger2) => None,
-                    (Playdate, RightTrigger) => None,
-                    (Playdate, RightTrigger2) => None,
-                    (Playdate, Select) => None,
-                    (Playdate, Start) => Some(&[playdate::_menu]),
-                    (Playdate, Mode) => None,
-                    (Playdate, LeftThumb) => None,
-                    (Playdate, RightThumb) => None,
-                    (Playdate, DPadUp) => Some(&[playdate::_up, playdate::_dpad]),
-                    (Playdate, DPadDown) => Some(&[playdate::_down, playdate::_dpad]),
-                    (Playdate, DPadLeft) => Some(&[playdate::_left, playdate::_dpad]),
-                    (Playdate, DPadRight) => Some(&[playdate::_right, playdate::_dpad]),
-                    (Playdate, Other(_)) => None,
+                    (Generic, RightTrigger2) => &[generic::_trigger],
+                    (Switch | Switch2 | WiiU, RightTrigger2) => &[_zr],
+                    (PS3 | PS4 | PS5 | SteamDeck, RightTrigger2) => &[_r2],
+                    (SteamController | XboxSeries | Xbox360 | XboxOne, RightTrigger2) => &[_rt],
+                    (Gamecube | Wii | Playdate, RightTrigger2) => &[&[]],
 
-                    (SteamController, South) => Some(&[steam::_a]),
-                    (SteamController, East) => Some(&[steam::_b]),
-                    (SteamController, North) => Some(&[steam::_y]),
-                    (SteamController, West) => Some(&[steam::_x]),
-                    (SteamController, C) => None,
-                    (SteamController, Z) => None,
-                    (SteamController, LeftTrigger) => Some(&[steam::_lb]),
-                    (SteamController, LeftTrigger2) => Some(&[steam::_lt]),
-                    (SteamController, RightTrigger) => Some(&[steam::_rb]),
-                    (SteamController, RightTrigger2) => Some(&[steam::_rt]),
-                    (SteamController, Select) => Some(&[steam::_back]),
-                    (SteamController, Start) => Some(&[steam::_start]),
-                    (SteamController, Mode) => None,
-                    (SteamController, LeftThumb) => {
-                        Some(&[steam::_press, steam::_l, steam::_stick])
-                    }
-                    (SteamController, RightThumb) => Some(&[steam::_pad]),
-                    (SteamController, DPadUp) => Some(&[steam::_up, steam::_dpad]),
-                    (SteamController, DPadDown) => Some(&[steam::_down, steam::_dpad]),
-                    (SteamController, DPadLeft) => Some(&[steam::_left, steam::_dpad]),
-                    (SteamController, DPadRight) => Some(&[steam::_right, steam::_dpad]),
-                    (SteamController, Other(_)) => None,
+                    (Generic, LeftThumb) => &[generic::_press, generic::_stick],
+                    (Gamecube, LeftThumb) => &[gamecube::_grip, gamecube::_stick],
+                    (
+                        Switch | Switch2 | PS3 | PS4 | PS5 | SteamDeck | Xbox360 | XboxOne
+                        | XboxSeries | SteamController,
+                        LeftThumb,
+                    ) => &[_press, _l, _stick],
+                    (Wii | WiiU | Playdate, LeftThumb) => &[&[]],
 
-                    (SteamDeck, South) => Some(&[steamdeck::_a]),
-                    (SteamDeck, East) => Some(&[steamdeck::_b]),
-                    (SteamDeck, North) => Some(&[steamdeck::_y]),
-                    (SteamDeck, West) => Some(&[steamdeck::_x]),
-                    (SteamDeck, C) => None,
-                    (SteamDeck, Z) => None,
-                    (SteamDeck, LeftTrigger) => Some(&[steamdeck::_l1]),
-                    (SteamDeck, LeftTrigger2) => Some(&[steamdeck::_l2]),
-                    (SteamDeck, RightTrigger) => Some(&[steamdeck::_r1]),
-                    (SteamDeck, RightTrigger2) => Some(&[steamdeck::_r2]),
-                    (SteamDeck, Select) => Some(&[steamdeck::_view]),
-                    (SteamDeck, Start) => Some(&[steamdeck::_options]),
-                    (SteamDeck, Mode) => None,
-                    (SteamDeck, LeftThumb) => {
-                        Some(&[steamdeck::_press, steamdeck::_l, steamdeck::_stick])
-                    }
-                    (SteamDeck, RightThumb) => {
-                        Some(&[steamdeck::_press, steamdeck::_r, steamdeck::_stick])
-                    }
-                    (SteamDeck, DPadUp) => Some(&[steamdeck::_up, steamdeck::_dpad]),
-                    (SteamDeck, DPadDown) => Some(&[steamdeck::_down, steamdeck::_dpad]),
-                    (SteamDeck, DPadLeft) => Some(&[steamdeck::_left, steamdeck::_dpad]),
-                    (SteamDeck, DPadRight) => Some(&[steamdeck::_right, steamdeck::_dpad]),
-                    (SteamDeck, Other(_)) => None,
+                    (Generic, RightThumb) => &[generic::_press, generic::_stick],
+                    (Gamecube, RightThumb) => &[gamecube::_c, gamecube::_stick],
+                    (
+                        Switch | Switch2 | PS3 | PS4 | PS5 | SteamDeck | Xbox360 | XboxOne
+                        | XboxSeries,
+                        RightThumb,
+                    ) => &[_press, _r, _stick],
+                    (SteamController, RightThumb) => &[steam::_pad],
+                    (Wii | WiiU | Playdate, RightThumb) => &[&[]],
 
-                    // TODO: xbox elite controller back buttons in Other
-                    (Xbox, South) => Some(&[xbox::_a]),
-                    (Xbox, East) => Some(&[xbox::_b]),
-                    (Xbox, North) => Some(&[xbox::_y]),
-                    (Xbox, West) => Some(&[xbox::_x]),
-                    (Xbox, C) => None,
-                    (Xbox, Z) => None,
-                    (Xbox, LeftTrigger) => Some(&[xbox::_lb]),
-                    (Xbox, LeftTrigger2) => Some(&[xbox::_lt]),
-                    (Xbox, RightTrigger) => Some(&[xbox::_rb]),
-                    (Xbox, RightTrigger2) => Some(&[xbox::_rt]),
-                    (Xbox, Select) => Some(&[xbox::_menu]),
-                    (Xbox, Start) => Some(&[xbox::_start]),
-                    (Xbox, Mode) => Some(&[xbox::_guide]),
-                    (Xbox, LeftThumb) => Some(&[xbox::_press, xbox::_l, xbox::_stick]),
-                    (Xbox, RightThumb) => Some(&[xbox::_press, xbox::_r, xbox::_stick]),
-                    (Xbox, DPadUp) => Some(&[xbox::_up, xbox::_dpad]),
-                    (Xbox, DPadDown) => Some(&[xbox::_down, xbox::_dpad]),
-                    (Xbox, DPadLeft) => Some(&[xbox::_left, xbox::_dpad]),
-                    (Xbox, DPadRight) => Some(&[xbox::_right, xbox::_dpad]),
-                    (Xbox, Other(_)) => None,
-                }
+                    (
+                        Gamecube | Switch | Switch2 | Wii | WiiU | PS3 | PS4 | PS5 | Playdate
+                        | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        DPadDown,
+                    ) => &[_down, _dpad],
+                    (Generic, DPadDown) => &[&[]],
+
+                    (
+                        Gamecube | Switch | Switch2 | Wii | WiiU | PS3 | PS4 | PS5 | Playdate
+                        | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        DPadLeft,
+                    ) => &[_left, _dpad],
+                    (Generic, DPadLeft) => &[&[]],
+
+                    (
+                        Gamecube | Switch | Switch2 | Wii | WiiU | PS3 | PS4 | PS5 | Playdate
+                        | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        DPadRight,
+                    ) => &[_right, _dpad],
+                    (Generic, DPadRight) => &[&[]],
+
+                    (
+                        Gamecube | Switch | Switch2 | Wii | WiiU | PS3 | PS4 | PS5 | Playdate
+                        | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        DPadUp,
+                    ) => &[_up, _dpad],
+                    (Generic, DPadUp) => &[&[]],
+
+                    (WiiU, Select) => &[wiiu::_minus],
+                    (PS3 | PS4 | PS5, Select) => &[ps::_select],
+                    (SteamController, Select) => &[steam::_back],
+                    (XboxSeries | Xbox360 | XboxOne, Select) => &[xbox::_menu],
+                    (SteamDeck, Select) => &[steamdeck::_view],
+                    (Playdate, Select) => &[playdate::_menu],
+                    (Generic | Gamecube | Switch | Switch2 | Wii, Select) => &[&[]],
+
+                    (WiiU, Start) => &[wiiu::_plus],
+                    (Playdate, Start) => &[],
+                    (SteamDeck, Start) => &[steamdeck::_options],
+                    (
+                        Gamecube | Xbox360 | XboxOne | XboxSeries | SteamController | PS3 | PS4
+                        | PS5,
+                        Start,
+                    ) => &[_start],
+                    (Generic | Switch | Switch2 | Wii, Start) => &[&[]],
+
+                    (WiiU, Mode) => &[wiiu::_home],
+                    (PS3 | PS4 | PS5, Mode) => &[ps::_touchpad],
+                    (XboxSeries | Xbox360 | XboxOne, Mode) => &[xbox::_guide],
+                    (
+                        SteamController | SteamDeck | Playdate | Wii | Switch2 | Switch | Gamecube
+                        | Generic,
+                        Mode,
+                    ) => &[&[]],
+
+                    (
+                        Generic | Gamecube | Switch | Switch2 | Wii | WiiU | PS3 | PS4 | PS5
+                        | Playdate | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        C,
+                    ) => &[&[]],
+
+                    (Gamecube, Z) => &[_z],
+                    (
+                        Generic | Wii | WiiU | Switch | Switch2 | Playdate | SteamController
+                        | SteamDeck | PS3 | PS4 | PS5 | Xbox360 | XboxOne | XboxSeries,
+                        Z,
+                    ) => &[&[]],
+
+                    (
+                        Generic | Gamecube | Switch | Switch2 | Playdate | Wii | WiiU | PS3 | PS4
+                        | PS5 | SteamController | SteamDeck | Xbox360 | XboxOne | XboxSeries,
+                        Other(_),
+                    ) => &[&[]],
+                };
+                (
+                    input,
+                    match KenneyGamepadBrand::from(self.0) {
+                        Generic => _Generic::DIR,
+                        Switch => _Nintendo_Switch::DIR,
+                        Wii => _Nintendo_Wii::DIR,
+                        WiiU => _Nintendo_WiiU::DIR,
+                        PS3 | PS4 | PS5 => _PlayStation_Series::DIR,
+                        SteamController => _Steam_Controller::DIR,
+                        SteamDeck => _Steam_Deck::DIR,
+                        Xbox360 | XboxOne | XboxSeries => _Xbox_Series::DIR,
+                        Gamecube => _Nintendo_Gamecube::DIR,
+                        Switch2 => _Nintendo_Switch_2::DIR,
+                        Playdate => _Playdate::DIR,
+                    },
+                )
             }
             #[cfg(feature = "use_xelu_free_controller_key_prompts")]
-            #[rustfmt::skip]
-            Pack::Xelu => match self {
-                _ => todo!(),
-            },
+            Pack::Xelu => {
+                use crate::gamepad_brand::XeluGamepadBrand::{self, *};
+                use xelu_free_controller_key_prompts::tokenize_dir::_Xelu_Free_Controller_Key_Prompts::{
+                    stem_words::*, *,
+                };
+                let input: &[&[usize]] = match (XeluGamepadBrand::from(self.0), self.1) {
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne,
+                        South,
+                    ) => &[_A],
+                    (Switch | Wii | WiiU, South) => &[_B],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, South) => &[_Cross],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne,
+                        East,
+                    ) => &[_B],
+                    (Switch | Wii | WiiU, East) => &[_A],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, East) => &[_Circle],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne,
+                        North,
+                    ) => &[_Y],
+                    (Switch | Wii | WiiU, North) => &[_X],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, North) => &[_Triangle],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne,
+                        West,
+                    ) => &[_X],
+                    (Switch | Wii | WiiU, West) => &[_Y],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, West) => &[_Square],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne | Switch,
+                        LeftTrigger,
+                    ) => &[_LB],
+                    (Wii | WiiU, LeftTrigger) => &[], //todo:
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger) => &[_L2],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne | Switch,
+                        RightTrigger,
+                    ) => &[_RB],
+                    (Wii | WiiU, RightTrigger) => &[], //todo:
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, RightTrigger) => &[_R1],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne | Switch,
+                        LeftTrigger2,
+                    ) => &[_LT],
+                    (Wii | WiiU, LeftTrigger2) => &[_ZL],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, LeftTrigger2) => &[_L2],
+
+                    (
+                        XboxSeries | SteamDeck | AmazonLuna | GoogleStadia | Ouya | SteamController
+                        | Oculus | Xbox360 | XboxOne | Switch,
+                        RightTrigger2,
+                    ) => &[_RT],
+                    (WiiU, RightTrigger2) => &[_ZR],
+                    (PS3 | PS4 | PS5 | PSMove | PSVita, RightTrigger2) => &[_R2],
+
+                    C => &[],
+                    Z => &[],
+                    Select => &[],
+                    Start => &[],
+                    Mode => &[],
+                    LeftThumb => &[],
+                    RightThumb => &[],
+                    DPadUp => &[],
+                    DPadDown => &[],
+                    DPadLeft => &[],
+                    DPadRight => &[],
+                    Other(_) => &[],
+                };
+                (
+                    input,
+                    match XeluGamepadBrand::from(self.0) {
+                        Switch => _Switch::DIR,
+                        Wii => _Others::_Wii::DIR,
+                        WiiU => _Others::_WiiU::DIR,
+                        PS3 => _Others::_PS3::DIR,
+                        PS4 => _Others::_PS4::DIR,
+                        PS5 => _PS5::DIR,
+                        SteamController => _Others::_Steam::DIR,
+                        SteamDeck => _Steam_Deck::DIR,
+                        Xbox360 => _Others::_Xbox_360::DIR,
+                        XboxOne => _Others::_Xbox_One::DIR,
+                        XboxSeries => _Xbox_Series::DIR,
+                        AmazonLuna => _Others::_Amazon_Luna::DIR,
+                        GoogleStadia => _Others::_Google_Stadia::DIR,
+                        Ouya => _Others::_Ouya::DIR,
+                        PSMove => _Others::_PS_Move::DIR,
+                        PSVita => _Others::_PS_Vita::DIR,
+                        Oculus => _Others::_VR::_Oculus::DIR,
+                        Vive => _Others::_VR::_Vive::DIR,
+                    },
+                )
+            }
         }
     }
 }

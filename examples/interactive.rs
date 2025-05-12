@@ -1,6 +1,6 @@
 use bevy::{math::vec3, prelude::*};
 use bevy_input_prompts::{
-    CopyAssetsError, Pack, FileIndices, ToFileDefault, copy_assets,
+    CopyAssetsError, FileConstraints, Pack, copy_assets,
     gamepad_brand::GamepadBrand,
     kenney_tokenize::{_Keyboard___Mouse as kbm, _Xbox_Series::stem_words as xboxsw},
 };
@@ -123,11 +123,11 @@ fn update_kenney_controller(
     let Some(gamepad) = gamepad else {
         return;
     };
-    let Some(&gamepad_button) = gamepad.get_just_pressed().next() else {
+    let Some(gamepad_button) = gamepad.get_just_pressed().next() else {
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[]) else {
+    let Some(path) = (GamepadBrand::Xbox, gamepad_button).file_path(Pack::Kenney, &[]) else {
         warn!("no prompt found");
         return;
     };
@@ -145,11 +145,11 @@ fn update_kenney_controller_color(
         return;
     };
     dbg!(gamepad.1.vendor_id(), gamepad.1.product_id());
-    let Some(&gamepad_button) = gamepad.1.get_just_pressed().next() else {
+    let Some(gamepad_button) = gamepad.1.get_just_pressed().next() else {
         return;
     };
     println!("{:?}", gamepad_button);
-    let Some(path) = gamepad_button.file_path(Pack::Kenney, GamepadBrand::Xbox, &[xboxsw::_color])
+    let Some(path) = (GamepadBrand::Xbox, gamepad_button).file_path(Pack::Kenney, &[xboxsw::_color])
     else {
         warn!("no prompt found");
         return;

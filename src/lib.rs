@@ -26,8 +26,8 @@ pub enum Pack {
     Xelu,
 }
 
-pub fn first_file_path<T: tokenize_dir::ToIter>(pack: Pack, files: T) -> Option<String> {
-    let file_index = *files.file_indices().get(0)?;
+pub fn first_file_path<T: tokenize_dir::ToConstraints>(pack: Pack, files: T) -> Option<String> {
+    let file_index = tokenize_dir::first_value_nonstrict(files.to_constraints())?;
     Some(format!(
         "bevy_input_prompts/{}",
         match pack {
@@ -49,15 +49,14 @@ pub fn copy_assets() -> Result<(), CopyAssetsError> {
     Ok(())
 }
 
-pub trait FileIndices {
-    type Constraints<'c>: tokenize_dir::ToIter;
-    fn file_indices<'c>(&self, pack: Pack) -> Option<Self::Constraints<'c>>;
-
+pub trait FileConstraints: Sized {
+    type Constraints<'c>: tokenize_dir::ToConstraints;
+    fn file_constriants<'c>(self, pack: Pack) -> Self::Constraints<'c>;
     fn file_path<'c>(
-        &self,
+        self,
         pack: Pack,
         extra_contraints: Self::Constraints<'c>,
     ) -> Option<String> {
-        first_file_path(pack, [self.file_indices(pack)?, extra_contraints])
+        first_file_path(pack, [self.file_constriants(pack), extra_contraints])
     }
 }
