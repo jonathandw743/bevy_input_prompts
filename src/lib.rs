@@ -6,12 +6,13 @@ pub use fs_extra::error::Error as CopyAssetsError;
 
 pub mod gamepad_brand;
 
-pub mod char;
-pub mod gamepad_axis;
-pub mod gamepad_button;
-pub mod key;
-pub mod key_code;
-pub mod keyboard_input;
+mod char;
+mod gamepad_axis;
+mod gamepad_button;
+mod key;
+mod key_code;
+mod keyboard_input;
+mod mouse_button;
 
 #[cfg(feature = "kenney_input_prompts")]
 pub use kenney_input_prompts::tokenize_dir::_kenney_input_prompts_1_4 as kenney_tokenize;
@@ -26,7 +27,7 @@ pub enum Pack {
     Xelu,
 }
 
-pub fn first_file_path<T: tokenize_dir::ToConstraints>(pack: Pack, files: T) -> Option<String> {
+pub fn first_file_path(pack: Pack, files: impl tokenize_dir::ToConstraints) -> Option<String> {
     let file_index = tokenize_dir::first_value_nonstrict(files.to_constraints())?;
     Some(format!(
         "bevy_input_prompts/{}",
@@ -61,10 +62,10 @@ pub trait FileConstraints: Sized {
     ) -> Option<String> {
         first_file_path(pack, self.file_constriants(pack))
     }
-    fn file_path_extra<T: tokenize_dir::ToConstraints>(
+    fn file_path_extra(
         self,
         pack: Pack,
-        extra_contraints: T,
+        extra_contraints: impl tokenize_dir::ToConstraints,
     ) -> Option<String> {
         first_file_path(pack, (self.file_constriants(pack), extra_contraints))
     }

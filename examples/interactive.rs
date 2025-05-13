@@ -17,9 +17,9 @@ fn main() -> Result<(), CopyAssetsError> {
             (
                 update_kenney_keyboard_default,
                 update_kenney_keyboard_double_outline,
+                update_kenney_mouse,
                 update_kenney_controller,
                 update_kenney_controller_color,
-                // update_kenney_keyboard_key,
             ),
         )
         .run();
@@ -32,6 +32,9 @@ struct KenneyKeyboardDefault;
 
 #[derive(Component)]
 struct KenneyKeyboardDoubleOutline;
+
+#[derive(Component)]
+struct KenneyMouse;
 
 #[derive(Component)]
 struct KenneyController;
@@ -54,6 +57,11 @@ fn setup(mut commands: Commands) {
         KenneyKeyboardDoubleOutline,
         Sprite::default(),
         Transform::default().with_translation(vec3(100.0, -50.0, 0.0)),
+    ));
+    commands.spawn((
+        KenneyMouse,
+        Sprite::default(),
+        Transform::default().with_translation(vec3(-200.0, -50.0, 0.0)),
     ));
     commands.spawn((
         KenneyController,
@@ -111,6 +119,27 @@ fn update_kenney_keyboard_double_outline(
         return;
     };
     for mut sprite in &mut kenney_keyboard {
+        sprite.image = asset_server.load(&path);
+    }
+}
+
+fn update_kenney_mouse(
+    mut kenney_mouse: Query<&mut Sprite, With<KenneyMouse>>,
+    mouse_button_input: Option<Res<ButtonInput<MouseButton>>>,
+    asset_server: Res<AssetServer>,
+) {
+    let Some(mouse_button_inputs) = mouse_button_input else {
+        return;
+    };
+    let Some(&mouse_button) = mouse_button_inputs.get_just_pressed().next() else {
+        return;
+    };
+    println!("{:?}", mouse_button);
+    let Some(path) = mouse_button.file_path_extra(Pack::Kenney, &[kbm::_Default::DIR]) else {
+        warn!("no prompt found");
+        return;
+    };
+    for mut sprite in &mut kenney_mouse {
         sprite.image = asset_server.load(&path);
     }
 }
